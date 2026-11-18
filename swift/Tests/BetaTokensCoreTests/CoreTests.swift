@@ -119,8 +119,9 @@ private func makeP7M(dir: URL, payload: String) throws -> URL {
     }
 
     private func beta(_ mode: EnrollmentMode, token: BetaToken?) throws -> [String: Any] {
+        let json = try Render.declaration(for: token, mode: mode)
         let d = try #require(try JSONSerialization.jsonObject(
-            with: Data(Render.declaration(for: token, mode: mode).utf8)) as? [String: Any])
+            with: Data(json.utf8)) as? [String: Any])
         return try #require((d["Payload"] as? [String: Any])?["Beta"] as? [String: Any])
     }
 

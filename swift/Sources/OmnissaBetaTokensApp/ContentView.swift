@@ -145,8 +145,12 @@ struct ContentView: View {
             }
             Text("UEM: " + model.mode.uemSummary).font(Brand.font(12)).foregroundColor(Brand.slate)
             Button("Copy reference declaration (JSON)") {
-                model.copy(Render.declaration(for: t, mode: model.mode),
-                           note: "Declaration copied to clipboard.")
+                do {
+                    model.copy(try Render.declaration(for: t, mode: model.mode),
+                               note: "Declaration copied to clipboard.")
+                } catch {
+                    model.errorText = error.localizedDescription
+                }
             }.buttonStyle(SecondaryButtonStyle())
         }
         .foregroundColor(Brand.text)

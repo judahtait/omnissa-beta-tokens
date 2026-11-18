@@ -40,18 +40,34 @@ class BetaToken:
 Opener = Callable[[urllib.request.Request], "urllib.response.addinfourl"]
 
 
+class _NoRedirect(urllib.request.HTTPRedirectHandler):
+    """Refuse redirects so OAuth Authorization is never replayed to another host."""
+
+    def redirect_request(self, req, fp, code, msg, headers, newurl):  # noqa: ANN001, N802
+        raise AbmError(
+            f"Unexpected HTTP redirect from Apple (HTTP {code} -> {newurl}). "
+            "Refusing to follow so Authorization is not sent elsewhere."
+        )
+
+
+def _default_opener(req: urllib.request.Request):
+    return urllib.request.build_opener(_NoRedirect()).open(req)
+
+
 def _get(url: str, headers: dict[str, str], opener: Opener) -> tuple[int, bytes]:
     req = urllib.request.Request(url, headers=headers, method="GET")
     try:
         with opener(req) as resp:
             return resp.status, resp.read()
     except urllib.error.HTTPError as exc:
-        return exc.code, exc.read()
+        body = exc.read()
+        exc.close()
+        return exc.code, body
     except urllib.error.URLError as exc:
         raise AbmError(f"Network error contacting Apple: {exc.reason}") from exc
 
 
-def get_session_token(creds: Credentials, opener: Opener = urllib.request.urlopen) -> str:
+def get_session_token(creds: Credentials, opener: Opener = _default_opener) -> str:
     header = build_oauth_header(
         "GET", SESSION_URL,
         creds.consumer_key, creds.consumer_secret,
@@ -74,7 +90,7 @@ def get_session_token(creds: Credentials, opener: Opener = urllib.request.urlope
     return token
 
 
-def get_beta_tokens(session_token: str, opener: Opener = urllib.request.urlopen) -> list[BetaToken]:
+def get_beta_tokens(session_token: str, opener: Opener = _default_opener) -> list[BetaToken]:
     status, body = _get(
         TOKENS_URL,
         {
@@ -99,5 +115,5 @@ def get_beta_tokens(session_token: str, opener: Opener = urllib.request.urlopen)
         raise AbmError(f"Unexpected beta token response: {exc}") from exc
 
 
-def fetch_beta_tokens(creds: Credentials, opener: Opener = urllib.request.urlopen) -> list[BetaToken]:
+def fetch_beta_tokens(creds: Credentials, opener: Opener = _default_opener) -> list[BetaToken]:
     return get_beta_tokens(get_session_token(creds, opener), opener)

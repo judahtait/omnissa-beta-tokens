@@ -1,3 +1,4 @@
+import Darwin
 import Foundation
 
 /// Key/cert generation and server token (.p7m) decryption using the system openssl.
@@ -52,7 +53,10 @@ public enum ServerToken {
         if FileManager.default.fileExists(atPath: key.path) || FileManager.default.fileExists(atPath: cert.path) {
             throw ToolError("A key or certificate already exists in \(dir.path). Remove them to start over.")
         }
-        let r = try runOpenSSL(["req", "-x509", "-newkey", "rsa:2048", "-nodes",
+        // Match Python: tighten umask before openssl writes the key, then restore.
+        let previousUmask = umask(0o177)
+        defer { _ = umask(previousUmask) }
+        let r = try runOpenSSL(["req", "-x509", "-newkey", "rsa:2048", "-nodes", "-sha256",
                                 "-keyout", key.path, "-out", cert.path,
                                 "-days", String(days), "-subj", "/CN=\(certCommonName)"])
         guard r.status == 0 else {

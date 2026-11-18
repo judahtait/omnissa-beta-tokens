@@ -177,3 +177,19 @@ class ServiceNameTests(unittest.TestCase):
     def test_default_service_name(self):
         from omnissa_beta_tokens.cli import SERVICE_NAME
         self.assertEqual(SERVICE_NAME, "Workspace One Beta Token Service")
+
+
+class CliFetchTests(unittest.TestCase):
+    """CLI wiring for fetch --declaration --mode off (no network)."""
+
+    def test_declaration_off_needs_no_network(self):
+        from contextlib import redirect_stderr, redirect_stdout
+        from omnissa_beta_tokens.cli import main
+
+        out, err = io.StringIO(), io.StringIO()
+        with redirect_stdout(out), redirect_stderr(err):
+            code = main(["--no-banner", "fetch", "--declaration", "--mode", "off"])
+        self.assertEqual(code, 0)
+        beta = json.loads(out.getvalue())["Payload"]["Beta"]
+        self.assertEqual(beta, {"ProgramEnrollment": "AlwaysOff"})
+        self.assertNotIn("[INFO]", out.getvalue())

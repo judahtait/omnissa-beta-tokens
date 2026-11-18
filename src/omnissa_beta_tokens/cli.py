@@ -14,7 +14,7 @@ from . import __version__, render
 from .abm import AbmError, fetch_beta_tokens
 from .servertoken import (
     CERT_NAME, ServerTokenError, decrypt_server_token, ensure_workdir,
-    find_p7m, generate_keypair, mask,
+    find_p7m, generate_keypair,
 )
 
 DEFAULT_WORKDIR = Path("~/.omnissa-beta-tokens").expanduser()
@@ -60,7 +60,7 @@ def cmd_init(args: argparse.Namespace) -> int:
         _, cert = generate_keypair(args.workdir)
     except ServerTokenError as exc:
         return _err(str(exc))
-    print(f"[INFO] Created key and certificate in {args.workdir} (private key mode 600).")
+    _info(f"Created key and certificate in {args.workdir} (private key mode 600).")
     copied = " (copied to clipboard - paste it into the form)" if _copy_to_clipboard(SERVICE_NAME) else ""
     # Echo --workdir when it is not the default, so the next command looks in the right place.
     workdir_opt = "" if args.workdir == DEFAULT_WORKDIR else f"--workdir {args.workdir} "
@@ -70,27 +70,37 @@ def cmd_init(args: argparse.Namespace) -> int:
         f"  2. Service Name: {SERVICE_NAME}{copied}\n"
         f"  3. Upload this file: {cert}\n"
         "  4. Download the .p7m server token\n"
-        f"  5. Run: omnissa-beta-tokens {workdir_opt}fetch --watch\n"
+        f"  5. Run: omnissa-beta-tokens {workdir_opt}fetch --watch\n",
+        file=sys.stderr,
     )
     return 0
+
+
+def _info(msg: str) -> None:
+    print(f"[INFO] {msg}", file=sys.stderr)
 
 
 def _watch_downloads(workdir: Path, interval: int) -> Path:
     downloads = Path("~/Downloads").expanduser()
     seen = set(downloads.glob("*.p7m"))
-    print(f"[INFO] Watching {downloads} for a new .p7m (Ctrl+C to stop)...")
+    _info(f"Watching {downloads} for a new .p7m (Ctrl+C to stop)...")
     while True:
         for f in downloads.glob("*.p7m"):
             if f not in seen:
                 dest = workdir / f.name
                 shutil.copy2(f, dest)
                 dest.chmod(0o600)
-                print(f"[INFO] Found {f.name}")
+                _info(f"Found {f.name}")
                 return dest
         time.sleep(interval)
 
 
 def cmd_fetch(args: argparse.Namespace) -> int:
+    # AlwaysOff needs no Apple session or matched program.
+    if args.declaration and args.mode == "off":
+        print(render.to_declaration(None, "off"))
+        return 0
+
     workdir = ensure_workdir(args.workdir)
     try:
         if not (workdir / CERT_NAME).exists():
@@ -101,7 +111,7 @@ def cmd_fetch(args: argparse.Namespace) -> int:
         if p7m is None:
             return _err("No .p7m found. Pass --p7m PATH, use --watch, or copy it into " + str(workdir))
         creds = decrypt_server_token(Path(p7m), workdir)
-        print(f"[INFO] Server token read: {creds!r}", file=sys.stderr)
+        _info(f"Server token read: {creds!r}")
         tokens = render.filter_tokens(fetch_beta_tokens(creds), args.os, args.match)
     except (ServerTokenError, AbmError) as exc:
         return _err(str(exc))
@@ -111,12 +121,9 @@ def cmd_fetch(args: argparse.Namespace) -> int:
     if not tokens:
         return _err("No beta programs matched.")
     if args.declaration:
-        if args.mode == "off":
-            out = render.to_declaration(None, "off")
-        elif len(tokens) != 1:
+        if len(tokens) != 1:
             return _err(f"--declaration needs exactly one match; got {len(tokens)}. Narrow with --os/--match.")
-        else:
-            out = render.to_declaration(tokens[0], args.mode)
+        out = render.to_declaration(tokens[0], args.mode)
     elif args.format == "json":
         out = render.to_json(tokens)
     elif args.format == "csv":

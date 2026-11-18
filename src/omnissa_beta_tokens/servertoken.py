@@ -46,11 +46,19 @@ class Credentials:
         )
 
 
+def _openssl_bin() -> str:
+    """Prefer a fixed system path so PATH hijacks cannot substitute openssl."""
+    for path in ("/usr/bin/openssl", "/opt/homebrew/bin/openssl"):
+        if os.path.isfile(path) and os.access(path, os.X_OK):
+            return path
+    return "openssl"
+
+
 def _run(cmd: list[str], **kw) -> subprocess.CompletedProcess:
     try:
         return subprocess.run(cmd, capture_output=True, check=False, **kw)
     except FileNotFoundError as exc:
-        raise ServerTokenError(f"'{cmd[0]}' not found in PATH") from exc
+        raise ServerTokenError(f"'{cmd[0]}' not found") from exc
 
 
 def ensure_workdir(workdir: Path) -> Path:
@@ -68,11 +76,13 @@ def generate_keypair(workdir: Path, days: int = 365) -> tuple[Path, Path]:
             f"{key.name}/{cert.name} already exist in {workdir}; "
             "refusing to overwrite. Remove them to start over."
         )
+    openssl = _openssl_bin()
     old_umask = os.umask(0o177)
     try:
         res = _run(
             [
-                "openssl", "req", "-x509", "-newkey", "rsa:2048", "-nodes",
+                openssl, "req", "-x509", "-newkey", "rsa:2048", "-nodes",
+                "-sha256",
                 "-keyout", str(key), "-out", str(cert),
                 "-days", str(days), "-subj", f"/CN={CERT_CN}",
             ]
@@ -98,7 +108,9 @@ def decrypt_server_token(p7m: Path, workdir: Path) -> Credentials:
         if not f.is_file():
             raise ServerTokenError(f"Missing file: {f}")
 
-    base = ["openssl", "smime", "-decrypt", "-recip", str(cert), "-inkey", str(key)]
+    base = [
+        _openssl_bin(), "smime", "-decrypt", "-recip", str(cert), "-inkey", str(key),
+    ]
     res = _run(base + ["-inform", "SMIME", "-in", str(p7m)])
     if res.returncode != 0:
         # Fallback used by the original Microsoft script: drop the 5 S/MIME

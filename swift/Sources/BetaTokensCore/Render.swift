@@ -54,9 +54,12 @@ public enum Render {
     /// Declarative > Configuration > Software Update:Settings > Beta.
     /// Only combinations valid under Apple's softwareupdate.settings schema can be produced:
     /// RequireProgram only with AlwaysOn, never together with OfferPrograms; AlwaysOff carries no program.
-    public static func declaration(for token: BetaToken?, mode: EnrollmentMode = .automatic) -> String {
+    public static func declaration(for token: BetaToken?, mode: EnrollmentMode = .automatic) throws -> String {
         var beta: [String: Any] = ["ProgramEnrollment": mode.programEnrollment.rawValue]
-        if mode != .off, let token {
+        if mode != .off {
+            guard let token else {
+                throw ToolError("Mode \(mode.rawValue) needs a beta program token.")
+            }
             let program: [String: Any] = ["Description": token.title, "Token": token.token]
             if mode == .automatic { beta["RequireProgram"] = program } else { beta["OfferPrograms"] = [program] }
         }
@@ -65,8 +68,10 @@ public enum Render {
             "Identifier": UUID().uuidString,
             "Payload": ["Beta": beta],
         ]
-        let data = try? JSONSerialization.data(withJSONObject: doc, options: [.prettyPrinted, .sortedKeys])
-        return data.map { String(decoding: $0, as: UTF8.self) } ?? "{}"
+        guard let data = try? JSONSerialization.data(withJSONObject: doc, options: [.prettyPrinted, .sortedKeys]) else {
+            throw ToolError("Could not encode the reference declaration.")
+        }
+        return String(decoding: data, as: UTF8.self)
     }
 
     public static func json(_ tokens: [BetaToken]) -> String {
