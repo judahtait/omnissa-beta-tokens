@@ -49,8 +49,6 @@ cat > "$OUT/Contents/Info.plist" <<PLIST
   <key>LSMinimumSystemVersion</key><string>13.0</string>
   <key>NSHighResolutionCapable</key><true/>
   <key>LSApplicationCategoryType</key><string>public.app-category.utilities</string>
-  <key>NSAppleEventsUsageDescription</key>
-  <string>Omnissa Beta Token Utility places Apple Business beside this window so you can upload the certificate.</string>
   ${ICON_KEY}
 </dict>
 </plist>

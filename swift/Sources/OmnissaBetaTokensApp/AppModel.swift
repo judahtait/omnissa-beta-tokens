@@ -112,12 +112,12 @@ final class AppModel: ObservableObject {
         copy(Self.serviceName, note: "Service name copied. Paste it into the Service Name field in Apple Business.")
     }
 
-    /// Open Apple Business Add Service and tile this app left / browser right.
+    /// Open Apple Business Add Service; slide this app to the left half (no browser control).
     func openAppleBusiness() {
         copyServiceName()
         SplitScreen.tileAppLeft()
-        SplitScreen.openURLAndTileBrowserRight(Self.appleAddServiceURL)
-        message = "Service name copied. Split screen: this app left, Apple Business right — paste the name and drag the .pem onto Upload Certificate. Apple will show 0 devices on this service; that is expected (UEM remains the enrollment server)."
+        SplitScreen.openURL(Self.appleAddServiceURL)
+        message = "Service name copied; Apple Business opened. This app is on the left — put the browser on the right (macOS window tiling or drag). Paste the name and drag the .pem onto Upload Certificate. Apple will show 0 devices on this service; that is expected."
     }
 
     func revealCertificate() {
