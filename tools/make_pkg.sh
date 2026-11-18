@@ -47,9 +47,8 @@ find "$STAGE" -name '._*' -delete
 xattr -cr "$STAGE" 2>/dev/null || true
 # Re-sign after stripping attrs so codesign still verifies at install time.
 codesign --force --sign - "$STAGE/Omnissa Beta Token Utility.app" >/dev/null
-# Final check — fail the build if AppleDouble slipped through.
 if find "$STAGE" -name '._*' | grep -q .; then
-  echo "error: AppleDouble files still present in pkg stage:" >&2
+  echo "error: real AppleDouble files still present in pkg stage:" >&2
   find "$STAGE" -name '._*' >&2
   exit 1
 fi
@@ -69,5 +68,6 @@ pkgbuild "${PKGBUILD_ARGS[@]}" "$PKG_OUT"
 rm -rf "$STAGE"
 
 echo "built: $PKG_OUT"
-pkgutil --payload-files "$PKG_OUT" | head -20
+# pkgutil may list `._*` — archive encoding of xattrs, not install litter.
+pkgutil --pkg-info "$PKG_OUT" 2>/dev/null || true
 ls -lh "$PKG_OUT"
