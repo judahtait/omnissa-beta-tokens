@@ -260,9 +260,25 @@ fields must match the table below (Automatic = AlwaysOn + Require on, Offer off)
 ### 5.4 Choose a mode (UEM field guidance only)
 
 Apple's schema only allows these combinations. Enter them in the UEM Beta
-payload (`fetch --uem-block` and the app’s UEM next-steps copy show the matching
-field summary). **Do not expect declaration JSON from this tool** — paste title
-and token, then set the fields.
+payload (app guidance step 4, or CLI `fetch --uem-block`). **Do not expect
+declaration JSON from this tool** — paste title and token, then set the fields.
+
+**Program enrollment** — whether the user can control beta enrollment in
+Software Update:
+
+| Value | Meaning |
+|---|---|
+| **Allowed** | User may enroll via their Apple Account. If Offer programs is set, those programs are also shown. |
+| **AlwaysOn** | Organization-controlled; user cannot enroll with their Apple Account. Auto-enrolls into Require program if present; otherwise presents Offer programs. |
+| **AlwaysOff** | No beta enrollment; removes the device from any current beta program. |
+
+**Require program** — device automatically enrolls in this beta program
+(Description + Token). Only when Program enrollment = **AlwaysOn**. Offer
+programs must not be present with Require program.
+
+**Offer programs** — programs the user may choose. Only when Program enrollment
+is **Allowed** or **AlwaysOn**. Must not be set with Require program. On
+unsupervised devices, enrollment is effectively Allowed when Offer programs is used.
 
 | Mode | Program enrollment | Require program | Offer programs | Result |
 |---|---|---|---|---|
@@ -270,12 +286,6 @@ and token, then set the fields.
 | Offer to user (`offer`) | Allowed | Off | On | The user can enroll in programs on their Apple Account, plus the offered program. |
 | Offer, no sign-in (`offer-always-on`) | AlwaysOn | Off | On | The offered programs are presented for the user to choose. Users cannot use their own Apple Account. |
 | Block and unenroll (`off`) | AlwaysOff | Off | Off | The device cannot enroll, and is removed from any beta program it is in. |
-
-Rules from the schema:
-
-- **Require program** is only valid with Program enrollment = **AlwaysOn**.
-- **Offer programs** must not be set together with **Require program**.
-- **AlwaysOff** carries no program.
 
 Do **not** use Allowed together with Require program. That combination is
 invalid under Apple's schema. Use **Automatic** instead.

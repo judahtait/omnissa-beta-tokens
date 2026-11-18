@@ -1,7 +1,8 @@
 import SwiftUI
 import AppKit
 
-/// Click-through steps 1 → 2 → 3 for creating a declarative Software Update profile in UEM.
+/// Click-through steps for creating a declarative Software Update profile in UEM,
+/// including Program enrollment / Require / Offer field guidance from Apple’s schema.
 struct UEMGuidanceSheet: View {
     let platform: String
     let programTitle: String
@@ -25,8 +26,14 @@ struct UEMGuidanceSheet: View {
             GuidanceStep(
                 number: 3,
                 title: "Software Update: Settings → Beta",
-                detail: "Turn Beta On, set enrollment as needed, Require program On. Paste the program title into Description (and use it as the profile name); paste the token into Token. Example: “\(programTitle)”. Assign and publish.",
+                detail: "Turn Beta On. Paste the program title into Description (and use it as the profile name); paste the token into Token. Example: “\(programTitle)”. Next: set Program enrollment / Require / Offer.",
                 imageName: "03-software-update-beta"
+            ),
+            GuidanceStep(
+                number: 4,
+                title: "Enable Beta enrollment settings",
+                detail: "In the UEM Beta payload, set Program enrollment, Require program, and Offer programs using only the combinations Apple allows. Do not paste declaration JSON — set these fields in the console.",
+                imageName: nil
             ),
         ]
     }
@@ -67,22 +74,22 @@ struct UEMGuidanceSheet: View {
     }
 
     private var stepChrome: some View {
-        HStack(spacing: 10) {
+        HStack(spacing: 8) {
             ForEach(Array(steps.enumerated()), id: \.offset) { index, s in
                 Button {
                     stepIndex = index
                 } label: {
-                    HStack(spacing: 6) {
+                    HStack(spacing: 5) {
                         Text("\(s.number)")
                             .font(Brand.font(12, medium: true))
                             .foregroundColor(index == stepIndex ? .white : Brand.navy)
                             .frame(width: 22, height: 22)
                             .background(Circle().fill(index == stepIndex ? Brand.indigo : Brand.rule.opacity(0.5)))
                         Text("Step \(s.number)")
-                            .font(Brand.font(13, medium: index == stepIndex))
+                            .font(Brand.font(12, medium: index == stepIndex))
                             .foregroundColor(index == stepIndex ? Brand.navy : Brand.slate)
                     }
-                    .padding(.horizontal, 10)
+                    .padding(.horizontal, 8)
                     .padding(.vertical, 6)
                     .background(
                         RoundedRectangle(cornerRadius: 8, style: .continuous)
@@ -100,7 +107,7 @@ struct UEMGuidanceSheet: View {
                         .foregroundColor(Brand.slate)
                 }
             }
-            Spacer()
+            Spacer(minLength: 0)
         }
         .padding(.horizontal, 20)
         .padding(.vertical, 12)
@@ -116,7 +123,10 @@ struct UEMGuidanceSheet: View {
                     .font(Brand.font(13))
                     .foregroundColor(Brand.text)
                     .fixedSize(horizontal: false, vertical: true)
-                if let image = bundledImage(step.imageName) {
+
+                if step.number == 4 {
+                    betaSettingsGuidance
+                } else if let name = step.imageName, let image = bundledImage(name) {
                     Image(nsImage: image)
                         .resizable()
                         .interpolation(.high)
@@ -128,8 +138,8 @@ struct UEMGuidanceSheet: View {
                                 .strokeBorder(Brand.rule, lineWidth: 1)
                         )
                         .shadow(color: .black.opacity(0.08), radius: 8, y: 2)
-                } else {
-                    Label("Screenshot missing: \(step.imageName).png — rebuild with tools/make_app.sh", systemImage: "photo")
+                } else if let name = step.imageName {
+                    Label("Screenshot missing: \(name).png — rebuild with tools/make_app.sh", systemImage: "photo")
                         .font(Brand.font(12))
                         .foregroundColor(Brand.magenta)
                 }
@@ -137,6 +147,83 @@ struct UEMGuidanceSheet: View {
             .padding(20)
             .frame(maxWidth: .infinity, alignment: .leading)
         }
+    }
+
+    /// Compact Apple schema guidance for UEM Beta fields (ProgramEnrollment / RequireProgram / OfferPrograms).
+    private var betaSettingsGuidance: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            fieldCard(
+                title: "Program enrollment",
+                body: """
+                Controls whether the user can manage beta enrollment in Software Update:
+                • Allowed — user may enroll via their Apple Account; Offer programs (if set) are also shown.
+                • AlwaysOn — org-controlled; user cannot enroll with their Apple Account. Auto-enrolls into Require program if set; otherwise presents Offer programs.
+                • AlwaysOff — no beta enrollment; removes the device from any current beta program.
+                """
+            )
+            fieldCard(
+                title: "Require program",
+                body: """
+                Device automatically enrolls in this beta program (Description + Token).
+                Only with Program enrollment = AlwaysOn. Do not set Offer programs when Require program is on.
+                """
+            )
+            fieldCard(
+                title: "Offer programs",
+                body: """
+                List of beta programs the user may choose. Only with Allowed or AlwaysOn. Must not be set together with Require program. On unsupervised devices, enrollment is effectively Allowed when this key is used.
+                """
+            )
+
+            Text("Valid combinations in UEM")
+                .font(Brand.font(14, medium: true))
+                .foregroundColor(Brand.navy)
+
+            modeRow("Automatic", "AlwaysOn + Require on + Offer off", "Device enrolls in your program; no user Apple Account enrollment.")
+            modeRow("Offer to user", "Allowed + Offer on + Require off", "User can use their Apple Account; offered programs also appear.")
+            modeRow("Offer, no sign-in", "AlwaysOn + Offer on + Require off", "User picks from offered programs; no Apple Account enrollment.")
+            modeRow("Block and unenroll", "AlwaysOff", "Blocks enrollment and removes existing beta enrollment.")
+
+            Text("Do not use Allowed together with Require program — invalid under Apple’s schema. Prefer Automatic (AlwaysOn + Require).")
+                .font(Brand.font(12))
+                .foregroundColor(Brand.slate)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
+    private func fieldCard(title: String, body: String) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(title)
+                .font(Brand.font(13, medium: true))
+                .foregroundColor(Brand.navy)
+            Text(body)
+                .font(Brand.font(12))
+                .foregroundColor(Brand.text)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(12)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Brand.card.opacity(0.9))
+        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                .strokeBorder(Brand.rule, lineWidth: 1)
+        )
+    }
+
+    private func modeRow(_ name: String, _ fields: String, _ result: String) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(name)
+                .font(Brand.font(13, medium: true))
+                .foregroundColor(Brand.navy)
+            Text(fields)
+                .font(.system(size: 11, design: .monospaced))
+                .foregroundColor(Brand.indigo)
+            Text(result)
+                .font(Brand.font(12))
+                .foregroundColor(Brand.slate)
+        }
+        .padding(.vertical, 4)
     }
 
     private var footer: some View {
@@ -185,5 +272,5 @@ private struct GuidanceStep {
     let number: Int
     let title: String
     let detail: String
-    let imageName: String
+    let imageName: String?
 }
