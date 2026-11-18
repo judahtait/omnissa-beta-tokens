@@ -22,8 +22,8 @@ first launch** for end users. Signing alone is not enough.
 
 The primary CLI binary (`omnissa-beta-tokens-<ver>-macos-arm64`) is produced by
 `cargo build --release` in `rust/` (required for `tools/release.sh`). It is not
-a PyInstaller/`PYI_PYTHON` artifact. Published **v0.1.0** may still lack that
-binary until a rebuild/republish attaches it and lists it in `SHA256SUMS`.
+a PyInstaller/`PYI_PYTHON` artifact. **v0.1.0** includes that binary; always
+verify against `SHA256SUMS` on the release.
 
 ```bash
 SIGN_IDENTITY="Developer ID Application: <team>" tools/make_app.sh
