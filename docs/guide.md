@@ -36,7 +36,8 @@ High-level flow:
 - Workspace ONE UEM with declarative management for the target OS.
 - Supervised devices for UEM-controlled enrollment and unenrollment. On
   unsupervised devices, only offering a program is possible (the user enrolls
-  manually). Source: Apple *Enrolling a device in a beta program*.
+  manually). Source: Apple
+  [Enrolling a device in a beta program](https://developer.apple.com/documentation/devicemanagement/enrolling-a-device-in-a-beta-program).
 - A Mac to run the app or CLI (see [Download](#3-download)).
 
 ## 3. Download
@@ -188,7 +189,10 @@ Security notes:
 ### 5.1 Supported devices
 
 The Beta setting is part of the declarative **Software Update: Settings**
-configuration. Source: Apple's `softwareupdate.settings` declaration schema.
+configuration. Source: Apple
+[Enrolling a device in a beta program](https://developer.apple.com/documentation/devicemanagement/enrolling-a-device-in-a-beta-program)
+and
+[Deploying software updates using declarative management](https://developer.apple.com/documentation/devicemanagement/deploying-software-updates-using-declarative-management).
 
 | Platform | Beta setting | Requirement |
 |---|---|---|
@@ -413,21 +417,31 @@ on a TTY and refuses on a non-interactive terminal.
 
 ## 11. References
 
-- Apple: [Enrolling a device in a beta program](https://developer.apple.com/documentation/devicemanagement/enrolling-a-device-in-a-beta-program)
-- Apple: [Get beta enrollment tokens](https://developer.apple.com/documentation/devicemanagement/get-beta-enrollment-tokens)
-- Project README (download formats, security model, known gaps)
+### Apple Developer Documentation
+
+| Topic | Link |
+|---|---|
+| Enrolling devices (tokens + `Beta` / `RequireProgram` / `OfferPrograms`) | [Enrolling a device in a beta program](https://developer.apple.com/documentation/devicemanagement/enrolling-a-device-in-a-beta-program) |
+| Token API used by this CLI/app | [Get beta enrollment tokens](https://developer.apple.com/documentation/devicemanagement/get-beta-enrollment-tokens) |
+| Declarative software updates + status (`softwareupdate.beta-enrollment`) | [Deploying software updates using declarative management](https://developer.apple.com/documentation/devicemanagement/deploying-software-updates-using-declarative-management) |
+| Software Update management overview | [SoftwareUpdate](https://developer.apple.com/documentation/devicemanagement/softwareupdate) |
+| Org enrollment in AppleSeed for IT | [beta.apple.com/for-it](https://beta.apple.com/for-it) |
+| WWDC24 (beta management context) | [What’s new in device management](https://developer.apple.com/videos/play/wwdc2024/10143/) |
+
+### This project
+
+- [README](../README.md) — install, security model, known gaps
+- In-app **How to create the UEM profile** — screenshot walkthrough aligned with §5
 
 ## 12. Known gaps
 
 - **On-device behavior** (which devices enroll, and what users see in Software
-  Update) has not been validated end to end. The checklist in section 6 is the
-  scaffold for that work; steps remain assumptions until a supervised test Mac
-  or iPhone confirms them.
-- **UEM Beta payload screenshot** for Automatic mode is still a placeholder
-  above. Capture with the token redacted before external sharing.
+  Update) should still be confirmed per tenant with the checklist in section 6.
 - **Signing and notarization** for the macOS app are not done yet; Gatekeeper
   will warn on first launch until Developer ID signing and notarization land.
 - **Private distribution** — the repository and releases are private; there is
   no public download channel yet.
 - Builds talk only to `mdmenrollment.apple.com` for token fetch. They need no
   other cloud account.
+- Product polish still open: bundle offline guide in Help, persist OS filter,
+  cancelable fetch, optional UEM console URL, VoiceOver audit.

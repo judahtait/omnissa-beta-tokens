@@ -4,9 +4,9 @@
 
 # Omnissa Beta Token Utility
 
-Get Apple beta enrollment tokens (AppleSeed for IT) and paste them into a
-Workspace ONE UEM declarative **Software Update: Settings** profile so supervised
-Apple devices can enroll in a beta program.
+Get AppleSeed for IT beta enrollment tokens and deliver them with a Workspace
+ONE UEM declarative **Software Update: Settings** profile so supervised Apple
+devices can enroll in a beta program.
 
 | Deliverable | Role |
 |---|---|
@@ -20,25 +20,18 @@ Version is always read from [`rust/Cargo.toml`](rust/Cargo.toml).
 > launch). Live Apple Business token fetch is proven; keep validating on-device
 > enrollment for your tenant. Full detail: [docs/guide.md](docs/guide.md).
 
-## Install locally (this machine)
-
-From the repo root:
+## Install locally
 
 ```bash
 tools/release.sh          # CLI + guide + SwiftUI .app → dist/release/
 # or app only:
 tools/make_app.sh
-```
-
-Then open:
-
-```bash
 open "dist/Omnissa Beta Token Utility.app"
 # if Gatekeeper blocks:
 xattr -dr com.apple.quarantine "dist/Omnissa Beta Token Utility.app"
 ```
 
-CLI binary: `dist/release/omnissa-beta-tokens-0.1.0-macos-arm64`  
+CLI: `dist/release/omnissa-beta-tokens-0.1.0-macos-arm64`  
 Guide: `dist/release/omnissa-beta-guide-0.1.0.html`
 
 ## How it works
@@ -46,11 +39,15 @@ Guide: `dist/release/omnissa-beta-guide-0.1.0.html`
 1. **Create a certificate** in the app (or `omnissa-beta-tokens init`).
 2. **Apple Business → Devices → Management Services → Add.** Upload the `.pem`,
    download the `.p7m`. Service name: `Workspace One Beta Token Service`
-   (copied for you).
-3. **Import the `.p7m`** with **Watch Downloads** (app) or `fetch --watch` (CLI).
+   (copied for you). **Open Apple Business** slides this app left and opens the
+   Add page (no Accessibility permission required).
+3. **Import the `.p7m`** with **Watch Downloads** (app) or `fetch --watch` (CLI)
+   — status shows **Server token ready**.
 4. **Fetch programs**, filter by OS, **Copy title** / **Copy token**.
-5. **UEM:** one declarative Software Update: Settings profile **per platform**
-   (macOS vs iOS). Beta On → Description = title, Token = token → assign → publish.
+5. **UEM:** **one AppleSeed beta → one token, one profile, one assignment.**
+   Use **How to create the UEM profile** (⇧⌘/) for screenshot steps. Beta On →
+   Description = title, Token = token → set Program enrollment / Require /
+   Offer → assign → publish.
 6. **Clean up** when done: delete the ABM service; app teardown or
    `omnissa-beta-tokens cleanup --yes`.
 
@@ -60,25 +57,41 @@ Guide: `dist/release/omnissa-beta-guide-0.1.0.html`
 |---|---|
 | Certificate | **Certificate ready**; drag the `.pem` chip into Apple Business |
 | Apple Business | Service created; **Download Service Token** works. Device count on **this** service stays **0** (expected — see below) |
-| `.p7m` | App: “Imported …p7m from Downloads” |
-| Fetch | **Loaded N beta programs**; pick one for your platform |
-| UEM | Profile **Installed** on the device |
+| `.p7m` | **Server token ready** checkmark |
+| Fetch | **Loaded N beta programs**; pick **one** program |
+| UEM | Separate profile **Installed** for that program |
 | Device | Software Update shows the expected beta |
+
+### One AppleSeed beta → one token, one profile, one assignment
+
+Each program needs its own enrollment token, declarative Software Update:
+Settings profile, and Smart Group assignment — across platforms (macOS vs iOS)
+and within a platform (two different macOS seeds). Do not reuse one profile for
+multiple programs. Modes (Automatic / Offer / Block) are set **in UEM**, not as
+JSON from this tool. See the [mode table](docs/guide.md#54-choose-a-mode-uem-field-guidance-only).
 
 ### Apple Business shows 0 devices — expected
 
 The external management service is **only** for downloading a server token and
 calling Apple’s beta API. It is **not** your MDM. Workspace ONE remains the
-enrollment server. Apple may list **0 devices** on this service even when UEM
-manages many devices. Do **not** reassign devices to it.
+enrollment server. Do **not** reassign devices to this service.
 
-### One UEM profile per platform
+## Apple documentation
 
-Filter the app/CLI to **macOS** or **iOS**, then create a matching Apple
-platform profile in UEM. A macOS token cannot ride in an iOS declaration.
+This tool retrieves tokens the same way MDM solutions do, then you paste them
+into UEM’s declarative Software Update: Settings > Beta payload:
 
-Modes (Automatic / Offer / Block) are set **in UEM**, not as declaration JSON
-from this tool. See the [mode table in the guide](docs/guide.md#54-choose-a-mode-uem-field-guidance-only).
+| Topic | Apple doc |
+|---|---|
+| End-to-end beta enrollment | [Enrolling a device in a beta program](https://developer.apple.com/documentation/devicemanagement/enrolling-a-device-in-a-beta-program) |
+| Token API (`mdmenrollment.apple.com`) | [Get beta enrollment tokens](https://developer.apple.com/documentation/devicemanagement/get-beta-enrollment-tokens) |
+| Declarative software updates + Beta | [Deploying software updates using declarative management](https://developer.apple.com/documentation/devicemanagement/deploying-software-updates-using-declarative-management) |
+| Software Update overview | [SoftwareUpdate](https://developer.apple.com/documentation/devicemanagement/softwareupdate) |
+| AppleSeed for IT (org enrollment) | [beta.apple.com/for-it](https://beta.apple.com/for-it) |
+| WWDC24 context | [What’s new in device management](https://developer.apple.com/videos/play/wwdc2024/10143/) |
+
+In the app: **Help → Apple Developer Documentation** opens the enrollment page;
+the UEM guidance sheet also links these docs.
 
 ## Quick start (CLI)
 
@@ -98,6 +111,12 @@ omnissa-beta-tokens cleanup --yes
 
 Default workdir: `~/.omnissa-beta-tokens` (700 / key 600).
 
+## App tips
+
+- **View → Make Text Larger / Smaller** (⌘+ / ⌘−) — also follows Dynamic Type.
+- **Help → How to Create the UEM Profile** (⇧⌘/) — screenshot walkthrough.
+- Drag the `.pem` chip onto Apple Business **Upload Certificate**.
+
 ## Security
 
 - OAuth secrets never printed (`[REDACTED]`).
@@ -105,27 +124,23 @@ Default workdir: `~/.omnissa-beta-tokens` (700 / key 600).
 - Treat `.p7m` / private key as credentials; never commit them.
 - Talks only to `mdmenrollment.apple.com`.
 
-## Known gaps
+## Known gaps / next improvements
 
-- Keep validating Software Update UX on supervised Mac/iPhone for your builds.
+- On-device Software Update UX still worth validating per tenant/build.
 - Notarization / Developer ID not done yet (Gatekeeper).
-- Repo and releases are private.
-- Brand/icon review still open.
+- Bundle offline HTML guide in Help; remember OS filter; cancelable fetch;
+  optional UEM console URL; VoiceOver pass; Sparkle once releases exist.
+- Repo and releases are private; brand/icon review still open.
 
 ## Build from source
 
 ```bash
-# CLI + tests
 cd rust && cargo test && cargo build --release
-
-# SwiftUI .app
 tools/make_app.sh
-
-# Full release folder
 tools/release.sh
 ```
 
-Release/signing notes: [docs/RELEASING.md](docs/RELEASING.md).  
+Release notes: [docs/RELEASING.md](docs/RELEASING.md).  
 Admin walkthrough: [docs/guide.md](docs/guide.md) → offline HTML via `build-guide`.
 
 ## Branding

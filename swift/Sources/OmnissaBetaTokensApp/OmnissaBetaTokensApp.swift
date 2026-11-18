@@ -52,6 +52,21 @@ struct OmnissaBetaTokensApp: App {
                     NotificationCenter.default.post(name: .showUEMGuidance, object: nil)
                 }
                 .keyboardShortcut("/", modifiers: [.command, .shift])
+
+                Divider()
+
+                Button("Apple: Enrolling a Device in a Beta Program") {
+                    AppleDocs.open(AppleDocs.enrollingDevice)
+                }
+                Button("Apple: Get Beta Enrollment Tokens") {
+                    AppleDocs.open(AppleDocs.getBetaTokens)
+                }
+                Button("Apple: Declarative Software Updates") {
+                    AppleDocs.open(AppleDocs.declarativeSoftwareUpdates)
+                }
+                Button("AppleSeed for IT") {
+                    AppleDocs.open(AppleDocs.appleSeedForIT)
+                }
             }
         }
     }

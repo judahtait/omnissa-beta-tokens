@@ -180,10 +180,30 @@ struct UEMGuidanceSheet: View {
                         .padding(.top, 8)
                     betaSettingsGuidance
                 }
+
+                if isLast {
+                    appleDocsFooter
+                        .padding(.top, 8)
+                }
             }
             .padding(20)
             .frame(maxWidth: .infinity, alignment: .leading)
         }
+    }
+
+    private var appleDocsFooter: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("Apple documentation")
+                .font(Brand.font(13, medium: true))
+                .foregroundColor(Brand.navy)
+            Link("Enrolling a device in a beta program", destination: AppleDocs.enrollingDevice)
+                .font(Brand.font(12))
+            Link("Get beta enrollment tokens", destination: AppleDocs.getBetaTokens)
+                .font(Brand.font(12))
+            Link("Deploying software updates using declarative management", destination: AppleDocs.declarativeSoftwareUpdates)
+                .font(Brand.font(12))
+        }
+        .tint(Brand.indigo)
     }
 
     /// Compact Apple schema guidance for UEM Beta fields (ProgramEnrollment / RequireProgram / OfferPrograms).
