@@ -26,7 +26,10 @@ struct ContentView: View {
         }
         .fileImporter(isPresented: $importing,
                       allowedContentTypes: [UTType(filenameExtension: "p7m") ?? .data, .data]) { result in
-            if case .success(let url) = result { model.p7m = url }
+            if case .success(let url) = result {
+                model.p7m = url
+                model.message = "Server token ready — \(url.lastPathComponent). You can Fetch beta tokens."
+            }
         }
         .sheet(isPresented: $showUEMGuidance) {
             if let t = model.selected {
@@ -136,23 +139,50 @@ struct ContentView: View {
         card(number: 2, title: "Choose server token (.p7m)") {
             Text("After you click Download Service Token in Apple Business, the app can watch ~/Downloads, wait until the .p7m finishes, and move it into the work folder.")
                 .font(Brand.font(12)).foregroundColor(Brand.slate)
+            if let p7m = model.p7m {
+                HStack(spacing: 10) {
+                    Label("Server token ready", systemImage: "checkmark.circle.fill")
+                        .font(Brand.font(13, medium: true))
+                        .foregroundColor(Brand.navy)
+                    Text(p7m.lastPathComponent)
+                        .font(Brand.font(12))
+                        .foregroundColor(Brand.slate)
+                        .lineLimit(1)
+                        .truncationMode(.middle)
+                    Spacer(minLength: 0)
+                    Button("Choose another...") { importing = true }
+                        .buttonStyle(SecondaryButtonStyle())
+                    if !model.isWatchingDownloads {
+                        Button("Watch Downloads") { model.startWatchingDownloads() }
+                            .buttonStyle(SecondaryButtonStyle())
+                    }
+                }
+                .padding(10)
+                .background(Brand.card.opacity(0.85))
+                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .strokeBorder(Brand.indigo.opacity(0.45), lineWidth: 1)
+                )
+            }
             HStack {
                 if model.isWatchingDownloads {
                     ProgressView().controlSize(.small)
                     Text("Watching Downloads…").font(Brand.font(12)).foregroundColor(Brand.slate)
                     Button("Stop") { model.stopWatchingDownloads() }.buttonStyle(SecondaryButtonStyle())
-                } else {
+                } else if model.p7m == nil {
                     Button("Watch Downloads") { model.startWatchingDownloads() }
                         .buttonStyle(PrimaryButtonStyle())
                     Button("Choose file...") { importing = true }.buttonStyle(SecondaryButtonStyle())
+                    Text("No file selected")
+                        .font(Brand.font(12)).foregroundColor(Brand.slate)
                 }
-                Text(model.p7m?.lastPathComponent ?? "No file selected")
-                    .font(Brand.font(12)).foregroundColor(Brand.slate).lineLimit(1).truncationMode(.middle)
             }
         }
         .dropDestination(for: URL.self) { urls, _ in
             guard let url = urls.first(where: { $0.pathExtension == "p7m" }) else { return false }
             model.p7m = url
+            model.message = "Server token ready — \(url.lastPathComponent). You can Fetch beta tokens."
             return true
         }
     }

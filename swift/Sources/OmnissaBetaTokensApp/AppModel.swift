@@ -69,7 +69,7 @@ final class AppModel: ObservableObject {
                             guard let self, !Task.isCancelled else { return }
                             self.p7m = dest
                             self.isWatchingDownloads = false
-                            self.message = "Imported \(dest.lastPathComponent) from Downloads. You can Fetch beta tokens."
+                            self.message = "Server token ready — imported \(dest.lastPathComponent) from Downloads. You can Fetch beta tokens."
                             self.downloadsWatchTask = nil
                         }
                         return
@@ -181,7 +181,7 @@ final class AppModel: ObservableObject {
     }
 
     func copyTitle(_ token: BetaToken) {
-        copy(token.title, note: "Program title copied — paste into UEM Beta Description only.")
+        copy(token.title, note: "Title copied. Use this as the title for the UEM profile (and paste into Beta Description).")
     }
 
     var osOptions: [String] {
