@@ -75,6 +75,9 @@ struct ContentView: View {
                     .font(.system(size: 12, design: .monospaced)).textSelection(.enabled)
                 Button("Copy name") { model.copyServiceName() }.buttonStyle(SecondaryButtonStyle())
             }
+            if model.hasKeypair {
+                draggableCertificate
+            }
             HStack {
                 if model.hasKeypair {
                     Label("Certificate ready", systemImage: "checkmark.circle.fill").foregroundColor(Brand.navy)
@@ -89,6 +92,36 @@ struct ContentView: View {
                 }
             }
         }
+    }
+
+    /// Native file icon the admin can drag straight onto Apple Business Upload Certificate.
+    private var draggableCertificate: some View {
+        let url = model.certificateURL
+        return HStack(spacing: 10) {
+            Image(nsImage: NSWorkspace.shared.icon(forFile: url.path))
+                .resizable()
+                .frame(width: 32, height: 32)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(ServerToken.certName)
+                    .font(Brand.font(13, medium: true))
+                    .foregroundColor(Brand.navy)
+                Text("Drag this file onto Upload Certificate in Apple Business")
+                    .font(Brand.font(11))
+                    .foregroundColor(Brand.slate)
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(10)
+        .background(Brand.card.opacity(0.85))
+        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                .strokeBorder(Brand.indigo.opacity(0.45), lineWidth: 1)
+        )
+        .onDrag {
+            NSItemProvider(contentsOf: url) ?? NSItemProvider()
+        }
+        .help("Drag \(ServerToken.certName) into the Apple Business upload control")
     }
 
     private var stepChoose: some View {
@@ -171,24 +204,17 @@ struct ContentView: View {
                     .foregroundColor(Brand.navy)
                     .lineLimit(2).fixedSize(horizontal: false, vertical: true)
                 Toggle("Reveal", isOn: $model.revealToken).toggleStyle(.switch).controlSize(.small)
+            }
+            Text("Create a UEM declarative Software Update: Settings profile for \(t.osDisplay) (one profile per platform). Paste title → Description, token → Token.")
+                .font(Brand.font(12)).foregroundColor(Brand.slate)
+            HStack {
                 Button("Copy title") { model.copyTitle(t) }
                     .buttonStyle(SecondaryButtonStyle())
                 Button("Copy token") { model.copy(t.token, note: "Token copied — paste into UEM Beta Token only.") }
                     .buttonStyle(PrimaryButtonStyle())
-                Button("Copy for UEM") { model.copyForUEM(t) }
+                Button("Copy UEM next steps") { model.copyForUEM(t) }
                     .buttonStyle(SecondaryButtonStyle())
             }
-            Text("One UEM declarative profile per platform (macOS vs iOS). Paste title → Description, token → Token; do not paste the mode checklist into Description.")
-                .font(Brand.font(12)).foregroundColor(Brand.slate)
-            Divider()
-            Text("Workspace ONE UEM Software Update:Settings > Beta").font(Brand.font(12)).foregroundColor(Brand.slate)
-            Picker("Mode", selection: $model.mode) {
-                ForEach(EnrollmentMode.allCases) { Text($0.title).tag($0) }
-            }
-            Text("UEM: " + model.mode.uemSummary).font(Brand.font(12)).foregroundColor(Brand.slate)
-            Text(model.mode.fieldChecklist)
-                .font(Brand.font(12))
-                .foregroundColor(Brand.slate)
         }
         .foregroundColor(Brand.text)
         .padding(12)

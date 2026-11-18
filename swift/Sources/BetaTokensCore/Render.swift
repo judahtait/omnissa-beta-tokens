@@ -60,18 +60,19 @@ public enum Render {
         return out
     }
 
-    /// Single clipboard block for pasting into UEM Software Update:Settings > Beta (not declaration JSON).
-    public static func uemClipboardBlock(title: String, token: String, mode: EnrollmentMode) -> String {
+    /// Title + token for UEM Beta fields, plus short “create the profile” directions (not declaration JSON).
+    public static func uemClipboardBlock(title: String, token: String, platform: String) -> String {
         """
         Program: \(title)
         Token: \(token)
 
-        Workspace ONE UEM Software Update:Settings > Beta
-        Mode: \(mode.title)
-        UEM: \(mode.uemSummary)
-
-        Field checklist:
-        \(mode.fieldChecklist.trimmingCharacters(in: .whitespacesAndNewlines))
+        Create the UEM profile (one declaration per platform):
+        1. Resources > Profiles & Baselines > Profiles > Add > Add Profile
+        2. Choose Apple \(platform) (must match this token)
+        3. Management Type = Declarative, Declaration Type = Configuration, Context = Device
+        4. Add Software Update: Settings → Beta = On
+        5. Paste Program into Description, Token into Token
+        6. Set Program enrollment / Require / Offer per your policy (see the admin guide), then assign and publish
         """
     }
 

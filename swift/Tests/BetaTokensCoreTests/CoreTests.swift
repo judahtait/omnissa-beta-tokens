@@ -86,6 +86,7 @@ private func makeP7M(dir: URL, payload: String) throws -> URL {
     @Test func importP7MCopiesIntoWorkdir() throws {
         let downloads = tempDir()
         let work = tempDir()
+        try FileManager.default.createDirectory(at: downloads, withIntermediateDirectories: true)
         let src = downloads.appendingPathComponent("Token_smime.p7m")
         try Data("fake-p7m-body".utf8).write(to: src)
         let dest = try ServerToken.importP7M(src, into: work)
@@ -93,7 +94,8 @@ private func makeP7M(dir: URL, payload: String) throws -> URL {
         #expect(FileManager.default.fileExists(atPath: dest.path))
         let mode = try FileManager.default.attributesOfItem(atPath: dest.path)[.posixPermissions] as? NSNumber
         #expect((mode?.uint16Value ?? 0) & 0o777 == 0o600)
-        #expect(ServerToken.p7mPaths(in: downloads).contains(src))
+        let found = ServerToken.p7mPaths(in: downloads).map(\.standardizedFileURL)
+        #expect(found.contains(src.standardizedFileURL))
     }
 }
 
@@ -179,14 +181,14 @@ private func makeP7M(dir: URL, payload: String) throws -> URL {
         }
     }
 
-    @Test func uemClipboardBlockIncludesTitleTokenAndChecklist() {
+    @Test func uemClipboardBlockDirectsProfileCreation() {
         let token = String(repeating: "T", count: 40)
-        let block = Render.uemClipboardBlock(title: "macOS Test Beta", token: token, mode: .automatic)
+        let block = Render.uemClipboardBlock(title: "macOS Test Beta", token: token, platform: "macOS")
         #expect(block.contains("Program: macOS Test Beta"))
         #expect(block.contains("Token: \(token)"))
-        #expect(block.contains("Program enrollment = AlwaysOn"))
-        #expect(block.contains("Require program = on"))
-        #expect(block.contains("Offer programs = off"))
+        #expect(block.contains("Choose Apple macOS"))
+        #expect(block.contains("Paste Program into Description"))
+        #expect(!block.contains("Field checklist"))
         #expect(!block.contains("\"Declarations\""))
         #expect(!block.contains("com.apple.configuration.softwareupdate.settings"))
     }

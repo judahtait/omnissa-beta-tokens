@@ -17,9 +17,10 @@ final class AppModel: ObservableObject {
     @Published var osFilter = "All"
     @Published var selection: BetaToken.ID?
     @Published var revealToken = false
-    @Published var mode: EnrollmentMode = .automatic
 
     private var downloadsWatchTask: Task<Void, Never>?
+
+    var certificateURL: URL { workdir.appendingPathComponent(ServerToken.certName) }
 
     init() { refresh() }
 
@@ -111,13 +112,82 @@ final class AppModel: ObservableObject {
         copy(Self.serviceName, note: "Service name copied. Paste it into the Service Name field in Apple Business.")
     }
 
+    /// Open Apple Business Add Service and tile this app left / browser right (like the E2E demo).
     func openAppleBusiness() {
         copyServiceName()
+        tileAppLeftHalf()
         NSWorkspace.shared.open(Self.appleAddServiceURL)
+        // Give the browser a moment to open, then pin its front window to the right half.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
+            Self.tileFrontBrowserRightHalf()
+        }
+        message = "Service name copied. App left / browser right — paste the name and drag the .pem into Upload Certificate."
     }
 
     func revealCertificate() {
-        NSWorkspace.shared.activateFileViewerSelecting([workdir.appendingPathComponent(ServerToken.certName)])
+        let cert = certificateURL
+        guard FileManager.default.fileExists(atPath: cert.path) else {
+            errorText = "No certificate yet. Create the certificate first."
+            return
+        }
+        // Select the .pem in Finder so it is ready to drag into Apple Business.
+        NSWorkspace.shared.activateFileViewerSelecting([cert])
+        message = "Certificate selected in Finder — drag \(ServerToken.certName) onto Upload Certificate in Apple Business."
+    }
+
+    private func tileAppLeftHalf() {
+        guard let screen = NSScreen.main?.visibleFrame else { return }
+        let gap: CGFloat = 6
+        let width = screen.width / 2 - gap
+        let frame = NSRect(x: screen.minX, y: screen.minY, width: width, height: screen.height)
+        if let window = NSApp.keyWindow ?? NSApp.windows.first(where: \.isVisible) {
+            window.setFrame(frame, display: true, animate: true)
+        }
+    }
+
+    private static func tileFrontBrowserRightHalf() {
+        guard let screen = NSScreen.main?.visibleFrame else { return }
+        let gap: CGFloat = 6
+        let left = Int(screen.minX + screen.width / 2 + gap)
+        let bottom = Int(screen.minY)
+        let right = Int(screen.maxX)
+        let top = Int(screen.maxY)
+        // bounds are {left, bottom, right, top} in AppleScript screen coords
+        let script = """
+        on run
+          set b to {\(left), \(bottom), \(right), \(top)}
+          try
+            tell application "Safari"
+              if (count of windows) > 0 then
+                set bounds of front window to b
+                activate
+                return
+              end if
+            end tell
+          end try
+          try
+            tell application "Google Chrome"
+              if (count of windows) > 0 then
+                set bounds of front window to b
+                activate
+                return
+              end if
+            end tell
+          end try
+          try
+            tell application "Microsoft Edge"
+              if (count of windows) > 0 then
+                set bounds of front window to b
+                activate
+              end if
+            end tell
+          end try
+        end run
+        """
+        var error: NSDictionary?
+        if let appleScript = NSAppleScript(source: script) {
+            appleScript.executeAndReturnError(&error)
+        }
     }
 
     func fetch() {
@@ -170,10 +240,11 @@ final class AppModel: ObservableObject {
     }
 
     func copyForUEM(_ token: BetaToken) {
-        let block = Render.uemClipboardBlock(title: token.title, token: token.token, mode: mode)
+        let block = Render.uemClipboardBlock(
+            title: token.title, token: token.token, platform: token.osDisplay)
         copy(
             block,
-            note: "UEM paste block copied. Paste Program title into Description and Token into Token only — not the checklist. Use a separate UEM declaration per platform (macOS vs iOS)."
+            note: "UEM next steps + title/token copied. Create one declarative profile for \(token.osDisplay), then paste Description = title, Token = token."
         )
     }
 
