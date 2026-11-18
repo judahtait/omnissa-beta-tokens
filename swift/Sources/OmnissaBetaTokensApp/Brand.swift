@@ -2,8 +2,8 @@ import SwiftUI
 import AppKit
 import CoreText
 
-// Omnissa brand values: the palette as (light, dark) pairs, Outfit Light and Medium, and the
-// Omnissa gradient (navy, indigo, magenta) for the header band.
+// Omnissa brand values with Apple Business Manager–aligned interactive blue.
+// ABM “Next” / checkbox blue sampled from portal screenshot ≈ #3C85E2 (2026-11-18).
 
 extension NSColor {
     convenience init(hex: UInt32) {
@@ -26,16 +26,21 @@ extension Color {
 
 enum Brand {
     // Palette, light / dark.
-    static let accent = Color(light: 0x4A12F0, dark: 0x7050FF)    // buttons, links, selection
+    /// Primary actions — matches Apple Business Manager filled button blue (#3C85E2).
+    static let accent = Color(light: 0x3C85E2, dark: 0x5AA3F0)
     static let heading = Color(light: 0x1C1C20, dark: 0xF2F2F7)   // titles
     static let text = Color(light: 0x1D1D1F, dark: 0xE5E5E7)      // body
     static let muted = Color(light: 0x6E6E73, dark: 0xA1A1A6)     // secondary text
     static let rule = Color(light: 0xD1D1D6, dark: 0x3A3A3C)      // separators
-    static let surface = Color(light: 0xF5F5F7, dark: 0x141416)   // window background
+    static let surface = Color(light: 0xF5F5F7, dark: 0x141416)   // window background (ABM-like gray)
     static let card = Color(light: 0xFFFFFF, dark: 0x1E1E21)      // cards, list background
     static let ok = Color(light: 0x248A3D, dark: 0x30D158)        // healthy
-    /// Reserved for negative/exception data (and the end of the edge gradient).
+    /// Secondary / Back-style control fill (ABM gray pill).
+    static let secondaryFill = Color(light: 0xF2F2F7, dark: 0x3A3A3C)
+    /// Reserved for negative/exception data only (not used on primary CTAs).
     static let magenta = Color(hex: 0xD600FF)
+    /// Omnissa navy retained for header depth.
+    static let omnissaNavy = Color(hex: 0x001E60)
 
     // Short aliases used by the views.
     static var navy: Color { heading }
@@ -44,12 +49,15 @@ enum Brand {
     static var tint: Color { rule }
     static var background: Color { surface }
 
-    /// The Omnissa gradient (navy, indigo, magenta) for the header band.
+    /// Header: Omnissa navy → ABM blue (closer to Business Manager, less magenta).
     static let headerGradient = LinearGradient(
-        colors: [Color(hex: 0x001E60), Color(hex: 0x4A12F0), Color(hex: 0xD600FF)],
+        colors: [Color(hex: 0x001E60), Color(hex: 0x0B5CAD), Color(hex: 0x3C85E2)],
         startPoint: .leading, endPoint: .trailing)
     static let edge = LinearGradient(
-        colors: [Color(hex: 0x4A12F0), Color(hex: 0xD600FF)], startPoint: .leading, endPoint: .trailing)
+        colors: [Color(hex: 0x0B5CAD), Color(hex: 0x3C85E2)], startPoint: .leading, endPoint: .trailing)
+
+    /// ABM-like control corner radius (Next / Back are rounded rects, not full pills).
+    static let controlRadius: CGFloat = 8
 
     // Outfit Light and Medium (SIL OFL 1.1, bundled in Contents/Resources/Fonts).
     static let outfitLight = "Outfit-Light"
@@ -139,48 +147,47 @@ extension View {
     func glass(_ radius: CGFloat = 16) -> some View { modifier(GlassSurface(radius: radius)) }
 }
 
-/// Soft indigo and magenta light behind the cards, so the glass has something to refract.
+/// Soft ABM-blue light behind the cards (no magenta wash on the workspace).
 struct GlassBackdrop: View {
     var body: some View {
         ZStack {
             Brand.surface
-            Circle().fill(Brand.accent.opacity(0.30)).frame(width: 460, height: 460)
+            Circle().fill(Brand.accent.opacity(0.22)).frame(width: 460, height: 460)
                 .blur(radius: 100).offset(x: -280, y: -140)
-            Circle().fill(Brand.magenta.opacity(0.16)).frame(width: 420, height: 420)
+            Circle().fill(Brand.omnissaNavy.opacity(0.10)).frame(width: 420, height: 420)
                 .blur(radius: 110).offset(x: 320, y: 280)
         }
         .ignoresSafeArea()
     }
 }
 
-// MARK: - Buttons
+// MARK: - Buttons (shaped like ABM Next / Back)
 
 struct PrimaryButtonStyle: ButtonStyle {
     @Environment(\.isEnabled) private var enabled
     func makeBody(configuration: Configuration) -> some View {
+        let shape = RoundedRectangle(cornerRadius: Brand.controlRadius, style: .continuous)
         configuration.label
             .font(Brand.font(13, medium: true))
-            .padding(.horizontal, 16).padding(.vertical, 7)
-            .background(Capsule().fill(enabled ? Brand.accent : Brand.rule))
-            .overlay(Capsule().fill(LinearGradient(colors: [Color.white.opacity(0.28), Color.white.opacity(0)],
-                                                   startPoint: .top, endPoint: .center)))  // gloss
+            .padding(.horizontal, 18).padding(.vertical, 8)
+            .background(shape.fill(enabled ? Brand.accent : Brand.rule))
             .foregroundColor(.white)
-            .opacity(configuration.isPressed ? 0.8 : 1)
-            .contentShape(Capsule())
+            .opacity(configuration.isPressed ? 0.85 : 1)
+            .contentShape(shape)
     }
 }
 
 struct SecondaryButtonStyle: ButtonStyle {
     @Environment(\.isEnabled) private var enabled
     func makeBody(configuration: Configuration) -> some View {
+        let shape = RoundedRectangle(cornerRadius: Brand.controlRadius, style: .continuous)
         configuration.label
             .font(Brand.font(13, medium: true))
-            .padding(.horizontal, 14).padding(.vertical, 6)
-            .background(Capsule().fill(Brand.card.opacity(0.75)))
-            .overlay(Capsule().stroke(enabled ? Brand.accent : Brand.rule, lineWidth: 1))
-            .foregroundColor(enabled ? Brand.accent : Brand.muted)
-            .opacity(configuration.isPressed ? 0.7 : 1)
-            .contentShape(Capsule())
+            .padding(.horizontal, 16).padding(.vertical, 8)
+            .background(shape.fill(Brand.secondaryFill.opacity(enabled ? 1 : 0.5)))
+            .foregroundColor(enabled ? Brand.text : Brand.muted)
+            .opacity(configuration.isPressed ? 0.75 : 1)
+            .contentShape(shape)
     }
 }
 
