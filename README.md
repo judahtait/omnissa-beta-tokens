@@ -72,7 +72,7 @@ Each program needs its own enrollment token, declarative Software Update:
 Settings profile, and Smart Group assignment — across platforms (macOS vs iOS)
 and within a platform (two different macOS seeds). Do not reuse one profile for
 multiple programs. Modes (Automatic / Offer / Block) are set **in UEM**, not as
-JSON from this tool. See the [mode table](docs/guide.md#54-choose-a-mode-uem-field-guidance-only).
+JSON from this tool. See the [mode table](docs/guide.md#modes-uem-fields-only--no-json-from-this-tool).
 
 ### Apple Business shows 0 devices — expected
 
