@@ -27,6 +27,9 @@ struct OmnissaBetaTokensApp: App {
                 .onChange(of: textScale) { newValue in
                     AppTextSize.apply(newValue)
                 }
+                .onReceive(NotificationCenter.default.publisher(for: NSApplication.didResignActiveNotification)) { _ in
+                    model.concealSensitiveUI()
+                }
         }
         .windowResizability(.contentMinSize)
         .commands {

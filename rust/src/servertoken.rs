@@ -60,7 +60,15 @@ pub fn ensure_workdir(workdir: &Path) -> Result<(), ToolError> {
         .permissions();
     perms.set_mode(0o700);
     fs::set_permissions(workdir, perms).map_err(|e| ToolError::msg(e.to_string()))?;
+    exclude_from_time_machine(workdir);
     Ok(())
+}
+
+/// Best-effort Time Machine exclusion (macOS). No-op if `tmutil` is unavailable.
+fn exclude_from_time_machine(path: &Path) {
+    let _ = std::process::Command::new("tmutil")
+        .args(["addexclusion", &path.to_string_lossy()])
+        .status();
 }
 
 fn libc_umask(mask: u32) -> u32 {

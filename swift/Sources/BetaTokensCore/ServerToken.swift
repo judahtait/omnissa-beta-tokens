@@ -39,6 +39,7 @@ public enum ServerToken {
         try FileManager.default.createDirectory(
             at: dir, withIntermediateDirectories: true, attributes: [.posixPermissions: 0o700])
         try FileManager.default.setAttributes([.posixPermissions: 0o700], ofItemAtPath: dir.path)
+        try excludeFromTimeMachine(dir)
     }
 
     public static func hasKeypair(in dir: URL) -> Bool {
@@ -63,22 +64,51 @@ public enum ServerToken {
             throw ToolError("openssl failed: \(String(decoding: r.err, as: UTF8.self))")
         }
         try FileManager.default.setAttributes([.posixPermissions: 0o600], ofItemAtPath: key.path)
-        try hideFromFinder(key)
+        try hardenCredentialFile(key)
+        try excludeFromTimeMachine(cert)
         return (key, cert)
     }
 
     /// Mark the private key invisible in Finder (still readable by openssl / this app).
     /// Call after generate and on refresh so existing installs get the flag.
     public static func hidePrivateKey(in dir: URL) {
+        hardenCredentials(in: dir)
+    }
+
+    /// Re-apply Finder-hidden + Time Machine exclusion on key / cert / `.p7m` in the workdir.
+    public static func hardenCredentials(in dir: URL) {
+        try? excludeFromTimeMachine(dir)
         let key = dir.appendingPathComponent(keyName)
-        guard FileManager.default.fileExists(atPath: key.path) else { return }
-        try? hideFromFinder(key)
+        if FileManager.default.fileExists(atPath: key.path) {
+            try? hardenCredentialFile(key)
+        }
+        let cert = dir.appendingPathComponent(certName)
+        if FileManager.default.fileExists(atPath: cert.path) {
+            try? excludeFromTimeMachine(cert)
+        }
+        let listed = (try? FileManager.default.contentsOfDirectory(at: dir, includingPropertiesForKeys: nil)) ?? []
+        for p7m in listed where p7m.pathExtension.lowercased() == "p7m" {
+            try? hardenCredentialFile(p7m)
+        }
+    }
+
+    private static func hardenCredentialFile(_ url: URL) throws {
+        try FileManager.default.setAttributes([.posixPermissions: 0o600], ofItemAtPath: url.path)
+        try hideFromFinder(url)
+        try excludeFromTimeMachine(url)
     }
 
     private static func hideFromFinder(_ url: URL) throws {
         var mutable = url
         var values = URLResourceValues()
         values.isHidden = true
+        try mutable.setResourceValues(values)
+    }
+
+    private static func excludeFromTimeMachine(_ url: URL) throws {
+        var mutable = url
+        var values = URLResourceValues()
+        values.isExcludedFromBackup = true
         try mutable.setResourceValues(values)
     }
 
@@ -158,7 +188,7 @@ public enum ServerToken {
             try fm.removeItem(at: dest)
         }
         try fm.copyItem(at: source, to: dest)
-        try fm.setAttributes([.posixPermissions: 0o600], ofItemAtPath: dest.path)
+        try hardenCredentialFile(dest)
         return dest
     }
 

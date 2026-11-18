@@ -58,12 +58,23 @@ struct ContentView: View {
         HStack(spacing: 14) {
             Image(nsImage: NSApp.applicationIconImage)
                 .resizable().interpolation(.high).frame(width: 64, height: 64)
-            VStack(alignment: .leading, spacing: 4) {
+                .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                .shadow(color: .black.opacity(0.25), radius: 8, y: 2)
+            VStack(alignment: .leading, spacing: 6) {
                 Text("OMNISSA  |  WORKSPACE ONE UEM")
                     .font(Brand.font(11, medium: true)).tracking(1.6).opacity(0.9)
                 Text("Beta Token Utility").font(Brand.font(26, medium: true))
-                Text("Get Apple beta enrollment tokens for your declarative Software Update profile.")
+                Text("Get AppleSeed enrollment tokens for declarative Software Update profiles.")
                     .font(Brand.font(13))
+                // Platform cues via SF Symbols — not the Apple logo (trademark; not allowed in logos).
+                HStack(spacing: 10) {
+                    Label("Mac", systemImage: "desktopcomputer")
+                    Label("iPhone", systemImage: "iphone")
+                    Label("iPad", systemImage: "ipad")
+                }
+                .font(Brand.font(11, medium: true))
+                .labelStyle(.titleAndIcon)
+                .opacity(0.92)
             }
         }
         .foregroundColor(.white)
@@ -211,7 +222,10 @@ struct ContentView: View {
                 TextField("Search title", text: $model.search).textFieldStyle(.roundedBorder)
             }
             List(model.filtered, selection: $model.selection) { t in
-                HStack {
+                HStack(spacing: 8) {
+                    Image(systemName: platformSymbol(t.osDisplay))
+                        .foregroundColor(Brand.indigo)
+                        .frame(width: 18)
                     Text(t.title).font(Brand.font(13)).foregroundColor(Brand.text)
                     Spacer()
                     Text(t.osDisplay).font(Brand.font(12)).foregroundColor(Brand.slate)
@@ -250,7 +264,7 @@ struct ContentView: View {
             FlowButtons {
                 Button("Copy title") { model.copyTitle(t) }
                     .buttonStyle(SecondaryButtonStyle())
-                Button("Copy token") { model.copy(t.token, note: "Token copied — paste into UEM Beta Token only.") }
+                Button("Copy token") { model.copyToken(t) }
                     .buttonStyle(PrimaryButtonStyle())
                 Button("How to create the UEM profile") { showUEMGuidance = true }
                     .buttonStyle(SecondaryButtonStyle())
@@ -259,6 +273,17 @@ struct ContentView: View {
         .foregroundColor(Brand.text)
         .padding(12)
         .glass(12)
+        .onChange(of: model.selection) { _ in model.revealToken = false }
+    }
+
+    private func platformSymbol(_ os: String) -> String {
+        let lower = os.lowercased()
+        if lower.contains("ios") || lower.contains("iphone") { return "iphone" }
+        if lower.contains("ipad") { return "ipad" }
+        if lower.contains("mac") { return "desktopcomputer" }
+        if lower.contains("tv") { return "appletv" }
+        if lower.contains("vision") { return "visionpro" }
+        return "laptopcomputer"
     }
 
     // MARK: Status

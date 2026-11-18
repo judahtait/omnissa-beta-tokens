@@ -123,8 +123,15 @@ the app’s **Show in Finder** opens a temp folder with only the `.pem`.
 
 - OAuth secrets never printed (`[REDACTED]`).
 - Decrypted server token stays in memory only.
+- Workdir `~/.omnissa-beta-tokens` is mode **700**; key / `.p7m` are mode **600**,
+  Finder-hidden, and **excluded from Time Machine**.
+- **Show in Finder** stages only the public `.pem` (private key never shown).
+- Copied enrollment tokens are cleared from the pasteboard after **60 seconds**.
+- Revealed tokens are concealed when the app resigns active (screen share / switch).
 - Treat `.p7m` / private key as credentials; never commit them.
 - Talks only to `mdmenrollment.apple.com`.
+- Still outstanding for stronger shipping security: **Developer ID + notarization**,
+  optional Keychain storage for the private key (larger change).
 
 ## Known gaps / next improvements
 

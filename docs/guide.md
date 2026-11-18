@@ -83,9 +83,11 @@ choose **Create certificate** — **Show in Finder** opens a temporary folder wi
 only the `.pem` (not the private key). Prefer dragging the in-app cert chip.
 
 Treat the private key and later the `.p7m` as credentials. Do not commit or
-share them. When you are finished, delete the management service in Apple
-Business and run `omnissa-beta-tokens cleanup --yes` (see
-[Finish / cleanup](#9-finish--cleanup)).
+share them. The workdir is excluded from Time Machine; the key and imported
+`.p7m` files are Finder-hidden. In the app, **Copy token** clears the clipboard
+after 60 seconds, and revealed tokens hide when the app is no longer active.
+When you are finished, delete the management service in Apple Business and run
+`omnissa-beta-tokens cleanup --yes` (see [Finish / cleanup](#9-finish--cleanup)).
 
 ### 4.2 Open Management Services in Apple Business
 

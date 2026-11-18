@@ -19,6 +19,10 @@ final class AppModel: ObservableObject {
     @Published var revealToken = false
 
     private var downloadsWatchTask: Task<Void, Never>?
+    private var pasteboardClearTask: Task<Void, Never>?
+
+    /// Seconds before a copied enrollment token is cleared from the pasteboard.
+    static let tokenPasteboardTTL: UInt64 = 60
 
     var certificateURL: URL { workdir.appendingPathComponent(ServerToken.certName) }
 
@@ -26,8 +30,9 @@ final class AppModel: ObservableObject {
 
     func refresh() {
         hasKeypair = ServerToken.hasKeypair(in: workdir)
-        if hasKeypair { ServerToken.hidePrivateKey(in: workdir) }
+        if hasKeypair { ServerToken.hardenCredentials(in: workdir) }
         if p7m == nil { p7m = ServerToken.findP7M(in: workdir) }
+        else { ServerToken.hardenCredentials(in: workdir) }
     }
 
     func createCertificate() {
@@ -124,7 +129,7 @@ final class AppModel: ObservableObject {
     func revealCertificate() {
         // Stage only the public cert in a temp folder so Finder never shows mdm_private.key.
         do {
-            ServerToken.hidePrivateKey(in: workdir)
+            ServerToken.hardenCredentials(in: workdir)
             let staged = try ServerToken.stagingCertificateForFinder(from: workdir)
             NSWorkspace.shared.activateFileViewerSelecting([staged])
             message = "Certificate ready in Finder — drag \(ServerToken.certName) onto Upload Certificate (private key stays hidden)."
@@ -191,6 +196,19 @@ final class AppModel: ObservableObject {
         copy(token.title, note: "Title copied. Use this as the UEM profile name and Beta Description — one profile per AppleSeed program.")
     }
 
+    func copyToken(_ token: BetaToken) {
+        copy(
+            token.token,
+            note: "Token copied — paste into UEM Beta Token within \(Self.tokenPasteboardTTL)s (clipboard then clears).",
+            clearAfterSeconds: Self.tokenPasteboardTTL
+        )
+    }
+
+    /// Hide revealed tokens when the window resigns key (shoulder-surfing / screen-share).
+    func concealSensitiveUI() {
+        revealToken = false
+    }
+
     var osOptions: [String] {
         ["All"] + Array(Set(tokens.map(\.osDisplay))).sorted { $0.lowercased() < $1.lowercased() }
     }
@@ -201,9 +219,22 @@ final class AppModel: ObservableObject {
 
     var selected: BetaToken? { tokens.first { $0.id == selection } }
 
-    func copy(_ string: String, note: String) {
+    func copy(_ string: String, note: String, clearAfterSeconds: UInt64? = nil) {
+        pasteboardClearTask?.cancel()
         NSPasteboard.general.clearContents()
         NSPasteboard.general.setString(string, forType: .string)
         message = note
+        guard let clearAfterSeconds else { return }
+        let snapshot = string
+        pasteboardClearTask = Task { @MainActor in
+            try? await Task.sleep(nanoseconds: clearAfterSeconds * 1_000_000_000)
+            guard !Task.isCancelled else { return }
+            if NSPasteboard.general.string(forType: .string) == snapshot {
+                NSPasteboard.general.clearContents()
+                if message?.contains("clipboard then clears") == true {
+                    message = "Clipboard cleared (token TTL elapsed)."
+                }
+            }
+        }
     }
 }
