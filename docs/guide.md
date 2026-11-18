@@ -1,44 +1,63 @@
 # Enrolling Apple Devices in a Beta Program with Workspace ONE UEM
 **Status:** Draft only. Review required by Legal, Compliance, or relevant Omnissa control owner.
-**Date:** 2026-11-17
+**Date:** 2026-11-18
 **Author:** Judah Tait (Support Engineering)
 
 ---
 
 <!-- Source for the branded HTML guide (python3 tools/build_guide.py).
-Screenshots are placeholders and must be cropped/redacted (no tokens or tenant
-secrets) before use. -->
+Screenshots must be cropped and redacted (no tokens, tenant names, or session
+data) before external use. -->
 
 ## 1. Overview
 
 Apple lets organizations enroll managed devices in beta programs (AppleSeed for
 IT) using organization-specific beta enrollment tokens. Workspace ONE UEM
-delivers the token to devices with a declarative **Software Update: Settings**
-configuration (Beta dictionary).
+delivers the token with a declarative **Software Update: Settings**
+configuration (the Beta dictionary).
 
-Flow: get tokens from Apple Business -> create a UEM declarative profile ->
-assign to devices -> verify on the device.
+High-level flow:
+
+1. Create a local key and certificate with Omnissa Beta Token Utility.
+2. Register an external device management service in Apple Business and download
+   the `.p7m` server token.
+3. Fetch the organization's beta programs and copy a token (or a reference
+   declaration).
+4. Build a Workspace ONE UEM declarative profile and assign it to supervised
+   devices.
+5. Confirm enrollment on the device (see [Known gaps](#10-known-gaps)).
 
 ## 2. Prerequisites
 
 - Apple Business (or Apple School Manager) administrator access.
-- The organization enrolled in AppleSeed for IT: https://beta.apple.com/for-it
+- Organization enrolled in [AppleSeed for IT](https://beta.apple.com/for-it)
   (otherwise Apple returns 403 `APPLE_SEED_FOR_IT_TURNED_OFF`).
-- Workspace ONE UEM with declarative management support for the target OS.
-- A Mac or Linux machine with Python 3.9+ and `openssl` (to run the utility).
-- Supervised devices for UEM-controlled enrollment/unenrollment. On
-  unsupervised devices only offering a program is possible (user enrolls
-  manually). Source: Apple "Enrolling a device in a beta program".
+- Workspace ONE UEM with declarative management for the target OS.
+- Supervised devices for UEM-controlled enrollment and unenrollment. On
+  unsupervised devices, only offering a program is possible (the user enrolls
+  manually). Source: Apple *Enrolling a device in a beta program*.
+- A Mac to run the utility (see [Download](#3-download-the-utility)).
 
 ## 3. Download the utility
 
-`omnissa-beta-tokens` is a single Python file with no third-party dependencies.
-Download it below, verify the hash, and run it with `python3`. You can read the
-full source before running it.
+The same logic ships three ways. Pick one:
+
+| Format | Best for | Needs |
+|---|---|---|
+| **macOS app** | Click-through workflow | macOS 13 or later |
+| **Single-file script** (`omnissa-beta-tokens.py`) | Reading the code before you run it | Python 3.9+ and system `openssl` |
+| **arm64 binary** | CLI without Python | Apple Silicon Mac |
+
+Get release builds from the repository **Releases** page (or use the embedded
+script below when you are reading this guide offline). Until builds are signed
+and notarized, macOS may block the app on first launch: right-click → **Open**,
+or run `xattr -d com.apple.quarantine "Omnissa Beta Token Utility.app"`.
 
 <!-- UTILITY_DOWNLOAD -->
 
-Run it like this (macOS or Linux):
+Command-line examples in this guide use the script form. Substitute
+`omnissa-beta-tokens` if you installed the binary, or use the matching controls
+in the app.
 
 ```
 python3 omnissa-beta-tokens.py --help
@@ -48,18 +67,25 @@ python3 omnissa-beta-tokens.py --help
 
 ### 4.1 Create the certificate
 
-Run `python3 omnissa-beta-tokens.py init`. It creates a private key and a
-certificate (`.pem`) in `~/.omnissa-beta-tokens`. The utility prints the exact
-path of the `.pem` to upload.
+```
+python3 omnissa-beta-tokens.py init
+```
+
+This creates a private key and a certificate (`.pem`) in
+`~/.omnissa-beta-tokens` (mode 700 for the folder, 600 for the key). The tool
+prints the `.pem` path to upload. In the app, choose **Create certificate**.
+
+Treat the private key and later the `.p7m` as credentials. Do not commit or
+share them. When you are finished, delete the management service in Apple
+Business and remove the local files.
 
 ### 4.2 Open Management Services in Apple Business
 
 Go straight to the Add page:
 https://business.apple.com/main/devices/managementservices/mdmservers/add
 
-Or navigate there: sign in to Apple Business, choose **Devices** in the top
-bar, select **Management Services** in the left menu, and next to
-**Device Management Services** select **Add**.
+Or navigate: sign in to Apple Business → **Devices** → **Management Services**
+→ **Add** next to **Device Management Services**.
 
 ![Apple Business, Devices > Management Services. Select Add in the Device Management Services row.](images/apple-business-management-services.png)
 
@@ -69,14 +95,13 @@ Device Management Services row).*
 ### 4.3 Add the external device management service
 
 1. Enter the service name `Workspace One Beta Token Service`. Apple's form
-   cannot be prefilled, so the utility copies this name to your clipboard when
-   you run `init` or select **Open Apple Business** in the app. Paste it into
-   **Service Name**.
+   cannot be prefilled, so `init` and the app's **Open Apple Business** action
+   copy this name to the clipboard. Paste it into **Service Name**.
 2. Leave **Allow this service to release devices** unchecked.
-3. Select **Upload Certificate** and choose the `.pem` file from step 4.1
+3. Select **Upload Certificate** and choose the `.pem` from step 4.1
    (`~/.omnissa-beta-tokens/mdm_public_cert.pem`).
 4. Continue (Step 2 of 2), then select **Download Service Token** to get the
-   `.p7m`. Service tokens can be redownloaded.
+   `.p7m`. Service tokens can be redownloaded later if needed.
 
 ![Add your external device management service form: Service Name, release devices checkbox, Upload Certificate.](images/apple-business-add-service.png)
 
@@ -87,17 +112,35 @@ release checkbox cleared, and upload the `.pem`.*
 
 *Figure 3. The completed form, ready to continue.*
 
-### 4.4 Get the beta programs
+### 4.4 Fetch the beta programs
 
-1. Run `python3 omnissa-beta-tokens.py fetch --watch` (or `--p7m <file>`).
-2. Pick the program you need, for example `macOS 27 Golden Gate AppleSeed Beta`.
-   Use `--reveal` or `--format json` to get the full token.
+```
+python3 omnissa-beta-tokens.py fetch --watch
+# or: python3 omnissa-beta-tokens.py fetch --p7m ~/Downloads/something.p7m
+```
 
-If you use the Omnissa Beta Token Utility app, the same steps are on screen:
-**Open Apple Business** takes you to the Add page, then choose the `.p7m`.
+Useful filters and outputs:
 
-Security: the `.p7m`, key and tokens are credentials. Do not share or commit
-them. When finished, delete the management service in Apple Business.
+```
+python3 omnissa-beta-tokens.py fetch --os macOS --reveal
+python3 omnissa-beta-tokens.py fetch --match "macOS 27" --declaration --mode auto
+python3 omnissa-beta-tokens.py fetch --declaration --mode off
+```
+
+`--declaration --mode off` (AlwaysOff / block and unenroll) does **not** need a
+`.p7m` or a network call. Other declaration modes need exactly one matching
+program.
+
+In the app: choose the `.p7m`, then **Fetch beta tokens**, pick a program and
+mode, and copy the token or reference declaration.
+
+Security notes:
+
+- OAuth secrets are never printed in full; they appear as `[REDACTED]`.
+- The decrypted server token stays in memory only.
+- Table output masks beta tokens unless you pass `--reveal` (or use Reveal in
+  the app). JSON, CSV, and declaration output include full tokens because they
+  are meant for export into UEM.
 
 ## 5. Create the Workspace ONE UEM profile
 
@@ -110,7 +153,7 @@ configuration. Source: Apple's `softwareupdate.settings` declaration schema.
 |---|---|---|
 | macOS | Supported | macOS 15.4 or later, **supervised** |
 | iOS and iPadOS | Supported | Supervised. Version follows the Software Update Settings payload (iOS 18.0 or later per the schema). |
-| tvOS, visionOS | Not supported | The schema lists the Beta key as not applicable. Tokens for these programs are listed by the utility but cannot be delivered with this setting. |
+| tvOS, visionOS | Not supported | The schema lists the Beta key as not applicable. The utility may still list tokens for these programs; they cannot be delivered with this setting. |
 
 On unsupervised devices only **Offer programs** can be used (the user enrolls
 manually). The organization must also be enrolled in AppleSeed for IT.
@@ -132,12 +175,13 @@ manually). The organization must also be enrolled in AppleSeed for IT.
 
 3. Name the profile (for example `macOS 27 Golden Gate AppleSeed Beta`).
 4. Add the **Software Update: Settings** payload and turn on **Beta**.
-5. Choose a mode from the table below, and enter the Description (the program
-   title) and the Token for the matching OS and program.
+5. Choose a mode from the table below. Enter the **Description** (program
+   title) and **Token** for that OS and program, matching the utility output.
 6. Select Next, set the assignment, then save and publish.
 
-[Screenshot to add: the Beta section of the payload for the chosen mode. The
-token field must be redacted.]
+[Screenshot to add: Software Update: Settings > Beta in Automatic mode
+(Program enrollment = AlwaysOn, Require program = on). Redact the token field.
+No tenant name or session data.]
 
 ### 5.3 Choose a mode
 
@@ -148,7 +192,7 @@ you (app: **Mode**; CLI: `fetch --declaration --mode ...`).
 |---|---|---|---|---|
 | Automatic (`auto`) | AlwaysOn | On | Off | The device enrolls in the program automatically. Users cannot enroll using their own Apple Account. |
 | Offer to user (`offer`) | Allowed | Off | On | The user can enroll in programs on their Apple Account, plus the offered program. |
-| Offer, no sign-in (`offer-always-on`) | AlwaysOn | Off | On | The offered programs are presented to the user to choose. Users cannot use their own Apple Account. |
+| Offer, no sign-in (`offer-always-on`) | AlwaysOn | Off | On | The offered programs are presented for the user to choose. Users cannot use their own Apple Account. |
 | Block and unenroll (`off`) | AlwaysOff | Off | Off | The device cannot enroll, and is removed from any beta program it is in. |
 
 Rules from the schema:
@@ -157,27 +201,32 @@ Rules from the schema:
 - **Offer programs** must not be set together with **Require program**.
 - **AlwaysOff** carries no program.
 
-An earlier test profile used Allowed with Require program on. That combination
-is not valid under Apple's schema, so do not use it. Use **Automatic** instead.
-How a device handles the invalid combination: data unavailable.
+Do **not** use Allowed together with Require program. That combination is
+invalid under Apple's schema. Use **Automatic** instead.
 
 ## 6. Verify on the device
 
-- In UEM, confirm the profile shows as installed (Devices > the device >
-  Profiles).
+- In UEM, confirm the profile shows as installed (**Devices** > the device >
+  **Profiles**).
 - Apple defines status items `softwareupdate.beta-enrollment` and
-  `softwareupdate.pending-version` that report beta enrollment and the pending
-  update. Whether the UEM console shows them: data unavailable.
-- On the device, open Software Update (iOS and iPadOS: Settings > General >
-  Software Update; macOS: System Settings > General > Software Update) and
-  confirm the beta update is offered. **Assumption, not validated on a test
-  device:** menu paths and wording can differ by OS version.
+  `softwareupdate.pending-version`. Whether the UEM console surfaces them:
+  data unavailable.
+- On the device, open Software Update (iOS and iPadOS: **Settings > General >
+  Software Update**; macOS: **System Settings > General > Software Update**)
+  and confirm the beta update is offered.
+
+See [Known gaps](#10-known-gaps): on-device menu paths and enrollment behavior
+have not been validated end to end on a supervised test device yet.
 
 ## 7. Unenroll
 
 Assign a profile in **Block and unenroll** mode (Program enrollment =
 AlwaysOff) to the device. This removes the device from any beta program.
 Supervised devices only.
+
+```
+python3 omnissa-beta-tokens.py fetch --declaration --mode off
+```
 
 ## 8. Troubleshooting
 
@@ -188,12 +237,24 @@ Supervised devices only.
 | Token not accepted | Token expired for its seeding period | Fetch fresh tokens |
 | Decrypt failed | `.p7m` does not match uploaded `.pem` | Re-run `init` and re-upload |
 | Device not enrolling | Unsupervised device | Offer the program; user enrolls manually |
-| Profile does not enroll the device | Invalid combination (for example Allowed with Require program) | Use Automatic mode: AlwaysOn with Require program |
+| Profile does not enroll the device | Invalid combination (for example Allowed with Require program) | Use Automatic: AlwaysOn with Require program |
 | tvOS or visionOS device not enrolling | Beta setting not supported on these platforms | Not applicable; see the compatibility table |
+| macOS blocks the app on first launch | Build not notarized yet | Right-click → Open, or clear quarantine with `xattr` |
 
 ## 9. References
 
-- Apple: Enrolling a device in a beta program -
-  https://developer.apple.com/documentation/devicemanagement/enrolling-a-device-in-a-beta-program
-- Apple: Get beta enrollment tokens -
-  https://developer.apple.com/documentation/devicemanagement/get-beta-enrollment-tokens
+- Apple: [Enrolling a device in a beta program](https://developer.apple.com/documentation/devicemanagement/enrolling-a-device-in-a-beta-program)
+- Apple: [Get beta enrollment tokens](https://developer.apple.com/documentation/devicemanagement/get-beta-enrollment-tokens)
+- Project README (download formats, security model, known gaps)
+
+## 10. Known gaps
+
+- **On-device behavior** (which devices enroll, and what users see in Software
+  Update) has not been validated end to end. Steps in section 6 are assumptions
+  until a supervised test Mac or iPhone confirms them.
+- **UEM Beta payload screenshot** for Automatic mode is still a placeholder
+  above. Capture with the token redacted before external sharing.
+- **Signing and notarization** for the macOS app are not done yet; Gatekeeper
+  will warn on first launch.
+- Builds talk only to `mdmenrollment.apple.com` for token fetch. They need no
+  other cloud account.

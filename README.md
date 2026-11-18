@@ -132,14 +132,20 @@ pip install markdown && python3 tools/build_guide.py   # dist/omnissa-beta-guide
 cd swift && swift build && swift test   # Swift Testing; no full Xcode required
 cd .. && tools/make_app.sh              # dist/Omnissa Beta Token Utility.app, ad-hoc signed
 
+# Rust CLI (experimental; mirrors the Python/Swift core)
+cd rust && cargo test && cargo build --release
+# binary: rust/target/release/omnissa-beta-tokens
+
 # Everything, with checksums, into dist/release/
 tools/release.sh
 ```
 
 `swift/BetaTokensCore` holds the logic (OAuth, server token, Apple client,
-declaration rendering) and `swift/Sources/OmnissaBetaTokensApp` is the UI. Tests
-use fabricated credentials only. For a signed build, set `SIGN_IDENTITY` and
-notarize as described in [docs/RELEASING.md](docs/RELEASING.md).
+declaration rendering) and `swift/Sources/OmnissaBetaTokensApp` is the UI. The
+Rust crate under `rust/` is an experimental CLI port of that same core; Python
+remains the primary script distribution. Tests use fabricated credentials only.
+For a signed build, set `SIGN_IDENTITY` and notarize as described in
+[docs/RELEASING.md](docs/RELEASING.md).
 
 ## Branding
 

@@ -29,3 +29,7 @@ swift/.build/
 _memory.md
 _PROJECT_BRIEF.md
 _projectbrief.md
+
+# Rust
+rust/target/
+**/target/
