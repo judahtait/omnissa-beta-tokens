@@ -4,7 +4,6 @@ import AppKit
 /// Click-through steps for creating a declarative Software Update profile in UEM,
 /// including Program enrollment / Require / Offer field guidance from Apple’s schema.
 struct UEMGuidanceSheet: View {
-    let platform: String
     let programTitle: String
     @Environment(\.dismiss) private var dismiss
     @State private var stepIndex = 0
@@ -14,23 +13,29 @@ struct UEMGuidanceSheet: View {
             GuidanceStep(
                 number: 1,
                 title: "Add → Add Profile",
-                detail: "Resources → Profiles & Baselines → Profiles → Add → Add Profile. Then choose Apple \(platform) so the declaration matches the token’s OS.",
-                imageName: "01-add-profile-platform"
+                detail: "Resources → Profiles & Baselines → Profiles → Add → Add Profile.",
+                imageName: "01-add-profile-menu"
             ),
             GuidanceStep(
                 number: 2,
-                title: "Declarative → Configuration → Device",
-                detail: "Set Management Type to Declarative, Declaration Type to Configuration, Context to Device, then Next.",
-                imageName: "02-declarative-configuration"
+                title: "Select the platform",
+                detail: "Choose the Apple platform that matches the beta program’s OS (one declarative profile per platform).",
+                imageName: "02-select-platform"
             ),
             GuidanceStep(
                 number: 3,
-                title: "Software Update: Settings → Beta",
-                detail: "Turn Beta On. Paste the program title into Description (and use it as the profile name); paste the token into Token. Example: “\(programTitle)”. Next: set Program enrollment / Require / Offer.",
-                imageName: "03-software-update-beta"
+                title: "Declarative → Configuration → Device",
+                detail: "Set Management Type to Declarative, Declaration Type to Configuration, Context to Device, then Next.",
+                imageName: "03-declarative-configuration"
             ),
             GuidanceStep(
                 number: 4,
+                title: "Software Update: Settings → Beta",
+                detail: "Turn Beta On. Paste the program title into Description (and use it as the profile name); paste the token into Token. Example: “\(programTitle)”. Next: set Program enrollment / Require / Offer.",
+                imageName: "04-software-update-beta"
+            ),
+            GuidanceStep(
+                number: 5,
                 title: "Enable Beta enrollment settings",
                 detail: "In the UEM Beta payload, set Program enrollment, Require program, and Offer programs using only the combinations Apple allows. Do not paste declaration JSON — set these fields in the console.",
                 imageName: nil
@@ -62,7 +67,7 @@ struct UEMGuidanceSheet: View {
                 Text("Create the UEM profile")
                     .font(Brand.font(20, medium: true))
                     .foregroundColor(Brand.navy)
-                Text("Declarative Software Update: Settings for \(platform) — one profile per platform.")
+                Text("Declarative Software Update: Settings — one profile per platform.")
                     .font(Brand.font(13))
                     .foregroundColor(Brand.slate)
             }
@@ -125,7 +130,7 @@ struct UEMGuidanceSheet: View {
                     .foregroundColor(Brand.text)
                     .fixedSize(horizontal: false, vertical: true)
 
-                if step.number == 4 {
+                if step.number == 5 {
                     betaSettingsGuidance
                 } else if let name = step.imageName, let image = bundledImage(name) {
                     Image(nsImage: image)

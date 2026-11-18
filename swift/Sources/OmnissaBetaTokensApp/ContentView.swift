@@ -33,11 +33,7 @@ struct ContentView: View {
             }
         }
         .sheet(isPresented: $showUEMGuidance) {
-            if let t = model.selected {
-                UEMGuidanceSheet(platform: t.osDisplay, programTitle: t.title)
-            } else {
-                UEMGuidanceSheet(platform: "macOS / iOS", programTitle: "your beta program")
-            }
+            UEMGuidanceSheet(programTitle: model.selected?.title ?? "your beta program")
         }
         .onReceive(NotificationCenter.default.publisher(for: .showUEMGuidance)) { _ in
             showUEMGuidance = true
