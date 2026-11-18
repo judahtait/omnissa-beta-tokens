@@ -66,15 +66,8 @@ struct ContentView: View {
                 Text("Beta Token Utility").font(Brand.font(26, medium: true))
                 Text("Get AppleSeed enrollment tokens for declarative Software Update profiles.")
                     .font(Brand.font(13))
-                // Platform cues via SF Symbols — not the Apple logo (trademark; not allowed in logos).
-                HStack(spacing: 10) {
-                    Label("Mac", systemImage: "desktopcomputer")
-                    Label("iPhone", systemImage: "iphone")
-                    Label("iPad", systemImage: "ipad")
-                }
-                .font(Brand.font(11, medium: true))
-                .labelStyle(.titleAndIcon)
-                .opacity(0.92)
+                // All Apple platforms we surface tokens for — SF Symbols only (not the Apple logo).
+                platformIcons
             }
         }
         .foregroundColor(.white)
@@ -83,6 +76,33 @@ struct ContentView: View {
         .background(Brand.headerGradient)
         .overlay(LinearGradient(colors: [Color.white.opacity(0.18), Color.white.opacity(0)],
                                 startPoint: .top, endPoint: .center).allowsHitTesting(false))
+    }
+
+    private var platformIcons: some View {
+        let items: [(String, String)] = [
+            ("Mac", "desktopcomputer"),
+            ("iPhone", "iphone"),
+            ("iPad", "ipad"),
+            ("Apple TV", "appletv"),
+            ("Vision", "visionpro"),
+            ("Watch", "applewatch"),
+        ]
+        return ViewThatFits(in: .horizontal) {
+            HStack(spacing: 12) {
+                ForEach(items, id: \.0) { title, symbol in
+                    Label(title, systemImage: symbol)
+                }
+            }
+            HStack(spacing: 10) {
+                ForEach(items, id: \.0) { title, symbol in
+                    Image(systemName: symbol)
+                        .accessibilityLabel(title)
+                }
+            }
+        }
+        .font(Brand.font(11, medium: true))
+        .labelStyle(.titleAndIcon)
+        .opacity(0.92)
     }
 
     // MARK: Steps
@@ -283,6 +303,7 @@ struct ContentView: View {
         if lower.contains("mac") { return "desktopcomputer" }
         if lower.contains("tv") { return "appletv" }
         if lower.contains("vision") { return "visionpro" }
+        if lower.contains("watch") { return "applewatch" }
         return "laptopcomputer"
     }
 
