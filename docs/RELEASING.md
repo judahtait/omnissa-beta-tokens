@@ -27,7 +27,7 @@ Ship:
 - `SHA256SUMS`
 
 Requires a Rust toolchain (`cargo`). A cargo failure fails the release. No
-Python or Swift product artifacts are shipped.
+No Python or Swift artifacts are shipped.
 
 ## Sign and notarize (needs an Omnissa Developer ID Application certificate)
 

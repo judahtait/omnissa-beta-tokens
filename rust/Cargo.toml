@@ -15,11 +15,21 @@ path = "src/main.rs"
 name = "omnissa-beta-tokens-app"
 path = "src/bin/omnissa-beta-tokens-app.rs"
 
+[[bin]]
+name = "build-guide"
+path = "src/bin/build-guide.rs"
+
+[[bin]]
+name = "make-icns"
+path = "src/bin/make-icns.rs"
+
 [dependencies]
 base64 = "0.22"
 clap = { version = "4", features = ["derive"] }
 eframe = { version = "0.31", default-features = true }
 hmac = "0.12"
+pulldown-cmark = { version = "0.13", default-features = false, features = ["html"] }
+regex = "1"
 rfd = "0.15"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"

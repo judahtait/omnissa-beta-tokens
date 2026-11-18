@@ -11,9 +11,7 @@
 #   omnissa-beta-guide-<ver>.html                branded guide (best-effort)
 #   SHA256SUMS
 #
-# Does not ship legacy Python .py / bundle.py outputs. Guide build may use
-# tools/build_guide.py when Python is available; otherwise copies an existing
-# dist guide if present. Missing Python must not fail the release.
+# Guide is built with Rust (`cargo run --release --bin build-guide`).
 #
 # Builds are ad-hoc signed unless SIGN_IDENTITY is set; notarization is a separate step (README).
 set -euo pipefail
@@ -46,29 +44,13 @@ echo "built omnissa-beta-tokens-$VERSION-macos-arm64"
 
 step "Guide"
 GUIDE_OUT="$REL/omnissa-beta-guide-$VERSION.html"
-if [[ -f "$ROOT/tools/build_guide.py" ]] && command -v python3 >/dev/null 2>&1; then
-  if python3 tools/build_guide.py; then
-    if [[ -f "$ROOT/dist/omnissa-beta-guide.html" ]]; then
-      cp "$ROOT/dist/omnissa-beta-guide.html" "$GUIDE_OUT"
-      echo "built omnissa-beta-guide-$VERSION.html"
-    else
-      echo "[warn] build_guide.py ran but dist/omnissa-beta-guide.html missing" >&2
-    fi
-  else
-    echo "[warn] tools/build_guide.py failed; trying existing dist guide" >&2
-  fi
+cargo run --release --manifest-path "$ROOT/rust/Cargo.toml" --bin build-guide
+if [[ ! -f "$ROOT/dist/omnissa-beta-guide.html" ]]; then
+  echo "error: build-guide did not write dist/omnissa-beta-guide.html" >&2
+  exit 1
 fi
-if [[ ! -f "$GUIDE_OUT" ]]; then
-  if [[ -f "$ROOT/dist/omnissa-beta-guide.html" ]]; then
-    cp "$ROOT/dist/omnissa-beta-guide.html" "$GUIDE_OUT"
-    echo "copied existing dist/omnissa-beta-guide.html"
-  elif [[ -f "$ROOT/dist/omnissa-beta-guide-$VERSION.html" ]]; then
-    cp "$ROOT/dist/omnissa-beta-guide-$VERSION.html" "$GUIDE_OUT"
-    echo "copied existing dist/omnissa-beta-guide-$VERSION.html"
-  else
-    echo "[warn] no guide HTML available (python/build_guide optional); continuing without it" >&2
-  fi
-fi
+cp "$ROOT/dist/omnissa-beta-guide.html" "$GUIDE_OUT"
+echo "built omnissa-beta-guide-$VERSION.html"
 
 step "Rust GUI app"
 if [[ -z "${SKIP_APP_BUILD:-}" ]]; then
