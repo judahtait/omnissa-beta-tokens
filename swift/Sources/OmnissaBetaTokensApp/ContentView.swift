@@ -1,4 +1,5 @@
 import SwiftUI
+import AppKit
 import UniformTypeIdentifiers
 import BetaTokensCore
 
@@ -30,18 +31,23 @@ struct ContentView: View {
     // MARK: Header
 
     private var header: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text("OMNISSA  |  WORKSPACE ONE UEM")
-                .font(Brand.font(11, medium: true)).tracking(1.6).opacity(0.9)
-            Text("Beta Token Utility").font(Brand.font(26, medium: true))
-            Text("Get Apple beta enrollment tokens for your declarative Software Update profile.")
-                .font(Brand.font(13))
+        HStack(spacing: 14) {
+            Image(nsImage: NSApp.applicationIconImage)
+                .resizable().interpolation(.high).frame(width: 64, height: 64)
+            VStack(alignment: .leading, spacing: 4) {
+                Text("OMNISSA  |  WORKSPACE ONE UEM")
+                    .font(Brand.font(11, medium: true)).tracking(1.6).opacity(0.9)
+                Text("Beta Token Utility").font(Brand.font(26, medium: true))
+                Text("Get Apple beta enrollment tokens for your declarative Software Update profile.")
+                    .font(Brand.font(13))
+            }
         }
         .foregroundColor(.white)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal, 20).padding(.vertical, 18)
+        .padding(.horizontal, 20).padding(.vertical, 14)
         .background(Brand.headerGradient)
-        .overlay(alignment: .bottom) { Brand.edge.frame(height: 3) }
+        .overlay(LinearGradient(colors: [Color.white.opacity(0.18), Color.white.opacity(0)],
+                                startPoint: .top, endPoint: .center).allowsHitTesting(false))
     }
 
     // MARK: Steps

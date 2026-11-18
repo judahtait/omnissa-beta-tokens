@@ -45,9 +45,9 @@ enum Brand {
     static var tint: Color { rule }
     static var background: Color { surface }
 
-    /// The band at the top of windows (graphite, charcoal, ink) and the 3 pt edge under it.
+    /// The Omnissa gradient (navy, indigo, magenta) for the header band.
     static let headerGradient = LinearGradient(
-        colors: [Color(hex: 0x3A3A40), Color(hex: 0x1C1C20), Color(hex: 0x0B0B0D)],
+        colors: [Color(hex: 0x001E60), Color(hex: 0x4A12F0), Color(hex: 0xD600FF)],
         startPoint: .leading, endPoint: .trailing)
     static let edge = LinearGradient(
         colors: [Color(hex: 0x4A12F0), Color(hex: 0xD600FF)], startPoint: .leading, endPoint: .trailing)
@@ -97,7 +97,13 @@ struct GlassSurface: ViewModifier {
 
     private func materialFallback(_ content: Content, _ shape: RoundedRectangle) -> some View {
         content
-            .background(.ultraThinMaterial, in: shape)
+            .background {
+                // Card tint over the material keeps light mode white-frosted instead of gray.
+                ZStack {
+                    shape.fill(.ultraThinMaterial)
+                    shape.fill(Brand.card.opacity(0.55))
+                }
+            }
             .overlay(shape.strokeBorder(
                 LinearGradient(colors: [Color.white.opacity(0.55), Color.white.opacity(0.06)],
                                startPoint: .topLeading, endPoint: .bottomTrailing), lineWidth: 1))
@@ -145,7 +151,7 @@ struct SecondaryButtonStyle: ButtonStyle {
         configuration.label
             .font(Brand.font(13, medium: true))
             .padding(.horizontal, 14).padding(.vertical, 6)
-            .background(Capsule().fill(.ultraThinMaterial))
+            .background(Capsule().fill(Brand.card.opacity(0.75)))
             .overlay(Capsule().stroke(enabled ? Brand.accent : Brand.rule, lineWidth: 1))
             .foregroundColor(enabled ? Brand.accent : Brand.muted)
             .opacity(configuration.isPressed ? 0.7 : 1)

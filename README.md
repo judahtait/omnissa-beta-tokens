@@ -102,6 +102,18 @@ Until then, a user can right-click > Open, or run
 (`com.omnissa.betatokenutility`) is a placeholder; confirm with the Omnissa
 app owner before shipping.
 
+## Icon
+
+`tools/make_icon.swift` draws the app icon with CoreGraphics (see
+`docs/branding/logo-d-beta.html` for the variants). Build the `.icns` with
+`tools/make_icns.py` (or `iconutil`), then `tools/make_app.sh` bundles it:
+
+```bash
+swiftc -O tools/make_icon.swift -o /tmp/make_icon
+/tmp/make_icon iconset v2-key-bow omnissa assets/AppIcon.iconset
+python3 tools/make_icns.py assets/AppIcon.iconset assets/AppIcon.icns
+```
+
 ## Docs
 
 - `docs/guide.md` - Workspace ONE enrollment guide (source for the branded HTML).

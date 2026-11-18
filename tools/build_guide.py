@@ -11,11 +11,11 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 
 CSS = """
-:root{--navy:#1C1C20;--indigo:#4A12F0;--text:#1D1D1F;--slate:#6E6E73;--tint:#D1D1D6;--bg:#F5F5F7;--page:#FFFFFF;--thbg:#1C1C20;--magenta:#D600FF}
-@media(prefers-color-scheme:dark){:root{--navy:#F2F2F7;--indigo:#7050FF;--text:#E5E5E7;--slate:#A1A1A6;--tint:#3A3A3C;--bg:#1E1E21;--page:#141416;--thbg:#2A2A2E}}
+:root{--navy:#1C1C20;--indigo:#4A12F0;--text:#1D1D1F;--slate:#6E6E73;--tint:#D1D1D6;--bg:#F5F5F7;--page:#FFFFFF;--thbg:#001E60;--magenta:#D600FF}
+@media(prefers-color-scheme:dark){:root{--navy:#F2F2F7;--indigo:#7050FF;--text:#E5E5E7;--slate:#A1A1A6;--tint:#3A3A3C;--bg:#1E1E21;--page:#141416;--thbg:#1B2A66}}
 *{box-sizing:border-box}
 body{margin:0;background:var(--page);color:var(--text);font-family:'Outfit','Outfit Light',system-ui,-apple-system,Segoe UI,sans-serif;font-weight:300;font-size:16px;line-height:1.6}
-header{background:linear-gradient(90deg,#3A3A40,#1C1C20,#0B0B0D);color:#fff;padding:48px 16px 40px;border-bottom:3px solid transparent;border-image:linear-gradient(90deg,#4A12F0,#D600FF) 1}
+header{background:linear-gradient(100deg,#001E60,#4A12F0,#D600FF);color:#fff;padding:48px 16px 40px}
 .wrap{max-width:900px;margin:0 auto;padding:0 16px}
 header .wrap{padding:0}
 .eyebrow{font-weight:500;letter-spacing:.12em;text-transform:uppercase;font-size:13px;opacity:.9}
