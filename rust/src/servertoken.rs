@@ -17,8 +17,14 @@ pub const CERT_CN: &str = "Omnissa Beta Token Utility";
 
 fn openssl_bin() -> &'static str {
     for path in ["/usr/bin/openssl", "/opt/homebrew/bin/openssl"] {
-        if Path::new(path).is_file() {
-            return path;
+        let p = Path::new(path);
+        if p.is_file() {
+            use std::os::unix::fs::PermissionsExt;
+            if let Ok(meta) = fs::metadata(p) {
+                if meta.permissions().mode() & 0o111 != 0 {
+                    return path;
+                }
+            }
         }
     }
     "openssl"

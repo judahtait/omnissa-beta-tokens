@@ -57,9 +57,9 @@ xattr -d com.apple.quarantine "Omnissa Beta Token Utility.app"
 3. **Fetch the beta programs.** The tool decrypts the server token locally,
    signs a request to Apple's `mdmenrollment.apple.com` service, and lists the
    programs (`GET /os-beta-enrollment/tokens`).
-4. **Use a token in Workspace ONE UEM.** Pick a program and a mode, then enter the
-   values in the Software Update: Settings > Beta payload (or copy the reference
-   declaration).
+4. **Use a token in Workspace ONE UEM.** Pick a program, then enter the title and
+   token in the Software Update: Settings > Beta payload using a valid mode
+   (see below).
 
 The full walkthrough, with screenshots, is in [docs/guide.md](docs/guide.md).
 
@@ -74,22 +74,23 @@ Business, choose the downloaded `.p7m`, then **Fetch beta tokens**.
 omnissa-beta-tokens init                      # key + certificate in ~/.omnissa-beta-tokens
 omnissa-beta-tokens fetch --watch             # waits for the .p7m in ~/Downloads
 omnissa-beta-tokens fetch --p7m token.p7m --os macOS --reveal
-omnissa-beta-tokens fetch --match "macOS 27" --declaration --mode auto
+omnissa-beta-tokens fetch --match "macOS 27" --format json
 ```
 
 Use `python3 omnissa-beta-tokens.py ...` instead if you downloaded the script.
 
 ## Modes
 
-Apple's `softwareupdate.settings` schema allows only these combinations, and the
-tool only produces them:
+Apple's `softwareupdate.settings` schema allows only these combinations in the
+UEM Beta payload. Enter them in the console (the app Mode picker shows the same
+summary):
 
 | Mode | Program enrollment | Require program | Offer programs |
 |---|---|---|---|
-| `auto` (automatic enrollment) | AlwaysOn | On | Off |
-| `offer` (user chooses) | Allowed | Off | On |
-| `offer-always-on` | AlwaysOn | Off | On |
-| `off` (block and unenroll) | AlwaysOff | Off | Off |
+| Automatic | AlwaysOn | On | Off |
+| Offer to user | Allowed | Off | On |
+| Offer, no sign-in | AlwaysOn | Off | On |
+| Block and unenroll | AlwaysOff | Off | Off |
 
 The Beta setting needs **supervised** devices: macOS 15.4 or later, and iOS or
 iPadOS (the schema lists the Software Update Settings payload from iOS 18.0).
@@ -103,8 +104,8 @@ period.
 - OAuth secrets are never printed or logged; they appear as `[REDACTED]`.
 - The decrypted server token is kept in memory only. No plaintext copy is written.
 - The work folder is mode 700 and the private key mode 600.
-- Beta tokens are masked on screen unless you choose to reveal them. JSON, CSV
-  and declaration output include full tokens because they are for export.
+- Beta tokens are masked on screen unless you choose to reveal them. JSON and CSV
+  output include full tokens because they are for export.
 - Treat the `.p7m` and the private key as credentials. When you are finished,
   delete the management service in Apple Business and the local files.
 - `*.p7m`, `*.pem` and `*.key` are git-ignored. Never commit them.
@@ -141,10 +142,10 @@ tools/release.sh
 ```
 
 `swift/BetaTokensCore` holds the logic (OAuth, server token, Apple client,
-declaration rendering) and `swift/Sources/OmnissaBetaTokensApp` is the UI. The
-Rust crate under `rust/` is an experimental CLI port of that same core; Python
-remains the primary script distribution. Tests use fabricated credentials only.
-For a signed build, set `SIGN_IDENTITY` and notarize as described in
+formatting) and `swift/Sources/OmnissaBetaTokensApp` is the UI. The Rust crate
+under `rust/` is an experimental CLI port of that same core; Python remains the
+primary script distribution. Tests use fabricated credentials only. For a signed
+build, set `SIGN_IDENTITY` and notarize as described in
 [docs/RELEASING.md](docs/RELEASING.md).
 
 ## Branding

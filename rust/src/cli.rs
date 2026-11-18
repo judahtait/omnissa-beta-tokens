@@ -11,7 +11,7 @@ use std::time::Duration;
 use clap::{Parser, Subcommand, ValueEnum};
 
 use crate::abm::{self, default_transport};
-use crate::render::{self, Mode};
+use crate::render;
 use crate::servertoken::{self, CERT_NAME};
 
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -19,14 +19,25 @@ pub const SERVICE_NAME: &str = "Workspace One Beta Token Service";
 pub const APPLE_ADD_SERVICE_URL: &str =
     "https://business.apple.com/main/devices/managementservices/mdmservers/add";
 
+fn dirs_home() -> Option<PathBuf> {
+    std::env::var_os("HOME").map(PathBuf::from)
+}
+
 fn default_workdir() -> PathBuf {
     dirs_home()
         .unwrap_or_else(|| PathBuf::from("."))
         .join(".omnissa-beta-tokens")
 }
 
-fn dirs_home() -> Option<PathBuf> {
-    std::env::var_os("HOME").map(PathBuf::from)
+fn expand_path(p: PathBuf) -> PathBuf {
+    let s = p.to_string_lossy();
+    if s == "~" {
+        return dirs_home().unwrap_or(p);
+    }
+    if let Some(rest) = s.strip_prefix("~/") {
+        return dirs_home().map(|h| h.join(rest)).unwrap_or(p);
+    }
+    p
 }
 
 #[derive(Parser, Debug)]
@@ -39,11 +50,15 @@ pub struct Args {
     #[arg(long, global = true)]
     pub no_banner: bool,
 
-    #[arg(long, global = true, default_value_os_t = default_workdir())]
+    #[arg(long, global = true, default_value_os_t = default_workdir(), value_parser = parse_path)]
     pub workdir: PathBuf,
 
     #[command(subcommand)]
     pub command: Commands,
+}
+
+fn parse_path(s: &str) -> Result<PathBuf, String> {
+    Ok(expand_path(PathBuf::from(s)))
 }
 
 #[derive(Subcommand, Debug)]
@@ -52,7 +67,7 @@ pub enum Commands {
     Init,
     /// Decrypt the .p7m and list beta tokens
     Fetch {
-        #[arg(long)]
+        #[arg(long, value_parser = parse_path)]
         p7m: Option<PathBuf>,
         #[arg(long)]
         watch: bool,
@@ -66,10 +81,6 @@ pub enum Commands {
         format: OutputFormat,
         #[arg(long)]
         reveal: bool,
-        #[arg(long)]
-        declaration: bool,
-        #[arg(long, default_value = "auto")]
-        mode: String,
     },
 }
 
@@ -161,8 +172,6 @@ pub fn run(args: Args) -> i32 {
             match_text,
             format,
             reveal,
-            declaration,
-            mode,
         } => cmd_fetch(
             &args.workdir,
             p7m,
@@ -172,8 +181,6 @@ pub fn run(args: Args) -> i32 {
             match_text.as_deref(),
             format,
             reveal,
-            declaration,
-            &mode,
         ),
     }
 }
@@ -224,24 +231,7 @@ fn cmd_fetch(
     match_text: Option<&str>,
     format: OutputFormat,
     reveal: bool,
-    declaration: bool,
-    mode_s: &str,
 ) -> i32 {
-    let mode = match Mode::parse(mode_s) {
-        Ok(m) => m,
-        Err(e) => return err(e.to_string()),
-    };
-
-    if declaration && mode == Mode::Off {
-        match render::to_declaration(None, Mode::Off) {
-            Ok(out) => {
-                println!("{out}");
-                return 0;
-            }
-            Err(e) => return err(e.to_string()),
-        }
-    }
-
     if let Err(e) = servertoken::ensure_workdir(workdir) {
         return err(e.to_string());
     }
@@ -283,23 +273,10 @@ fn cmd_fetch(
         return err("No beta programs matched.");
     }
 
-    let out = if declaration {
-        if tokens.len() != 1 {
-            return err(format!(
-                "--declaration needs exactly one match; got {}. Narrow with --os/--match.",
-                tokens.len()
-            ));
-        }
-        match render::to_declaration(Some(&tokens[0]), mode) {
-            Ok(s) => s,
-            Err(e) => return err(e.to_string()),
-        }
-    } else {
-        match format {
-            OutputFormat::Json => render::to_json(&tokens),
-            OutputFormat::Csv => render::to_csv(&tokens),
-            OutputFormat::Table => render::to_table(&tokens, reveal),
-        }
+    let out = match format {
+        OutputFormat::Json => render::to_json(&tokens),
+        OutputFormat::Csv => render::to_csv(&tokens),
+        OutputFormat::Table => render::to_table(&tokens, reveal),
     };
     println!("{out}");
     0

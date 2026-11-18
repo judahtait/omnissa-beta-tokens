@@ -4,7 +4,7 @@ public enum ProgramEnrollment: String, CaseIterable, Sendable {
     case allowed = "Allowed", alwaysOn = "AlwaysOn", alwaysOff = "AlwaysOff"
 }
 
-/// The four valid ways to configure the Beta dictionary.
+/// Valid UEM Beta payload combinations (enter these in the console; no JSON export).
 public enum EnrollmentMode: String, CaseIterable, Identifiable, Sendable {
     case automatic, offer, offerAlwaysOn, off
 
@@ -36,11 +36,12 @@ public enum EnrollmentMode: String, CaseIterable, Identifiable, Sendable {
         case .off: return "Program enrollment = AlwaysOff, no program"
         }
     }
+
+    public var usesRequireProgram: Bool { self == .automatic }
+    public var usesOfferPrograms: Bool { self == .offer || self == .offerAlwaysOn }
 }
 
 public enum Render {
-    public static let softwareUpdateSettings = "com.apple.configuration.softwareupdate.settings"
-
     public static func filter(_ tokens: [BetaToken], os: String? = nil, text: String? = nil) -> [BetaToken] {
         var out = tokens.sorted {
             ($0.osDisplay.lowercased(), $0.title.lowercased()) < ($1.osDisplay.lowercased(), $1.title.lowercased())
@@ -48,30 +49,6 @@ public enum Render {
         if let os, !os.isEmpty { out = out.filter { $0.osDisplay.caseInsensitiveCompare(os) == .orderedSame } }
         if let text, !text.isEmpty { out = out.filter { $0.title.localizedCaseInsensitiveContains(text) } }
         return out
-    }
-
-    /// Reference Apple declaration. In the UEM console the same values are entered through
-    /// Declarative > Configuration > Software Update:Settings > Beta.
-    /// Only combinations valid under Apple's softwareupdate.settings schema can be produced:
-    /// RequireProgram only with AlwaysOn, never together with OfferPrograms; AlwaysOff carries no program.
-    public static func declaration(for token: BetaToken?, mode: EnrollmentMode = .automatic) throws -> String {
-        var beta: [String: Any] = ["ProgramEnrollment": mode.programEnrollment.rawValue]
-        if mode != .off {
-            guard let token else {
-                throw ToolError("Mode \(mode.rawValue) needs a beta program token.")
-            }
-            let program: [String: Any] = ["Description": token.title, "Token": token.token]
-            if mode == .automatic { beta["RequireProgram"] = program } else { beta["OfferPrograms"] = [program] }
-        }
-        let doc: [String: Any] = [
-            "Type": softwareUpdateSettings,
-            "Identifier": UUID().uuidString,
-            "Payload": ["Beta": beta],
-        ]
-        guard let data = try? JSONSerialization.data(withJSONObject: doc, options: [.prettyPrinted, .sortedKeys]) else {
-            throw ToolError("Could not encode the reference declaration.")
-        }
-        return String(decoding: data, as: UTF8.self)
     }
 
     public static func json(_ tokens: [BetaToken]) -> String {

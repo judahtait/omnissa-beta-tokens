@@ -141,55 +141,13 @@ class RenderTests(unittest.TestCase):
         self.assertEqual(len(render.filter_tokens(self.toks, "macos", None)), 1)
         self.assertEqual(len(render.filter_tokens(self.toks, None, "ios")), 1)
 
-    def test_declaration_modes_follow_apple_schema(self):
-        t = self.toks[0]
-        auto = json.loads(render.to_declaration(t))["Payload"]["Beta"]
-        self.assertEqual(auto["ProgramEnrollment"], "AlwaysOn")
-        self.assertEqual(auto["RequireProgram"]["Token"], "M" * 40)
-        self.assertNotIn("OfferPrograms", auto)
-
-        offer = json.loads(render.to_declaration(t, "offer"))["Payload"]["Beta"]
-        self.assertEqual(offer["ProgramEnrollment"], "Allowed")
-        self.assertEqual(offer["OfferPrograms"][0]["Description"], "macOS Test Beta")
-        self.assertNotIn("RequireProgram", offer)
-
-        aon = json.loads(render.to_declaration(t, "offer-always-on"))["Payload"]["Beta"]
-        self.assertEqual(aon["ProgramEnrollment"], "AlwaysOn")
-        self.assertIn("OfferPrograms", aon)
-
-        off = json.loads(render.to_declaration(None, "off"))["Payload"]["Beta"]
-        self.assertEqual(off, {"ProgramEnrollment": "AlwaysOff"})
-
-    def test_declaration_never_invalid(self):
-        # RequireProgram only with AlwaysOn; never alongside OfferPrograms
-        for mode in render.MODES:
-            beta = json.loads(render.to_declaration(self.toks[0] if mode != "off" else None, mode))["Payload"]["Beta"]
-            if "RequireProgram" in beta:
-                self.assertEqual(beta["ProgramEnrollment"], "AlwaysOn")
-                self.assertNotIn("OfferPrograms", beta)
-        with self.assertRaises(ValueError):
-            render.to_declaration(self.toks[0], "bogus")
-        with self.assertRaises(ValueError):
-            render.to_declaration(None, "auto")
+    def test_json_and_csv_include_tokens(self):
+        data = json.loads(render.to_json(self.toks))
+        self.assertEqual(data[0]["token"], "M" * 40)
+        self.assertIn("M" * 40, render.to_csv(self.toks))
 
 
 class ServiceNameTests(unittest.TestCase):
     def test_default_service_name(self):
         from omnissa_beta_tokens.cli import SERVICE_NAME
         self.assertEqual(SERVICE_NAME, "Workspace One Beta Token Service")
-
-
-class CliFetchTests(unittest.TestCase):
-    """CLI wiring for fetch --declaration --mode off (no network)."""
-
-    def test_declaration_off_needs_no_network(self):
-        from contextlib import redirect_stderr, redirect_stdout
-        from omnissa_beta_tokens.cli import main
-
-        out, err = io.StringIO(), io.StringIO()
-        with redirect_stdout(out), redirect_stderr(err):
-            code = main(["--no-banner", "fetch", "--declaration", "--mode", "off"])
-        self.assertEqual(code, 0)
-        beta = json.loads(out.getvalue())["Payload"]["Beta"]
-        self.assertEqual(beta, {"ProgramEnrollment": "AlwaysOff"})
-        self.assertNotIn("[INFO]", out.getvalue())

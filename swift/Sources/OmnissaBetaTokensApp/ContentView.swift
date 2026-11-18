@@ -144,14 +144,6 @@ struct ContentView: View {
                 ForEach(EnrollmentMode.allCases) { Text($0.title).tag($0) }
             }
             Text("UEM: " + model.mode.uemSummary).font(Brand.font(12)).foregroundColor(Brand.slate)
-            Button("Copy reference declaration (JSON)") {
-                do {
-                    model.copy(try Render.declaration(for: t, mode: model.mode),
-                               note: "Declaration copied to clipboard.")
-                } catch {
-                    model.errorText = error.localizedDescription
-                }
-            }.buttonStyle(SecondaryButtonStyle())
         }
         .foregroundColor(Brand.text)
         .padding(12)

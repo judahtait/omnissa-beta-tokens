@@ -96,11 +96,6 @@ def _watch_downloads(workdir: Path, interval: int) -> Path:
 
 
 def cmd_fetch(args: argparse.Namespace) -> int:
-    # AlwaysOff needs no Apple session or matched program.
-    if args.declaration and args.mode == "off":
-        print(render.to_declaration(None, "off"))
-        return 0
-
     workdir = ensure_workdir(args.workdir)
     try:
         if not (workdir / CERT_NAME).exists():
@@ -120,11 +115,7 @@ def cmd_fetch(args: argparse.Namespace) -> int:
 
     if not tokens:
         return _err("No beta programs matched.")
-    if args.declaration:
-        if len(tokens) != 1:
-            return _err(f"--declaration needs exactly one match; got {len(tokens)}. Narrow with --os/--match.")
-        out = render.to_declaration(tokens[0], args.mode)
-    elif args.format == "json":
+    if args.format == "json":
         out = render.to_json(tokens)
     elif args.format == "csv":
         out = render.to_csv(tokens)
@@ -156,11 +147,6 @@ def build_parser() -> argparse.ArgumentParser:
     f.add_argument("--match", help="Filter by text in the program title")
     f.add_argument("--format", choices=["table", "json", "csv"], default="table")
     f.add_argument("--reveal", action="store_true", help="Show full tokens in the table (masked by default)")
-    f.add_argument("--declaration", action="store_true", help="Emit a reference SoftwareUpdate Settings declaration for one program")
-    f.add_argument("--mode", choices=list(render.MODES), default="auto",
-                   help="Declaration mode (default auto): auto = AlwaysOn + RequireProgram; "
-                        "offer = Allowed + OfferPrograms; offer-always-on = AlwaysOn + OfferPrograms; "
-                        "off = AlwaysOff (unenroll)")
     f.set_defaults(func=cmd_fetch)
     return p
 

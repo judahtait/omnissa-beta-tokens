@@ -36,9 +36,18 @@ fn live_get_no_redirect(
             let _ = resp.into_reader().read_to_end(&mut body);
             Ok((code, body))
         }
-        Err(ureq::Error::Transport(t)) => Err(ToolError::msg(format!(
-            "Network error contacting Apple: {t}"
-        ))),
+        Err(ureq::Error::Transport(t)) => {
+            let msg = t.to_string();
+            if msg.to_ascii_lowercase().contains("redirect") {
+                return Err(ToolError::msg(format!(
+                    "Unexpected HTTP redirect from Apple ({msg}). \
+                     Refusing to follow so Authorization is not sent elsewhere."
+                )));
+            }
+            Err(ToolError::msg(format!(
+                "Network error contacting Apple: {t}"
+            )))
+        }
     }
 }
 

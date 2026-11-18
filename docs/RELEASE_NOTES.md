@@ -11,7 +11,7 @@ declarative Software Update: Settings profile.
 ### Notes
 - Builds are not signed or notarized yet. On first launch, right-click the app and choose
   Open, or run `xattr -d com.apple.quarantine "Omnissa Beta Token Utility.app"`.
-- Only valid Apple declaration combinations are generated (automatic, offer, offer with no
+- Enter only valid Apple Beta combinations in UEM (automatic, offer, offer with no
   sign-in, block and unenroll). The Beta setting needs supervised devices (macOS 15.4+, iOS and
   iPadOS); it is not available on tvOS or visionOS.
 - On-device behavior has not been validated end to end yet.

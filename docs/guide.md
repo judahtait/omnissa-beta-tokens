@@ -21,8 +21,7 @@ High-level flow:
 1. Create a local key and certificate with Omnissa Beta Token Utility.
 2. Register an external device management service in Apple Business and download
    the `.p7m` server token.
-3. Fetch the organization's beta programs and copy a token (or a reference
-   declaration).
+3. Fetch the organization's beta programs and copy a token.
 4. Build a Workspace ONE UEM declarative profile and assign it to supervised
    devices.
 5. Confirm enrollment on the device (see [Known gaps](#10-known-gaps)).
@@ -123,24 +122,18 @@ Useful filters and outputs:
 
 ```
 python3 omnissa-beta-tokens.py fetch --os macOS --reveal
-python3 omnissa-beta-tokens.py fetch --match "macOS 27" --declaration --mode auto
-python3 omnissa-beta-tokens.py fetch --declaration --mode off
+python3 omnissa-beta-tokens.py fetch --match "macOS 27" --format json
 ```
 
-`--declaration --mode off` (AlwaysOff / block and unenroll) does **not** need a
-`.p7m` or a network call. Other declaration modes need exactly one matching
-program.
-
-In the app: choose the `.p7m`, then **Fetch beta tokens**, pick a program and
-mode, and copy the token or reference declaration.
+In the app: choose the `.p7m`, then **Fetch beta tokens**, pick a program, copy
+the token, and use the Mode picker as a reminder of which UEM Beta fields to set.
 
 Security notes:
 
 - OAuth secrets are never printed in full; they appear as `[REDACTED]`.
 - The decrypted server token stays in memory only.
 - Table output masks beta tokens unless you pass `--reveal` (or use Reveal in
-  the app). JSON, CSV, and declaration output include full tokens because they
-  are meant for export into UEM.
+  the app). JSON and CSV output include full tokens because they are for export.
 
 ## 5. Create the Workspace ONE UEM profile
 
@@ -185,8 +178,8 @@ No tenant name or session data.]
 
 ### 5.3 Choose a mode
 
-Apple's schema only allows these combinations. The utility generates them for
-you (app: **Mode**; CLI: `fetch --declaration --mode ...`).
+Apple's schema only allows these combinations. Enter them in the UEM Beta
+payload (the app **Mode** picker shows the matching field summary).
 
 | Mode | Program enrollment | Require program | Offer programs | Result |
 |---|---|---|---|---|
@@ -223,10 +216,6 @@ have not been validated end to end on a supervised test device yet.
 Assign a profile in **Block and unenroll** mode (Program enrollment =
 AlwaysOff) to the device. This removes the device from any beta program.
 Supervised devices only.
-
-```
-python3 omnissa-beta-tokens.py fetch --declaration --mode off
-```
 
 ## 8. Troubleshooting
 
