@@ -106,7 +106,16 @@ pub fn generate_keypair(workdir: &Path, days: u32) -> Result<(PathBuf, PathBuf),
         .permissions();
     perms.set_mode(0o600);
     fs::set_permissions(&key, perms).map_err(|e| ToolError::msg(e.to_string()))?;
+    // Hide from Finder so "open workdir" does not advertise the private key next to the .pem.
+    hide_from_finder(&key);
     Ok((key, cert))
+}
+
+/// Best-effort Finder hidden flag (macOS `chflags hidden`). No-op if unavailable.
+fn hide_from_finder(path: &Path) {
+    let _ = std::process::Command::new("chflags")
+        .args(["hidden", &path.to_string_lossy()])
+        .status();
 }
 
 pub fn find_p7m(workdir: &Path) -> Option<PathBuf> {

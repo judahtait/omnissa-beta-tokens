@@ -109,7 +109,9 @@ omnissa-beta-tokens cleanup --yes
 | `fetch --uem-block` | Title + token + short “create profile” steps (one match only) |
 | `cleanup --yes` | Delete local key/cert/`*.p7m` |
 
-Default workdir: `~/.omnissa-beta-tokens` (700 / key 600).
+Default workdir: `~/.omnissa-beta-tokens` (folder mode 700, key mode 600). The
+private key lives beside the cert for openssl decrypt, but is **Finder-hidden**;
+the app’s **Show in Finder** opens a temp folder with only the `.pem`.
 
 ## App tips
 

@@ -26,6 +26,7 @@ final class AppModel: ObservableObject {
 
     func refresh() {
         hasKeypair = ServerToken.hasKeypair(in: workdir)
+        if hasKeypair { ServerToken.hidePrivateKey(in: workdir) }
         if p7m == nil { p7m = ServerToken.findP7M(in: workdir) }
     }
 
@@ -121,14 +122,15 @@ final class AppModel: ObservableObject {
     }
 
     func revealCertificate() {
-        let cert = certificateURL
-        guard FileManager.default.fileExists(atPath: cert.path) else {
-            errorText = "No certificate yet. Create the certificate first."
-            return
+        // Stage only the public cert in a temp folder so Finder never shows mdm_private.key.
+        do {
+            ServerToken.hidePrivateKey(in: workdir)
+            let staged = try ServerToken.stagingCertificateForFinder(from: workdir)
+            NSWorkspace.shared.activateFileViewerSelecting([staged])
+            message = "Certificate ready in Finder — drag \(ServerToken.certName) onto Upload Certificate (private key stays hidden)."
+        } catch {
+            errorText = error.localizedDescription
         }
-        // Select the .pem in Finder so it is ready to drag into Apple Business.
-        NSWorkspace.shared.activateFileViewerSelecting([cert])
-        message = "Certificate selected in Finder — drag \(ServerToken.certName) onto Upload Certificate in Apple Business."
     }
 
     func fetch() {

@@ -76,8 +76,11 @@ omnissa-beta-tokens init
 ```
 
 This creates a private key and a certificate (`.pem`) in
-`~/.omnissa-beta-tokens` (mode 700 for the folder, 600 for the key). The tool
-prints the `.pem` path to upload. In the app, choose **Create certificate**.
+`~/.omnissa-beta-tokens` (mode 700 for the folder, 600 for the key). The private
+key must sit next to the cert so openssl can decrypt the `.p7m`; it is marked
+**hidden in Finder**. The tool prints the `.pem` path to upload. In the app,
+choose **Create certificate** — **Show in Finder** opens a temporary folder with
+only the `.pem` (not the private key). Prefer dragging the in-app cert chip.
 
 Treat the private key and later the `.p7m` as credentials. Do not commit or
 share them. When you are finished, delete the management service in Apple

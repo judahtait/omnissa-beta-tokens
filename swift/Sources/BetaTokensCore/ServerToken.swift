@@ -63,7 +63,37 @@ public enum ServerToken {
             throw ToolError("openssl failed: \(String(decoding: r.err, as: UTF8.self))")
         }
         try FileManager.default.setAttributes([.posixPermissions: 0o600], ofItemAtPath: key.path)
+        try hideFromFinder(key)
         return (key, cert)
+    }
+
+    /// Mark the private key invisible in Finder (still readable by openssl / this app).
+    /// Call after generate and on refresh so existing installs get the flag.
+    public static func hidePrivateKey(in dir: URL) {
+        let key = dir.appendingPathComponent(keyName)
+        guard FileManager.default.fileExists(atPath: key.path) else { return }
+        try? hideFromFinder(key)
+    }
+
+    private static func hideFromFinder(_ url: URL) throws {
+        var mutable = url
+        var values = URLResourceValues()
+        values.isHidden = true
+        try mutable.setResourceValues(values)
+    }
+
+    /// Copy only the public cert into a temporary folder for Finder (keeps the private key out of view).
+    public static func stagingCertificateForFinder(from dir: URL) throws -> URL {
+        let cert = dir.appendingPathComponent(certName)
+        guard FileManager.default.fileExists(atPath: cert.path) else {
+            throw ToolError("No certificate yet. Create the certificate first.")
+        }
+        let folder = FileManager.default.temporaryDirectory
+            .appendingPathComponent("OmnissaBetaToken-cert-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        let staged = folder.appendingPathComponent(certName)
+        try FileManager.default.copyItem(at: cert, to: staged)
+        return staged
     }
 
     public static func findP7M(in dir: URL) -> URL? {
