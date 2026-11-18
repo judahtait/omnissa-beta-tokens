@@ -4,7 +4,9 @@
 //   make_icon sheet   <outDir>                         concept PNGs (every variant x tile, 1024 and 64 px)
 //   make_icon iconset <variant> <tile> <iconsetDir>    16..1024 px iconset; then: iconutil -c icns <iconsetDir>
 //
-// Variants: v1-layered, v2-key-bow, v3-badge.  Tiles: omnissa (navy > indigo > magenta), light (indigo > magenta).
+// Variants: v1-layered, v2-key-bow, v3-badge.
+// Tiles: white (white tile, Omnissa-gradient mark), omnissa (navy > indigo > magenta tile, white mark),
+//        light (indigo > magenta tile, white mark).
 // The beta is a monoline path, not a font glyph: Outfit has no Greek characters, and an
 // outlined glyph from a system font would carry that font's licence.
 
@@ -21,7 +23,7 @@ let srgb = CGColorSpace(name: CGColorSpace.sRGB)!
 let white = color(0xFFFFFF)
 
 enum Variant: String, CaseIterable { case layered = "v1-layered", bow = "v2-key-bow", badge = "v3-badge" }
-enum Tile: String, CaseIterable { case omnissa, light }
+enum Tile: String, CaseIterable { case white, omnissa, light }
 
 // MARK: geometry (1024 x 1024 design space, y down)
 
@@ -79,9 +81,10 @@ struct Painter {
     let ctx: CGContext
     let k: CGFloat   // design-space to pixel factor (shadows are specified in pixels)
 
-    func stroke(_ path: CGPath, width: CGFloat, _ c: CGColor = white, shadow: Bool = false) {
+    func stroke(_ path: CGPath, width: CGFloat, _ c: CGColor = white, shadow: Bool = false,
+                shadowColor: CGColor = color(0x000030, 0.38)) {
         ctx.saveGState()
-        if shadow { ctx.setShadow(offset: CGSize(width: 0, height: -14 * k), blur: 24 * k, color: color(0x000030, 0.38)) }
+        if shadow { ctx.setShadow(offset: CGSize(width: 0, height: -14 * k), blur: 24 * k, color: shadowColor) }
         ctx.setStrokeColor(c); ctx.setLineWidth(width); ctx.setLineCap(.round); ctx.setLineJoin(.round)
         ctx.addPath(path); ctx.strokePath()
         ctx.restoreGState()
@@ -91,10 +94,31 @@ struct Painter {
         ctx.saveGState(); ctx.setFillColor(c); ctx.addPath(path); ctx.fillPath(); ctx.restoreGState()
     }
 
-    func glassHex(radius: CGFloat) {
-        let h = hexagon(radius: radius)
-        fill(h, color(0xFFFFFF, 0.14))
-        stroke(h, width: 10, color(0xFFFFFF, 0.55))
+    /// Stroke filled with a linear gradient (design-space coordinates), optionally with a soft shadow and a glossy sheen.
+    func gradientStroke(_ path: CGPath, width: CGFloat, colors: [CGColor], locs: [CGFloat],
+                        from a: CGPoint, to b: CGPoint, shadow: Bool = false, sheen: Bool = false) {
+        if shadow {
+            stroke(path, width: width, color(0x4A12F0), shadow: true, shadowColor: color(0x1A1A40, 0.22))
+        }
+        ctx.saveGState()
+        ctx.addPath(path); ctx.setLineWidth(width); ctx.setLineCap(.round); ctx.setLineJoin(.round)
+        ctx.replacePathWithStrokedPath(); ctx.clip()
+        ctx.drawLinearGradient(CGGradient(colorsSpace: srgb, colors: colors as CFArray, locations: locs)!,
+                               start: a, end: b, options: [.drawsBeforeStartLocation, .drawsAfterEndLocation])
+        if sheen {
+            let bb = ctx.boundingBoxOfClipPath
+            ctx.drawLinearGradient(CGGradient(colorsSpace: srgb, colors: [color(0xFFFFFF, 0.26), color(0xFFFFFF, 0)] as CFArray,
+                                              locations: [0, 1])!, start: pt(bb.midX, bb.minY), end: pt(bb.midX, bb.midY), options: [])
+        }
+        ctx.restoreGState()
+    }
+
+    func gradientFill(_ path: CGPath, colors: [CGColor], locs: [CGFloat], from a: CGPoint, to b: CGPoint) {
+        ctx.saveGState()
+        ctx.addPath(path); ctx.clip()
+        ctx.drawLinearGradient(CGGradient(colorsSpace: srgb, colors: colors as CFArray, locations: locs)!,
+                               start: a, end: b, options: [.drawsBeforeStartLocation, .drawsAfterEndLocation])
+        ctx.restoreGState()
     }
 }
 
@@ -108,49 +132,73 @@ func render(_ variant: Variant, _ tile: Tile, pixels: Int) -> CGImage {
     ctx.scaleBy(x: k, y: -k)
     let p = Painter(ctx: ctx, k: k)
 
+    let onWhite = tile == .white
+
     // Tile (macOS icon grid: 824 px square inside the 1024 canvas)
     let tilePath = CGPath(roundedRect: CGRect(x: 100, y: 100, width: 824, height: 824),
                           cornerWidth: 186, cornerHeight: 186, transform: nil)
     ctx.saveGState()
-    ctx.setShadow(offset: CGSize(width: 0, height: -12 * k), blur: 28 * k, color: color(0x000000, 0.35))
-    ctx.setFillColor(color(0x4A12F0)); ctx.addPath(tilePath); ctx.fillPath()
+    ctx.setShadow(offset: CGSize(width: 0, height: -12 * k), blur: 28 * k,
+                  color: onWhite ? color(0x1A1A40, 0.16) : color(0x000000, 0.35))
+    ctx.setFillColor(onWhite ? white : color(0x4A12F0)); ctx.addPath(tilePath); ctx.fillPath()
     ctx.restoreGState()
 
     ctx.saveGState()
     ctx.addPath(tilePath); ctx.clip()
-    let stops: [CGColor], locs: [CGFloat]
-    switch tile {
-    case .omnissa: stops = [color(0x001E60), color(0x4A12F0), color(0xD600FF)]; locs = [0, 0.55, 1]
-    case .light: stops = [color(0x4A12F0), color(0xD600FF)]; locs = [0, 1]
+    if onWhite {
+        ctx.drawLinearGradient(CGGradient(colorsSpace: srgb, colors: [color(0xFFFFFF), color(0xEDEDF5)] as CFArray,
+                                          locations: [0, 1])!, start: pt(512, 100), end: pt(512, 924), options: [])
+    } else {
+        let stops: [CGColor], locs: [CGFloat]
+        if tile == .omnissa { stops = [color(0x001E60), color(0x4A12F0), color(0xD600FF)]; locs = [0, 0.55, 1] }
+        else { stops = [color(0x4A12F0), color(0xD600FF)]; locs = [0, 1] }
+        ctx.drawLinearGradient(CGGradient(colorsSpace: srgb, colors: stops as CFArray, locations: locs)!,
+                               start: pt(140, 100), end: pt(880, 924), options: [])
+        // liquid-glass sheen across the top half
+        ctx.drawLinearGradient(CGGradient(colorsSpace: srgb, colors: [color(0xFFFFFF, 0.30), color(0xFFFFFF, 0)] as CFArray,
+                                          locations: [0, 1])!, start: pt(512, 100), end: pt(512, 560), options: [])
     }
-    ctx.drawLinearGradient(CGGradient(colorsSpace: srgb, colors: stops as CFArray, locations: locs)!,
-                           start: pt(140, 100), end: pt(880, 924), options: [])
-    // liquid-glass sheen across the top half
-    ctx.drawLinearGradient(CGGradient(colorsSpace: srgb, colors: [color(0xFFFFFF, 0.30), color(0xFFFFFF, 0)] as CFArray,
-                                      locations: [0, 1])!, start: pt(512, 100), end: pt(512, 560), options: [])
     ctx.restoreGState()
-    p.stroke(tilePath, width: 3, color(0xFFFFFF, 0.35))
+    p.stroke(tilePath, width: 3, onWhite ? color(0xD5D5E2) : color(0xFFFFFF, 0.35))
+
+    // Mark painting: white on gradient tiles, Omnissa gradient on the white tile.
+    func stops(_ alpha: CGFloat) -> [CGColor] { [color(0x001E60, alpha), color(0x4A12F0, alpha), color(0xD600FF, alpha)] }
+    let locs: [CGFloat] = [0, 0.5, 1]
+    func mark(_ path: CGPath, _ width: CGFloat, shadow: Bool = false) {
+        if onWhite {
+            p.gradientStroke(path, width: width, colors: stops(1), locs: locs, from: pt(220, 330), to: pt(820, 700),
+                             shadow: shadow, sheen: true)
+        } else {
+            p.stroke(path, width: width, shadow: shadow)
+        }
+    }
+    func glass(_ path: CGPath, outline w: CGFloat) {
+        if onWhite {
+            p.gradientFill(path, colors: stops(0.10), locs: locs, from: pt(200, 200), to: pt(830, 830))
+            p.gradientStroke(path, width: w, colors: stops(0.50), locs: locs, from: pt(200, 200), to: pt(830, 830))
+        } else {
+            p.fill(path, color(0xFFFFFF, 0.14))
+            p.stroke(path, width: w, color(0xFFFFFF, 0.55))
+        }
+    }
 
     switch variant {
     case .layered:
         // Hexagon (glass) > beta > key laid over the lower right.
-        p.glassHex(radius: 305)
-        p.stroke(placed(betaPath(), at: pt(500, 500), from: betaCenter, scale: 0.66), width: 52, shadow: true)
-        p.stroke(placed(keyPath(), at: pt(672, 672), from: keyCenter, scale: 0.42, rotation: .pi / 4), width: 44, shadow: true)
+        glass(hexagon(radius: 305), outline: 10)
+        mark(placed(betaPath(), at: pt(500, 500), from: betaCenter, scale: 0.66), 52, shadow: true)
+        mark(placed(keyPath(), at: pt(672, 672), from: keyCenter, scale: 0.42, rotation: .pi / 4), 44, shadow: true)
     case .bow:
         // The beta sits inside the bow of the key.
-        p.glassHex(radius: 372)
-        p.stroke(keyPath(ringCenter: pt(404, 512), ringRadius: 150, shaftEnd: 772,
-                         teeth: [(694, 80), (756, 62)]), width: 52, shadow: true)
-        p.stroke(placed(betaPath(), at: pt(404, 512), from: betaCenter, scale: 0.31), width: 32)
+        glass(hexagon(radius: 372), outline: 10)
+        mark(keyPath(ringCenter: pt(404, 512), ringRadius: 150, shaftEnd: 772, teeth: [(694, 80), (756, 62)]), 52, shadow: true)
+        mark(placed(betaPath(), at: pt(404, 512), from: betaCenter, scale: 0.31), 32)
     case .badge:
         // Hexagon outline with a large beta, and a small key badge on the corner.
-        p.stroke(hexagon(radius: 300), width: 34, color(0xFFFFFF, 0.95))
-        p.stroke(placed(betaPath(), at: pt(512, 500), from: betaCenter, scale: 0.72), width: 56, shadow: true)
-        let disc = CGPath(ellipseIn: CGRect(x: 702 - 118, y: 712 - 118, width: 236, height: 236), transform: nil)
-        p.fill(disc, color(0xFFFFFF, 0.24))
-        p.stroke(disc, width: 8, color(0xFFFFFF, 0.65))
-        p.stroke(placed(keyPath(), at: pt(702, 712), from: keyCenter, scale: 0.26, rotation: .pi / 4), width: 26)
+        mark(hexagon(radius: 300), 34)
+        mark(placed(betaPath(), at: pt(512, 500), from: betaCenter, scale: 0.72), 56, shadow: true)
+        glass(CGPath(ellipseIn: CGRect(x: 702 - 118, y: 712 - 118, width: 236, height: 236), transform: nil), outline: 8)
+        mark(placed(keyPath(), at: pt(702, 712), from: keyCenter, scale: 0.26, rotation: .pi / 4), 26)
     }
     return ctx.makeImage()!
 }

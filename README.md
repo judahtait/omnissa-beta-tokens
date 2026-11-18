@@ -110,7 +110,7 @@ app owner before shipping.
 
 ```bash
 swiftc -O tools/make_icon.swift -o /tmp/make_icon
-/tmp/make_icon iconset v2-key-bow omnissa assets/AppIcon.iconset
+/tmp/make_icon iconset v1-layered omnissa assets/AppIcon.iconset
 python3 tools/make_icns.py assets/AppIcon.iconset assets/AppIcon.icns
 ```
 

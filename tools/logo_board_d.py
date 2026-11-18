@@ -19,7 +19,7 @@ VARIANTS = [
     ("v3-badge", "3. Beta with key badge",
      "Large beta in a hexagon outline with a small key badge on the corner. Beta first, key second."),
 ]
-TILES = [("omnissa", "Omnissa gradient (navy, indigo, magenta)"), ("light", "Lighter (indigo, magenta)")]
+TILES = [("white", "White tile, Omnissa-gradient mark"), ("omnissa", "Omnissa gradient tile (navy, indigo, magenta) - chosen"), ("light", "Lighter gradient tile (indigo, magenta)")]
 
 
 def card(vid: str, title: str, why: str) -> str:
@@ -60,8 +60,8 @@ h2{{font-weight:500;color:var(--heading);margin:0 0 4px;font-size:20px}} p{{marg
 <div>Concept D (hexagon with a key) with the Greek beta layered in. Rendered with CoreGraphics by <code>tools/make_icon.swift</code>.</div></div></header>
 <main class="wrap">{cards}
 <section class="card"><h2>Notes</h2>
-<p><b>Recommendation:</b> variant 2 for clarity at small sizes, or variant 1 if you want the beta to lead.</p>
-<p class="note">The beta is a drawn monoline path, not a font glyph (Outfit has no Greek characters). Not yet checked against the Omnissa brand guidelines, and no official logo was available. The app currently ships variant 2 on the Omnissa gradient as an interim icon (<code>assets/AppIcon.icns</code>).</p>
+<p><b>Chosen:</b> variant 1 (layered glass: hexagon, beta, key) on the Omnissa gradient tile. The other variants and tile styles are kept for reference.</p>
+<p class="note">The beta is a drawn monoline path, not a font glyph (Outfit has no Greek characters). Not yet checked against the Omnissa brand guidelines, and no official logo was available. The app ships variant 1 on the Omnissa gradient tile (<code>assets/AppIcon.icns</code>).</p>
 <p class="note">Switch the icon: <code>make_icon iconset &lt;variant&gt; &lt;tile&gt; assets/AppIcon.iconset</code>, then <code>python3 tools/make_icns.py assets/AppIcon.iconset assets/AppIcon.icns</code>, then <code>tools/make_app.sh</code>. For a macOS 26 Liquid Glass icon, compose the layers in Icon Composer (Xcode 26).</p></section>
 </main></body></html>"""
     OUT.write_text(html, encoding="utf-8")
