@@ -5,13 +5,14 @@ import AppKit
 struct OmnissaBetaTokensApp: App {
     @StateObject private var model = AppModel()
 
+    init() { Brand.registerFonts() }
+
     var body: some Scene {
         WindowGroup("Omnissa Beta Token Utility") {
             ContentView()
                 .environmentObject(model)
                 .frame(minWidth: 760, minHeight: 720)
                 .onAppear {
-                    NSApp.appearance = NSAppearance(named: .aqua)  // light surfaces, also for file dialogs
                     NSApp.setActivationPolicy(.regular)
                     NSApp.activate(ignoringOtherApps: true)
                 }

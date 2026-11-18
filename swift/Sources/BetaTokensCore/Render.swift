@@ -4,6 +4,40 @@ public enum ProgramEnrollment: String, CaseIterable, Sendable {
     case allowed = "Allowed", alwaysOn = "AlwaysOn", alwaysOff = "AlwaysOff"
 }
 
+/// The four valid ways to configure the Beta dictionary.
+public enum EnrollmentMode: String, CaseIterable, Identifiable, Sendable {
+    case automatic, offer, offerAlwaysOn, off
+
+    public var id: String { rawValue }
+
+    public var programEnrollment: ProgramEnrollment {
+        switch self {
+        case .automatic, .offerAlwaysOn: return .alwaysOn
+        case .offer: return .allowed
+        case .off: return .alwaysOff
+        }
+    }
+
+    public var title: String {
+        switch self {
+        case .automatic: return "Automatic enrollment (AlwaysOn + Require program)"
+        case .offer: return "Offer to user (Allowed + Offer programs)"
+        case .offerAlwaysOn: return "Offer, no sign-in needed (AlwaysOn + Offer programs)"
+        case .off: return "Block and unenroll (AlwaysOff)"
+        }
+    }
+
+    /// What to set in the UEM Software Update:Settings > Beta payload.
+    public var uemSummary: String {
+        switch self {
+        case .automatic: return "Program enrollment = AlwaysOn, Require program = on, Offer programs = off"
+        case .offer: return "Program enrollment = Allowed, Require program = off, Offer programs = on"
+        case .offerAlwaysOn: return "Program enrollment = AlwaysOn, Require program = off, Offer programs = on"
+        case .off: return "Program enrollment = AlwaysOff, no program"
+        }
+    }
+}
+
 public enum Render {
     public static let softwareUpdateSettings = "com.apple.configuration.softwareupdate.settings"
 
@@ -18,11 +52,14 @@ public enum Render {
 
     /// Reference Apple declaration. In the UEM console the same values are entered through
     /// Declarative > Configuration > Software Update:Settings > Beta.
-    public static func declaration(for token: BetaToken, enrollment: ProgramEnrollment = .allowed,
-                                   requireProgram: Bool = true) -> String {
-        let program: [String: Any] = ["Description": token.title, "Token": token.token]
-        var beta: [String: Any] = ["ProgramEnrollment": enrollment.rawValue]
-        if requireProgram { beta["RequireProgram"] = program } else { beta["OfferPrograms"] = [program] }
+    /// Only combinations valid under Apple's softwareupdate.settings schema can be produced:
+    /// RequireProgram only with AlwaysOn, never together with OfferPrograms; AlwaysOff carries no program.
+    public static func declaration(for token: BetaToken?, mode: EnrollmentMode = .automatic) -> String {
+        var beta: [String: Any] = ["ProgramEnrollment": mode.programEnrollment.rawValue]
+        if mode != .off, let token {
+            let program: [String: Any] = ["Description": token.title, "Token": token.token]
+            if mode == .automatic { beta["RequireProgram"] = program } else { beta["OfferPrograms"] = [program] }
+        }
         let doc: [String: Any] = [
             "Type": softwareUpdateSettings,
             "Identifier": UUID().uuidString,

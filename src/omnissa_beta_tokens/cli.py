@@ -109,9 +109,12 @@ def cmd_fetch(args: argparse.Namespace) -> int:
     if not tokens:
         return _err("No beta programs matched.")
     if args.declaration:
-        if len(tokens) != 1:
+        if args.mode == "off":
+            out = render.to_declaration(None, "off")
+        elif len(tokens) != 1:
             return _err(f"--declaration needs exactly one match; got {len(tokens)}. Narrow with --os/--match.")
-        out = render.to_declaration(tokens[0], args.enrollment, not args.offer)
+        else:
+            out = render.to_declaration(tokens[0], args.mode)
     elif args.format == "json":
         out = render.to_json(tokens)
     elif args.format == "csv":
@@ -145,9 +148,10 @@ def build_parser() -> argparse.ArgumentParser:
     f.add_argument("--format", choices=["table", "json", "csv"], default="table")
     f.add_argument("--reveal", action="store_true", help="Show full tokens in the table (masked by default)")
     f.add_argument("--declaration", action="store_true", help="Emit a reference SoftwareUpdate Settings declaration for one program")
-    f.add_argument("--enrollment", choices=["Allowed", "AlwaysOn", "AlwaysOff"], default="Allowed",
-                   help="ProgramEnrollment value for --declaration (default Allowed)")
-    f.add_argument("--offer", action="store_true", help="Use OfferPrograms instead of RequireProgram")
+    f.add_argument("--mode", choices=list(render.MODES), default="auto",
+                   help="Declaration mode (default auto): auto = AlwaysOn + RequireProgram; "
+                        "offer = Allowed + OfferPrograms; offer-always-on = AlwaysOn + OfferPrograms; "
+                        "off = AlwaysOff (unenroll)")
     f.set_defaults(func=cmd_fetch)
     return p
 

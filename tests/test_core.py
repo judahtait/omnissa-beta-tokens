@@ -141,17 +141,36 @@ class RenderTests(unittest.TestCase):
         self.assertEqual(len(render.filter_tokens(self.toks, "macos", None)), 1)
         self.assertEqual(len(render.filter_tokens(self.toks, None, "ios")), 1)
 
-    def test_declaration(self):
-        d = json.loads(render.to_declaration(self.toks[0]))
-        beta = d["Payload"]["Beta"]
-        self.assertEqual(beta["ProgramEnrollment"], "Allowed")
-        self.assertEqual(beta["RequireProgram"]["Token"], "M" * 40)
-        d = json.loads(render.to_declaration(self.toks[0], "AlwaysOn", require=False))
-        self.assertIn("OfferPrograms", d["Payload"]["Beta"])
+    def test_declaration_modes_follow_apple_schema(self):
+        t = self.toks[0]
+        auto = json.loads(render.to_declaration(t))["Payload"]["Beta"]
+        self.assertEqual(auto["ProgramEnrollment"], "AlwaysOn")
+        self.assertEqual(auto["RequireProgram"]["Token"], "M" * 40)
+        self.assertNotIn("OfferPrograms", auto)
 
+        offer = json.loads(render.to_declaration(t, "offer"))["Payload"]["Beta"]
+        self.assertEqual(offer["ProgramEnrollment"], "Allowed")
+        self.assertEqual(offer["OfferPrograms"][0]["Description"], "macOS Test Beta")
+        self.assertNotIn("RequireProgram", offer)
 
-if __name__ == "__main__":
-    unittest.main()
+        aon = json.loads(render.to_declaration(t, "offer-always-on"))["Payload"]["Beta"]
+        self.assertEqual(aon["ProgramEnrollment"], "AlwaysOn")
+        self.assertIn("OfferPrograms", aon)
+
+        off = json.loads(render.to_declaration(None, "off"))["Payload"]["Beta"]
+        self.assertEqual(off, {"ProgramEnrollment": "AlwaysOff"})
+
+    def test_declaration_never_invalid(self):
+        # RequireProgram only with AlwaysOn; never alongside OfferPrograms
+        for mode in render.MODES:
+            beta = json.loads(render.to_declaration(self.toks[0] if mode != "off" else None, mode))["Payload"]["Beta"]
+            if "RequireProgram" in beta:
+                self.assertEqual(beta["ProgramEnrollment"], "AlwaysOn")
+                self.assertNotIn("OfferPrograms", beta)
+        with self.assertRaises(ValueError):
+            render.to_declaration(self.toks[0], "bogus")
+        with self.assertRaises(ValueError):
+            render.to_declaration(None, "auto")
 
 
 class ServiceNameTests(unittest.TestCase):

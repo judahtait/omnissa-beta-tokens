@@ -54,18 +54,33 @@ def to_csv(tokens: list[BetaToken]) -> str:
     return buf.getvalue()
 
 
-def to_declaration(token: BetaToken, enrollment: str = "Allowed", require: bool = True) -> str:
+# Valid combinations per Apple's softwareupdate.settings declaration schema:
+#  - RequireProgram only with ProgramEnrollment=AlwaysOn
+#  - OfferPrograms must not be present together with RequireProgram
+#  - AlwaysOff carries no program
+MODES = {
+    "auto": ("AlwaysOn", "RequireProgram"),
+    "offer": ("Allowed", "OfferPrograms"),
+    "offer-always-on": ("AlwaysOn", "OfferPrograms"),
+    "off": ("AlwaysOff", None),
+}
+
+
+def to_declaration(token: BetaToken | None, mode: str = "auto") -> str:
     """Reference Apple declaration (Software Update Settings, Beta dictionary).
 
     In the Workspace ONE UEM console the same values are entered through the
     Declarative > Configuration > Software Update:Settings > Beta fields.
     """
-    program = {"Description": token.title, "Token": token.token}
+    if mode not in MODES:
+        raise ValueError(f"unknown mode {mode!r}; choose from {', '.join(MODES)}")
+    enrollment, key = MODES[mode]
     beta: dict = {"ProgramEnrollment": enrollment}
-    if require:
-        beta["RequireProgram"] = program
-    else:
-        beta["OfferPrograms"] = [program]
+    if key:
+        if token is None:
+            raise ValueError(f"mode {mode!r} needs a beta program token")
+        program = {"Description": token.title, "Token": token.token}
+        beta[key] = program if key == "RequireProgram" else [program]
     return json.dumps(
         {
             "Type": SOFTWARE_UPDATE_SETTINGS,

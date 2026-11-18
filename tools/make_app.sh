@@ -24,6 +24,17 @@ rm -rf "$OUT"
 mkdir -p "$OUT/Contents/MacOS" "$OUT/Contents/Resources"
 cp "$BIN" "$OUT/Contents/MacOS/OmnissaBetaTokens"
 
+# Outfit Light/Medium (SIL OFL 1.1) with their licence; the app registers them at launch.
+mkdir -p "$OUT/Contents/Resources/Fonts"
+cp "$ROOT"/assets/fonts/*.ttf "$ROOT"/assets/fonts/OFL.txt "$OUT/Contents/Resources/Fonts/"
+# App icon, if one has been generated (see docs/branding/).
+if [[ -f "$ROOT/assets/AppIcon.icns" ]]; then
+  cp "$ROOT/assets/AppIcon.icns" "$OUT/Contents/Resources/AppIcon.icns"
+  ICON_KEY='<key>CFBundleIconFile</key><string>AppIcon</string>'
+else
+  ICON_KEY=''
+fi
+
 cat > "$OUT/Contents/Info.plist" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -39,6 +50,7 @@ cat > "$OUT/Contents/Info.plist" <<PLIST
   <key>LSMinimumSystemVersion</key><string>13.0</string>
   <key>NSHighResolutionCapable</key><true/>
   <key>LSApplicationCategoryType</key><string>public.app-category.utilities</string>
+  ${ICON_KEY}
 </dict>
 </plist>
 PLIST

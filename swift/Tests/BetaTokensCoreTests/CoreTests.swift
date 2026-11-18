@@ -118,17 +118,39 @@ private func makeP7M(dir: URL, payload: String) throws -> URL {
         #expect(Render.filter(toks, text: "ios").count == 1)
     }
 
-    @Test func declarationShape() throws {
+    private func beta(_ mode: EnrollmentMode, token: BetaToken?) throws -> [String: Any] {
         let d = try #require(try JSONSerialization.jsonObject(
-            with: Data(Render.declaration(for: toks[0]).utf8)) as? [String: Any])
-        let beta = try #require((d["Payload"] as? [String: Any])?["Beta"] as? [String: Any])
-        #expect(beta["ProgramEnrollment"] as? String == "Allowed")
-        #expect(beta["RequireProgram"] != nil)
+            with: Data(Render.declaration(for: token, mode: mode).utf8)) as? [String: Any])
+        return try #require((d["Payload"] as? [String: Any])?["Beta"] as? [String: Any])
+    }
 
-        let d2 = try #require(try JSONSerialization.jsonObject(
-            with: Data(Render.declaration(for: toks[0], enrollment: .alwaysOn, requireProgram: false).utf8)) as? [String: Any])
-        let beta2 = try #require((d2["Payload"] as? [String: Any])?["Beta"] as? [String: Any])
-        #expect(beta2["OfferPrograms"] != nil)
-        #expect(beta2["RequireProgram"] == nil)
+    @Test func declarationModesFollowAppleSchema() throws {
+        let auto = try beta(.automatic, token: toks[0])
+        #expect(auto["ProgramEnrollment"] as? String == "AlwaysOn")
+        #expect(auto["RequireProgram"] != nil)
+        #expect(auto["OfferPrograms"] == nil)
+
+        let offer = try beta(.offer, token: toks[0])
+        #expect(offer["ProgramEnrollment"] as? String == "Allowed")
+        #expect(offer["OfferPrograms"] != nil)
+        #expect(offer["RequireProgram"] == nil)
+
+        let aon = try beta(.offerAlwaysOn, token: toks[0])
+        #expect(aon["ProgramEnrollment"] as? String == "AlwaysOn")
+        #expect(aon["OfferPrograms"] != nil)
+
+        let off = try beta(.off, token: nil)
+        #expect(off["ProgramEnrollment"] as? String == "AlwaysOff")
+        #expect(off.count == 1)
+    }
+
+    @Test func requireProgramOnlyWithAlwaysOn() throws {
+        for mode in EnrollmentMode.allCases {
+            let b = try beta(mode, token: mode == .off ? nil : toks[0])
+            if b["RequireProgram"] != nil {
+                #expect(b["ProgramEnrollment"] as? String == "AlwaysOn")
+                #expect(b["OfferPrograms"] == nil)
+            }
+        }
     }
 }

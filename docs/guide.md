@@ -101,46 +101,83 @@ them. When finished, delete the management service in Apple Business.
 
 ## 5. Create the Workspace ONE UEM profile
 
+### 5.1 Supported devices
+
+The Beta setting is part of the declarative **Software Update: Settings**
+configuration. Source: Apple's `softwareupdate.settings` declaration schema.
+
+| Platform | Beta setting | Requirement |
+|---|---|---|
+| macOS | Supported | macOS 15.4 or later, **supervised** |
+| iOS and iPadOS | Supported | Supervised. Version follows the Software Update Settings payload (iOS 18.0 or later per the schema). |
+| tvOS, visionOS | Not supported | The schema lists the Beta key as not applicable. Tokens for these programs are listed by the utility but cannot be delivered with this setting. |
+
+On unsupervised devices only **Offer programs** can be used (the user enrolls
+manually). The organization must also be enrolled in AppleSeed for IT.
+
+### 5.2 Create the profile
+
 1. In UEM: **Resources > Profiles & Baselines > Profiles > Add > Add Profile**.
-2. Choose the platform (iOS, macOS, tvOS or visionOS).
-3. Set **Management Type** = Declarative, **Declaration Type** = Configuration,
+
+   ![UEM Add Profile: Select a platform to start (Apple iOS, macOS, tvOS, visionOS).](images/uem-add-profile-platform.png)
+
+   *Figure 4. Choose the platform.*
+
+2. Set **Management Type** = Declarative, **Declaration Type** = Configuration,
    **Context** = Device. Select Next.
-4. Name the profile (for example `macOS 27 Golden Gate AppleSeed Beta`).
-5. Add the **Software Update: Settings** payload and turn on **Beta**
-   (requires macOS 15.4 per the console).
-6. Set **Program enrollment** (Allowed, AlwaysOn or AlwaysOff).
-7. Turn on **Require program** and enter:
-   - Description: the program title.
-   - Token: the token for the matching OS and program.
-8. Select Next, set the assignment, then save and publish.
 
-[Screenshot placeholders: Add Profile platform picker; Declaration type;
-Software Update:Settings Beta - token field MUST be redacted]
+   ![UEM Apple iOS profile: Management Type Declarative, Declaration Type Configuration, Context Device.](images/uem-declarative-configuration.png)
 
-### Program enrollment values (from Apple)
+   *Figure 5. Declarative, Configuration, Device.*
 
-| Value | Behavior |
-|---|---|
-| Allowed | User may enroll in programs their Apple Account has, plus `OfferPrograms`. |
-| AlwaysOn | No sign-in needed; all `OfferPrograms` offered. Use with `RequireProgram` to enroll automatically. |
-| AlwaysOff | Prevents enrollment and unenrolls the device from any beta program. |
+3. Name the profile (for example `macOS 27 Golden Gate AppleSeed Beta`).
+4. Add the **Software Update: Settings** payload and turn on **Beta**.
+5. Choose a mode from the table below, and enter the Description (the program
+   title) and the Token for the matching OS and program.
+6. Select Next, set the assignment, then save and publish.
 
-Note: the tested tenant configuration used Allowed with Require program enabled.
-Apple's documentation pairs `RequireProgram` with `AlwaysOn`. Confirm which
-combination gives the expected result on your target OS before publishing this
-guide. Behavior difference: data unavailable.
+[Screenshot to add: the Beta section of the payload for the chosen mode. The
+token field must be redacted.]
+
+### 5.3 Choose a mode
+
+Apple's schema only allows these combinations. The utility generates them for
+you (app: **Mode**; CLI: `fetch --declaration --mode ...`).
+
+| Mode | Program enrollment | Require program | Offer programs | Result |
+|---|---|---|---|---|
+| Automatic (`auto`) | AlwaysOn | On | Off | The device enrolls in the program automatically. Users cannot enroll using their own Apple Account. |
+| Offer to user (`offer`) | Allowed | Off | On | The user can enroll in programs on their Apple Account, plus the offered program. |
+| Offer, no sign-in (`offer-always-on`) | AlwaysOn | Off | On | The offered programs are presented to the user to choose. Users cannot use their own Apple Account. |
+| Block and unenroll (`off`) | AlwaysOff | Off | Off | The device cannot enroll, and is removed from any beta program it is in. |
+
+Rules from the schema:
+
+- **Require program** is only valid with Program enrollment = **AlwaysOn**.
+- **Offer programs** must not be set together with **Require program**.
+- **AlwaysOff** carries no program.
+
+An earlier test profile used Allowed with Require program on. That combination
+is not valid under Apple's schema, so do not use it. Use **Automatic** instead.
+How a device handles the invalid combination: data unavailable.
 
 ## 6. Verify on the device
 
-- Confirm the profile shows as installed/compliant in UEM (Devices > device >
+- In UEM, confirm the profile shows as installed (Devices > the device >
   Profiles).
-- On the device, open Software Update and confirm the beta program is offered.
-- Exact on-device verification steps per OS: data unavailable (to be validated).
+- Apple defines status items `softwareupdate.beta-enrollment` and
+  `softwareupdate.pending-version` that report beta enrollment and the pending
+  update. Whether the UEM console shows them: data unavailable.
+- On the device, open Software Update (iOS and iPadOS: Settings > General >
+  Software Update; macOS: System Settings > General > Software Update) and
+  confirm the beta update is offered. **Assumption, not validated on a test
+  device:** menu paths and wording can differ by OS version.
 
 ## 7. Unenroll
 
-Assign a profile with Program enrollment = AlwaysOff to the device. This
-removes the device from any beta program. Supervised devices only.
+Assign a profile in **Block and unenroll** mode (Program enrollment =
+AlwaysOff) to the device. This removes the device from any beta program.
+Supervised devices only.
 
 ## 8. Troubleshooting
 
@@ -151,6 +188,8 @@ removes the device from any beta program. Supervised devices only.
 | Token not accepted | Token expired for its seeding period | Fetch fresh tokens |
 | Decrypt failed | `.p7m` does not match uploaded `.pem` | Re-run `init` and re-upload |
 | Device not enrolling | Unsupervised device | Offer the program; user enrolls manually |
+| Profile does not enroll the device | Invalid combination (for example Allowed with Require program) | Use Automatic mode: AlwaysOn with Require program |
+| tvOS or visionOS device not enrolling | Beta setting not supported on these platforms | Not applicable; see the compatibility table |
 
 ## 9. References
 

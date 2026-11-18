@@ -19,11 +19,8 @@ struct ContentView: View {
                 }
                 .padding(20)
             }
-            .background(Brand.background)
+            .background(GlassBackdrop())
         }
-        // The Omnissa look uses light surfaces; pin light mode so labels stay readable
-        // when the Mac is in dark mode.
-        .preferredColorScheme(.light)
         .fileImporter(isPresented: $importing,
                       allowedContentTypes: [UTType(filenameExtension: "p7m") ?? .data, .data]) { result in
             if case .success(let url) = result { model.p7m = url }
@@ -35,15 +32,16 @@ struct ContentView: View {
     private var header: some View {
         VStack(alignment: .leading, spacing: 4) {
             Text("OMNISSA  |  WORKSPACE ONE UEM")
-                .font(.system(size: 11, weight: .medium)).tracking(1.6).opacity(0.9)
-            Text("Beta Token Utility").font(.system(size: 26, weight: .medium))
+                .font(Brand.font(11, medium: true)).tracking(1.6).opacity(0.9)
+            Text("Beta Token Utility").font(Brand.font(26, medium: true))
             Text("Get Apple beta enrollment tokens for your declarative Software Update profile.")
-                .font(.system(size: 13, weight: .light))
+                .font(Brand.font(13))
         }
         .foregroundColor(.white)
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, 20).padding(.vertical, 18)
-        .background(Brand.gradient)
+        .background(Brand.headerGradient)
+        .overlay(alignment: .bottom) { Brand.edge.frame(height: 3) }
     }
 
     // MARK: Steps
@@ -51,9 +49,9 @@ struct ContentView: View {
     private var stepCreate: some View {
         card(number: 1, title: "Create certificate") {
             Text("In Apple Business go to Devices > Management Services > Add, name the service, and upload the .pem file. Then download the .p7m server token.")
-                .font(.system(size: 13)).foregroundColor(Brand.text)
+                .font(Brand.font(13)).foregroundColor(Brand.text)
             HStack {
-                Text("Service name:").font(.system(size: 12)).foregroundColor(Brand.slate)
+                Text("Service name:").font(Brand.font(12)).foregroundColor(Brand.slate)
                 Text(AppModel.serviceName)
                     .font(.system(size: 12, design: .monospaced)).textSelection(.enabled)
                 Button("Copy name") { model.copyServiceName() }.buttonStyle(SecondaryButtonStyle())
@@ -75,7 +73,7 @@ struct ContentView: View {
             HStack {
                 Button("Choose file...") { importing = true }.buttonStyle(SecondaryButtonStyle())
                 Text(model.p7m?.lastPathComponent ?? "No file selected")
-                    .font(.system(size: 12)).foregroundColor(Brand.slate).lineLimit(1).truncationMode(.middle)
+                    .font(Brand.font(12)).foregroundColor(Brand.slate).lineLimit(1).truncationMode(.middle)
             }
         }
         .dropDestination(for: URL.self) { urls, _ in
@@ -108,14 +106,15 @@ struct ContentView: View {
             }
             List(model.filtered, selection: $model.selection) { t in
                 HStack {
-                    Text(t.title).font(.system(size: 13)).foregroundColor(Brand.text)
+                    Text(t.title).font(Brand.font(13)).foregroundColor(Brand.text)
                     Spacer()
-                    Text(t.osDisplay).font(.system(size: 12)).foregroundColor(Brand.slate)
+                    Text(t.osDisplay).font(Brand.font(12)).foregroundColor(Brand.slate)
                 }.tag(t.id)
             }
             .scrollContentBackground(.hidden)
-            .background(Color.white)
-            .overlay(RoundedRectangle(cornerRadius: 6).stroke(Brand.tint, lineWidth: 1))
+            .background(Brand.card.opacity(0.6))
+            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous).stroke(Brand.rule, lineWidth: 1))
             .frame(height: 200)
             if let t = model.selected { detail(t) }
         }
@@ -123,7 +122,7 @@ struct ContentView: View {
 
     private func detail(_ t: BetaToken) -> some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text(t.title).font(.system(size: 15, weight: .medium)).foregroundColor(Brand.navy)
+            Text(t.title).font(Brand.font(15, medium: true)).foregroundColor(Brand.navy)
             HStack {
                 Text(model.revealToken ? t.token : t.maskedToken)
                     .font(.system(size: 12, design: .monospaced)).textSelection(.enabled)
@@ -134,21 +133,19 @@ struct ContentView: View {
                     .buttonStyle(PrimaryButtonStyle())
             }
             Divider()
-            Text("Workspace ONE UEM Software Update:Settings > Beta").font(.system(size: 12)).foregroundColor(Brand.slate)
-            HStack {
-                Picker("Program enrollment", selection: $model.enrollment) {
-                    ForEach(ProgramEnrollment.allCases, id: \.self) { Text($0.rawValue).tag($0) }
-                }.frame(width: 260)
-                Toggle("Require program", isOn: $model.requireProgram).controlSize(.small)
+            Text("Workspace ONE UEM Software Update:Settings > Beta").font(Brand.font(12)).foregroundColor(Brand.slate)
+            Picker("Mode", selection: $model.mode) {
+                ForEach(EnrollmentMode.allCases) { Text($0.title).tag($0) }
             }
+            Text("UEM: " + model.mode.uemSummary).font(Brand.font(12)).foregroundColor(Brand.slate)
             Button("Copy reference declaration (JSON)") {
-                model.copy(Render.declaration(for: t, enrollment: model.enrollment, requireProgram: model.requireProgram),
+                model.copy(Render.declaration(for: t, mode: model.mode),
                            note: "Declaration copied to clipboard.")
             }.buttonStyle(SecondaryButtonStyle())
         }
         .foregroundColor(Brand.text)
         .padding(12)
-        .background(RoundedRectangle(cornerRadius: 8).fill(Brand.background))
+        .glass(12)
     }
 
     // MARK: Status
@@ -157,9 +154,9 @@ struct ContentView: View {
         if let e = model.errorText {
             // Magenta is reserved for negative/exception data.
             Label(e, systemImage: "exclamationmark.triangle.fill")
-                .font(.system(size: 13)).foregroundColor(Brand.magenta)
+                .font(Brand.font(13)).foregroundColor(Brand.magenta)
         } else if let m = model.message {
-            Label(m, systemImage: "info.circle").font(.system(size: 13)).foregroundColor(Brand.slate)
+            Label(m, systemImage: "info.circle").font(Brand.font(13)).foregroundColor(Brand.slate)
         }
     }
 
@@ -168,15 +165,14 @@ struct ContentView: View {
     private func card<Content: View>(number: Int, title: String, @ViewBuilder content: () -> Content) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 10) {
-                Text("\(number)").font(.system(size: 12, weight: .medium)).foregroundColor(.white)
+                Text("\(number)").font(Brand.font(12, medium: true)).foregroundColor(.white)
                     .frame(width: 22, height: 22).background(Circle().fill(Brand.indigo))
-                Text(title).font(.system(size: 15, weight: .medium)).foregroundColor(Brand.navy)
+                Text(title).font(Brand.font(15, medium: true)).foregroundColor(Brand.navy)
             }
             content()
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(16)
-        .background(RoundedRectangle(cornerRadius: 10).fill(.white))
-        .overlay(RoundedRectangle(cornerRadius: 10).stroke(Brand.tint, lineWidth: 1))
+        .glass(16)
     }
 }

@@ -16,8 +16,7 @@ final class AppModel: ObservableObject {
     @Published var osFilter = "All"
     @Published var selection: BetaToken.ID?
     @Published var revealToken = false
-    @Published var enrollment: ProgramEnrollment = .allowed
-    @Published var requireProgram = true
+    @Published var mode: EnrollmentMode = .automatic
 
     init() { refresh() }
 
