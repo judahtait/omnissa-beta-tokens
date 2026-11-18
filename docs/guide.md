@@ -1,9 +1,13 @@
 # Enrolling Apple Devices in a Beta Program with Workspace ONE UEM
+**Status:** Draft only. Review required by Legal, Compliance, or relevant Omnissa control owner.
+**Date:** 2026-11-17
+**Author:** Judah Tait (Support Engineering)
 
-Draft only. Review required by Legal, Compliance, or relevant Omnissa control owner.
+---
 
-Status: DRAFT source for the Omnissa-branded HTML guide. Screenshots are
-placeholders and must be cropped/redacted (no tokens, tenant secrets) before use.
+<!-- Source for the branded HTML guide (python3 tools/build_guide.py).
+Screenshots are placeholders and must be cropped/redacted (no tokens or tenant
+secrets) before use. -->
 
 ## 1. Overview
 
@@ -21,19 +25,33 @@ assign to devices -> verify on the device.
 - The organization enrolled in AppleSeed for IT: https://beta.apple.com/for-it
   (otherwise Apple returns 403 `APPLE_SEED_FOR_IT_TURNED_OFF`).
 - Workspace ONE UEM with declarative management support for the target OS.
-- A Mac with Python 3.9+ and `openssl` (to run `omnissa-beta-tokens`).
+- A Mac or Linux machine with Python 3.9+ and `openssl` (to run the utility).
 - Supervised devices for UEM-controlled enrollment/unenrollment. On
   unsupervised devices only offering a program is possible (user enrolls
   manually). Source: Apple "Enrolling a device in a beta program".
 
-## 3. Get the beta tokens
+## 3. Download the utility
 
-1. Run `omnissa-beta-tokens init`. It creates a key and a certificate (`.pem`).
+`omnissa-beta-tokens` is a single Python file with no third-party dependencies.
+Download it below, verify the hash, and run it with `python3`. You can read the
+full source before running it.
+
+<!-- UTILITY_DOWNLOAD -->
+
+Run it like this (macOS or Linux):
+
+```
+python3 omnissa-beta-tokens.py --help
+```
+
+## 4. Get the beta tokens
+
+1. Run `python3 omnissa-beta-tokens.py init`. It creates a key and a certificate (`.pem`).
 2. In Apple Business: **Devices > Management Services > Add**.
 3. Name the service (suggested: `Apple Beta Token Service for MDM`). Leave
    "Allow this service to release devices" unchecked.
 4. Upload the `.pem` and continue (Step 2 of 2), then download the `.p7m`.
-5. Run `omnissa-beta-tokens fetch --watch` (or `--p7m <file>`).
+5. Run `python3 omnissa-beta-tokens.py fetch --watch` (or `--p7m <file>`).
 6. Pick the program you need, for example `macOS 27 Golden Gate AppleSeed Beta`.
    Use `--reveal` or `--format json` to get the full token.
 
@@ -42,7 +60,7 @@ assign to devices -> verify on the device.
 Security: the `.p7m`, key and tokens are credentials. Do not share or commit
 them. When finished, delete the management service in Apple Business.
 
-## 4. Create the Workspace ONE UEM profile
+## 5. Create the Workspace ONE UEM profile
 
 1. In UEM: **Resources > Profiles & Baselines > Profiles > Add > Add Profile**.
 2. Choose the platform (iOS, macOS, tvOS or visionOS).
@@ -73,19 +91,19 @@ Apple's documentation pairs `RequireProgram` with `AlwaysOn`. Confirm which
 combination gives the expected result on your target OS before publishing this
 guide. Behavior difference: data unavailable.
 
-## 5. Verify on the device
+## 6. Verify on the device
 
 - Confirm the profile shows as installed/compliant in UEM (Devices > device >
   Profiles).
 - On the device, open Software Update and confirm the beta program is offered.
 - Exact on-device verification steps per OS: data unavailable (to be validated).
 
-## 6. Unenroll
+## 7. Unenroll
 
 Assign a profile with Program enrollment = AlwaysOff to the device. This
 removes the device from any beta program. Supervised devices only.
 
-## 7. Troubleshooting
+## 8. Troubleshooting
 
 | Symptom | Cause | Action |
 |---|---|---|
@@ -95,7 +113,7 @@ removes the device from any beta program. Supervised devices only.
 | Decrypt failed | `.p7m` does not match uploaded `.pem` | Re-run `init` and re-upload |
 | Device not enrolling | Unsupervised device | Offer the program; user enrolls manually |
 
-## 8. References
+## 9. References
 
 - Apple: Enrolling a device in a beta program -
   https://developer.apple.com/documentation/devicemanagement/enrolling-a-device-in-a-beta-program

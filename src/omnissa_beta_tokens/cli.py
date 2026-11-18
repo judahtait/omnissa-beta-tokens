@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import os
 import shutil
 import sys
 import time
@@ -16,6 +17,24 @@ from .servertoken import (
 )
 
 DEFAULT_WORKDIR = Path("~/.omnissa-beta-tokens").expanduser()
+
+
+INDIGO = "\x1b[38;2;74;18;240m"   # Omnissa indigo #4A12F0
+SLATE = "\x1b[38;2;76;97;144m"    # Omnissa slate #4C6190
+BOLD, RESET = "\x1b[1m", "\x1b[0m"
+
+
+def _banner(enabled: bool) -> None:
+    """Omnissa banner on stderr so stdout stays clean for JSON/CSV piping."""
+    if not enabled:
+        return
+    color = sys.stderr.isatty() and "NO_COLOR" not in os.environ
+    b, i, s, r = (BOLD, INDIGO, SLATE, RESET) if color else ("", "", "", "")
+    print(
+        f"{b}{i}OMNISSA{r}  {b}Beta Token Utility{r} v{__version__}\n"
+        f"{s}Workspace ONE UEM - Apple beta enrollment tokens{r}\n",
+        file=sys.stderr,
+    )
 
 
 def _err(msg: str) -> int:
@@ -95,6 +114,7 @@ def build_parser() -> argparse.ArgumentParser:
         description="Get Apple beta enrollment tokens for Workspace ONE UEM.",
     )
     p.add_argument("--version", action="version", version=__version__)
+    p.add_argument("--no-banner", action="store_true", help="Do not print the Omnissa banner")
     p.add_argument("--workdir", type=lambda s: Path(s).expanduser(), default=DEFAULT_WORKDIR,
                    help=f"Key/cert/token directory (default: {DEFAULT_WORKDIR})")
     sub = p.add_subparsers(dest="command", required=True)
@@ -120,6 +140,7 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
+    _banner(not args.no_banner)
     return args.func(args)
 
 

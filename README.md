@@ -47,6 +47,18 @@ PYTHONPATH=src python3 -m unittest discover -s tests -v
 
 Tests use fabricated credentials only.
 
+## Build the single-file utility and the branded guide
+
+```bash
+python3 tools/bundle.py        # dist/omnissa-beta-tokens.py (one readable file)
+pip install markdown           # guide builder only
+python3 tools/build_guide.py   # dist/omnissa-beta-guide.html
+```
+
+The guide HTML embeds the single-file utility with a Download button, SHA-256
+hash and a Copy button, so it works offline and needs no public hosting.
+`dist/` is generated and git-ignored.
+
 ## Docs
 
 - `docs/guide.md` - Workspace ONE enrollment guide (source for the branded HTML).
