@@ -21,10 +21,12 @@ High-level flow:
 1. Create a local key and certificate with Omnissa Beta Token Utility.
 2. Register an external device management service in Apple Business and download
    the `.p7m` server token.
-3. Fetch the organization's beta programs and copy a token.
-4. Build a Workspace ONE UEM declarative profile and assign it to supervised
-   devices.
-5. Confirm enrollment on the device (see [Known gaps](#10-known-gaps)).
+3. Fetch the organization's beta programs and copy a token (optionally via
+   `--uem-block`).
+4. Build a Workspace ONE UEM declarative profile, assign it, and publish.
+5. Confirm enrollment on the device (see [On-device validation checklist](#6-on-device-validation-checklist) and [Known gaps](#12-known-gaps)).
+6. When finished, delete the Apple Business service and clean up local files
+   (see [Finish / cleanup](#9-finish--cleanup)).
 
 ## 2. Prerequisites
 
@@ -39,27 +41,31 @@ High-level flow:
 
 ## 3. Download the utility
 
-The same logic ships three ways. Pick one:
+Primary formats for 0.1.x:
 
 | Format | Best for | Needs |
 |---|---|---|
+| **Rust CLI** (`omnissa-beta-tokens`, macos-arm64) | Command line (primary) | Apple Silicon Mac |
 | **macOS app** | Click-through workflow | macOS 13 or later |
-| **Single-file script** (`omnissa-beta-tokens.py`) | Reading the code before you run it | Python 3.9+ and system `openssl` |
-| **arm64 binary** | CLI without Python | Apple Silicon Mac |
+| **Single-file script** (`omnissa-beta-tokens.py`) | Optional readable fallback | Python 3.9+ and system `openssl` |
 
 Get release builds from the repository **Releases** page (or use the embedded
-script below when you are reading this guide offline). Until builds are signed
-and notarized, macOS may block the app on first launch: right-click → **Open**,
-or run `xattr -d com.apple.quarantine "Omnissa Beta Token Utility.app"`.
+script below when you are reading this guide offline). The primary CLI asset is
+`omnissa-beta-tokens-<version>-macos-arm64` (Rust). **Published v0.1.0 may not
+yet attach that binary** — check `SHA256SUMS`, or build with
+`cd rust && cargo build --release`, or use the app / legacy `.py`. Until builds
+are signed and notarized, macOS may block the app on first launch: right-click →
+**Open**, or run `xattr -d com.apple.quarantine "Omnissa Beta Token Utility.app"`.
 
 <!-- UTILITY_DOWNLOAD -->
 
-Command-line examples in this guide use the script form. Substitute
-`omnissa-beta-tokens` if you installed the binary, or use the matching controls
-in the app.
+Command-line examples in this guide use the **Rust** binary
+`omnissa-beta-tokens`. The same subcommands work with the optional Python
+fallback if you prefer to read the code first:
 
 ```
-python3 omnissa-beta-tokens.py --help
+omnissa-beta-tokens --help
+# optional: python3 omnissa-beta-tokens.py --help
 ```
 
 ## 4. Get the beta tokens
@@ -67,7 +73,7 @@ python3 omnissa-beta-tokens.py --help
 ### 4.1 Create the certificate
 
 ```
-python3 omnissa-beta-tokens.py init
+omnissa-beta-tokens init
 ```
 
 This creates a private key and a certificate (`.pem`) in
@@ -76,7 +82,8 @@ prints the `.pem` path to upload. In the app, choose **Create certificate**.
 
 Treat the private key and later the `.p7m` as credentials. Do not commit or
 share them. When you are finished, delete the management service in Apple
-Business and remove the local files.
+Business and run `omnissa-beta-tokens cleanup --yes` (see
+[Finish / cleanup](#9-finish--cleanup)).
 
 ### 4.2 Open Management Services in Apple Business
 
@@ -114,16 +121,22 @@ release checkbox cleared, and upload the `.pem`.*
 ### 4.4 Fetch the beta programs
 
 ```
-python3 omnissa-beta-tokens.py fetch --watch
-# or: python3 omnissa-beta-tokens.py fetch --p7m ~/Downloads/something.p7m
+omnissa-beta-tokens fetch --watch
+# or: omnissa-beta-tokens fetch --p7m ~/Downloads/something.p7m
 ```
 
 Useful filters and outputs:
 
 ```
-python3 omnissa-beta-tokens.py fetch --os macOS --reveal
-python3 omnissa-beta-tokens.py fetch --match "macOS 27" --format json
+omnissa-beta-tokens fetch --os macOS --reveal
+omnissa-beta-tokens fetch --match "macOS 27" --format json
+omnissa-beta-tokens fetch --os macOS --match "27" --uem-block
 ```
+
+`--uem-block` requires **exactly one** matched program (narrow with `--os`
+and/or `--match`). It prints Title, Token, and a Mode field checklist for the
+UEM console — **not** declaration JSON — and copies the block to the clipboard
+when `pbcopy` is available.
 
 In the app: choose the `.p7m`, then **Fetch beta tokens**, pick a program, copy
 the token, and use the Mode picker as a reminder of which UEM Beta fields to set.
@@ -134,6 +147,10 @@ Security notes:
 - The decrypted server token stays in memory only.
 - Table output masks beta tokens unless you pass `--reveal` (or use Reveal in
   the app). JSON and CSV output include full tokens because they are for export.
+- If `access_token_expiry` on the server token is in the past, the CLI warns you
+  to regenerate the `.p7m` in Apple Business.
+- If any matched program is tvOS or visionOS, the CLI warns that UEM Software
+  Update: Settings > Beta cannot deliver those platforms.
 
 ## 5. Create the Workspace ONE UEM profile
 
@@ -169,17 +186,20 @@ manually). The organization must also be enrolled in AppleSeed for IT.
 3. Name the profile (for example `macOS 27 Golden Gate AppleSeed Beta`).
 4. Add the **Software Update: Settings** payload and turn on **Beta**.
 5. Choose a mode from the table below. Enter the **Description** (program
-   title) and **Token** for that OS and program, matching the utility output.
-6. Select Next, set the assignment, then save and publish.
+   title) and **Token** for that OS and program, matching the utility output
+   (or paste from `--uem-block`).
+6. Select Next, set the assignment (see [Assignment checklist](#5-4-assignment-checklist)), then save and publish.
 
 [Screenshot to add: Software Update: Settings > Beta in Automatic mode
 (Program enrollment = AlwaysOn, Require program = on). Redact the token field.
 No tenant name or session data.]
 
-### 5.3 Choose a mode
+### 5.3 Choose a mode (UEM field guidance only)
 
 Apple's schema only allows these combinations. Enter them in the UEM Beta
-payload (the app **Mode** picker shows the matching field summary).
+payload (the app **Mode** picker and `fetch --uem-block` show the matching
+field summary). **Do not expect declaration JSON from this tool** — paste title
+and token, then set the fields.
 
 | Mode | Program enrollment | Require program | Offer programs | Result |
 |---|---|---|---|---|
@@ -197,7 +217,61 @@ Rules from the schema:
 Do **not** use Allowed together with Require program. That combination is
 invalid under Apple's schema. Use **Automatic** instead.
 
-## 6. Verify on the device
+### 5.4 Assignment checklist
+
+Use this before publishing the profile:
+
+- [ ] **Supervised only** — exclude unsupervised devices from assignment
+      (Automatic / Block and unenroll require supervision).
+- [ ] **OS floors** — macOS **15.4+**; iOS / iPadOS **18.0+** (per the Software
+      Update Settings schema). Exclude older builds from the Smart Group.
+- [ ] **Smart Group tips** — prefer an explicit test Smart Group first (named
+      devices or a small pilot). Filter on platform, OS version, and
+      supervision/enrollment status your tenant exposes. Avoid “all devices”
+      until on-device validation passes.
+- [ ] **Separate enroll vs. exit profiles** — one profile for the beta mode you
+      want (for example Automatic), and a second profile in **Block and
+      unenroll** (AlwaysOff) for teardown. Do not rely on simply removing the
+      enroll profile if you need devices out of the beta program.
+- [ ] **Assignment exclusivity** — devices should not receive conflicting Beta
+      modes at once; assign the Block and unenroll profile when exiting, and
+      remove or exclude the enroll profile for those devices.
+- [ ] **Title and token** match `fetch` / `--uem-block` (no extra whitespace).
+- [ ] Publish / activate completed; no draft-only assignment left behind.
+
+## 6. On-device validation checklist
+
+Human E2E scaffold. Items remain unchecked until a supervised test Mac and
+iPhone confirm them. Treat section results as assumptions until then.
+
+### Mac (supervised, macOS 15.4+)
+
+- [ ] Profile shows as installed in UEM (**Devices** > device > **Profiles**).
+- [ ] Software Update path: **System Settings > General > Software Update**.
+- [ ] Expected beta program / build is offered (or Automatic enrollment
+      completed without a user Apple Account prompt, if using Automatic).
+- [ ] After Block and unenroll assignment: beta offer is gone / device left the
+      program.
+- [ ] Note UEM status items if visible (`softwareupdate.beta-enrollment`,
+      `softwareupdate.pending-version`) — or mark “not surfaced in console”.
+
+### iPhone (supervised, iOS 18+)
+
+- [ ] Profile shows as installed in UEM.
+- [ ] Software Update path: **Settings > General > Software Update**.
+- [ ] Expected beta program / build is offered (or Automatic enrollment
+      behavior matches the chosen mode).
+- [ ] After Block and unenroll assignment: device left the program / beta offer
+      cleared.
+- [ ] Note any user-visible prompts that differ from macOS.
+
+### Cross-checks
+
+- [ ] Token period still valid (re-fetch if the seeding period rolled).
+- [ ] Screenshots for the guide (token redacted; no tenant or session data).
+- [ ] Record OS builds and UEM console version used for the test.
+
+## 7. Verify on the device (summary)
 
 - In UEM, confirm the profile shows as installed (**Devices** > the device >
   **Profiles**).
@@ -208,42 +282,75 @@ invalid under Apple's schema. Use **Automatic** instead.
   Software Update**; macOS: **System Settings > General > Software Update**)
   and confirm the beta update is offered.
 
-See [Known gaps](#10-known-gaps): on-device menu paths and enrollment behavior
-have not been validated end to end on a supervised test device yet.
+Use the [On-device validation checklist](#6-on-device-validation-checklist) for
+the full Mac + iPhone pass. See [Known gaps](#12-known-gaps): on-device menu
+paths and enrollment behavior have not been validated end to end yet.
 
-## 7. Unenroll
+## 8. Unenroll
 
 Assign a profile in **Block and unenroll** mode (Program enrollment =
 AlwaysOff) to the device. This removes the device from any beta program.
-Supervised devices only.
+Supervised devices only. Prefer a dedicated Smart Group / assignment for exit
+(see [Assignment checklist](#5-4-assignment-checklist)).
 
-## 8. Troubleshooting
+## 9. Finish / cleanup
+
+When you no longer need the Apple Business management service used for token
+fetch:
+
+1. Unenroll devices that should leave the beta (section 8), or leave them
+   enrolled if that is intentional.
+2. In Apple Business, delete the external device management service
+   (`Workspace One Beta Token Service` or the name you used).
+3. Remove local credentials:
+
+```
+omnissa-beta-tokens cleanup --yes
+```
+
+`cleanup` deletes `mdm_private.key`, `mdm_public_cert.pem`, and any `*.p7m`
+under `--workdir` (default `~/.omnissa-beta-tokens`). It does **not** delete the
+Apple Business service — do that in the portal. Without `--yes`, the CLI prompts
+on a TTY and refuses on a non-interactive terminal.
+
+Optional Python fallback:
+
+```
+python3 omnissa-beta-tokens.py cleanup --yes
+```
+
+## 10. Troubleshooting
 
 | Symptom | Cause | Action |
 |---|---|---|
 | 403 `APPLE_SEED_FOR_IT_TURNED_OFF` | Org not enrolled in AppleSeed for IT | Enroll at beta.apple.com/for-it |
 | Session request fails (401/403) | Server token expired or revoked | Create a new management service and `.p7m` |
+| CLI warns about `access_token_expiry` | Server token past expiry | Regenerate `.p7m` in Apple Business |
 | Token not accepted | Token expired for its seeding period | Fetch fresh tokens |
 | Decrypt failed | `.p7m` does not match uploaded `.pem` | Re-run `init` and re-upload |
+| `--uem-block` errors | More than one program matched | Narrow with `--os` and/or `--match` |
 | Device not enrolling | Unsupervised device | Offer the program; user enrolls manually |
 | Profile does not enroll the device | Invalid combination (for example Allowed with Require program) | Use Automatic: AlwaysOn with Require program |
 | tvOS or visionOS device not enrolling | Beta setting not supported on these platforms | Not applicable; see the compatibility table |
 | macOS blocks the app on first launch | Build not notarized yet | Right-click → Open, or clear quarantine with `xattr` |
 
-## 9. References
+## 11. References
 
 - Apple: [Enrolling a device in a beta program](https://developer.apple.com/documentation/devicemanagement/enrolling-a-device-in-a-beta-program)
 - Apple: [Get beta enrollment tokens](https://developer.apple.com/documentation/devicemanagement/get-beta-enrollment-tokens)
 - Project README (download formats, security model, known gaps)
 
-## 10. Known gaps
+## 12. Known gaps
 
 - **On-device behavior** (which devices enroll, and what users see in Software
-  Update) has not been validated end to end. Steps in section 6 are assumptions
-  until a supervised test Mac or iPhone confirms them.
+  Update) has not been validated end to end. The checklist in section 6 is the
+  scaffold for that work; steps remain assumptions until a supervised test Mac
+  or iPhone confirms them.
 - **UEM Beta payload screenshot** for Automatic mode is still a placeholder
   above. Capture with the token redacted before external sharing.
 - **Signing and notarization** for the macOS app are not done yet; Gatekeeper
-  will warn on first launch.
+  will warn on first launch until Developer ID signing and notarization land.
+- **Private distribution** — the repository and releases are private; there is
+  no public download channel yet.
 - Builds talk only to `mdmenrollment.apple.com` for token fetch. They need no
   other cloud account.

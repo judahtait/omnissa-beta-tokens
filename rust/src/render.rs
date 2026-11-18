@@ -1,8 +1,31 @@
-//! Output formatting: table, JSON, and CSV.
+//! Output formatting: table, JSON, CSV, and UEM paste guidance.
 
 use serde_json::{json, Value};
 
 use crate::credentials::BetaToken;
+
+/// Platforms where Software Update:Settings > Beta cannot deliver a program.
+const UEM_BETA_UNSUPPORTED_OS: &[&str] = &["tvos", "visionos"];
+
+/// Mode field checklist matching Python / Swift UEM guidance (not declaration JSON).
+const UEM_MODE_CHECKLIST: &[(&str, &str)] = &[
+    (
+        "Automatic",
+        "Program enrollment=AlwaysOn, Require program=on, Offer programs=off",
+    ),
+    (
+        "Offer",
+        "Program enrollment=Allowed, Require program=off, Offer programs=on",
+    ),
+    (
+        "Offer-no-sign-in",
+        "Program enrollment=AlwaysOn, Require program=off, Offer programs=on",
+    ),
+    (
+        "Block",
+        "Program enrollment=AlwaysOff (no program; block and unenroll)",
+    ),
+];
 
 /// Match Python: sort, then OS membership on lowered os/os_display, then title substring.
 pub fn filter_tokens(
@@ -32,6 +55,39 @@ pub fn filter_tokens(
         out.retain(|t| t.title.to_ascii_lowercase().contains(&m));
     }
     out
+}
+
+/// Distinct display names among tokens that UEM Beta cannot deliver.
+pub fn unsupported_uem_beta_oses(tokens: &[BetaToken]) -> Vec<String> {
+    let mut found = Vec::new();
+    let mut seen = std::collections::HashSet::new();
+    for t in tokens {
+        let key = t.os_display().to_ascii_lowercase();
+        if UEM_BETA_UNSUPPORTED_OS.contains(&key.as_str()) && seen.insert(key) {
+            found.push(t.os_display().to_string());
+        }
+    }
+    found
+}
+
+/// Title + token + Mode field checklist for UEM paste (not declaration JSON).
+pub fn uem_paste_block(token: &BetaToken) -> String {
+    let width = UEM_MODE_CHECKLIST
+        .iter()
+        .map(|(name, _)| name.len())
+        .max()
+        .unwrap_or(0);
+    let mut lines = vec![
+        "=== UEM Software Update: Settings > Beta ===".to_string(),
+        format!("Title: {}", token.title),
+        format!("Token: {}", token.token),
+        String::new(),
+        "Mode field checklist (pick one combination in UEM; not JSON):".to_string(),
+    ];
+    for (name, summary) in UEM_MODE_CHECKLIST {
+        lines.push(format!("  {name:<width$}  {summary}"));
+    }
+    lines.join("\n")
 }
 
 pub fn to_table(tokens: &[BetaToken], reveal: bool) -> String {
@@ -130,6 +186,11 @@ mod tests {
                 os: "iOS".into(),
                 token: "I".repeat(40),
             },
+            BetaToken {
+                title: "tvOS Seed".into(),
+                os: "tvOS".into(),
+                token: "T".repeat(40),
+            },
         ]
     }
 
@@ -146,5 +207,24 @@ mod tests {
         let table = to_table(&t, false);
         assert!(!table.contains(&"M".repeat(40)));
         assert!(table.contains("MMMMMM...MMMM"));
+    }
+
+    #[test]
+    fn uem_block_lists_four_modes() {
+        let t = &toks()[0];
+        let block = uem_paste_block(t);
+        assert!(block.contains("Title: macOS Test Beta"));
+        assert!(block.contains(&format!("Token: {}", "M".repeat(40))));
+        assert!(block.contains("Automatic"));
+        assert!(block.contains("Offer-no-sign-in"));
+        assert!(block.contains("Block"));
+        assert!(block.contains("not JSON"));
+        assert!(!block.contains("com.apple.configuration"));
+    }
+
+    #[test]
+    fn unsupported_oses_detected() {
+        let names = unsupported_uem_beta_oses(&toks());
+        assert_eq!(names, vec!["tvOS".to_string()]);
     }
 }

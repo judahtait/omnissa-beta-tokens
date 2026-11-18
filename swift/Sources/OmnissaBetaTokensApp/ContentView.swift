@@ -6,6 +6,7 @@ import BetaTokensCore
 struct ContentView: View {
     @EnvironmentObject var model: AppModel
     @State private var importing = false
+    @State private var confirmTeardown = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -25,6 +26,18 @@ struct ContentView: View {
         .fileImporter(isPresented: $importing,
                       allowedContentTypes: [UTType(filenameExtension: "p7m") ?? .data, .data]) { result in
             if case .success(let url) = result { model.p7m = url }
+        }
+        .confirmationDialog(
+            "Delete local credentials?",
+            isPresented: $confirmTeardown,
+            titleVisibility: .visible
+        ) {
+            Button("Delete key, cert, and .p7m", role: .destructive) {
+                model.teardownLocalCredentials()
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("This securely deletes the private key, certificate, and any .p7m files in \(model.workdir.path). Also delete the management service in Apple Business if you no longer need it.")
         }
     }
 
@@ -70,6 +83,10 @@ struct ContentView: View {
                     Button("Create certificate") { model.createCertificate() }.buttonStyle(PrimaryButtonStyle())
                 }
                 Button("Open Apple Business") { model.openAppleBusiness() }.buttonStyle(SecondaryButtonStyle())
+                if model.hasKeypair || model.p7m != nil {
+                    Button("Delete local credentials...") { confirmTeardown = true }
+                        .buttonStyle(SecondaryButtonStyle())
+                }
             }
         }
     }
@@ -129,6 +146,15 @@ struct ContentView: View {
     private func detail(_ t: BetaToken) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             Text(t.title).font(Brand.font(15, medium: true)).foregroundColor(Brand.navy)
+            if t.isUnsupportedBetaPlatform {
+                Label(
+                    "\(t.osDisplay) is not supported: the Beta setting cannot deliver this program via Software Update:Settings.",
+                    systemImage: "exclamationmark.triangle.fill"
+                )
+                .font(Brand.font(12))
+                .foregroundColor(Brand.magenta)
+                .fixedSize(horizontal: false, vertical: true)
+            }
             HStack {
                 Text(model.revealToken ? t.token : t.maskedToken)
                     .font(.system(size: 12, design: .monospaced)).textSelection(.enabled)
@@ -137,6 +163,8 @@ struct ContentView: View {
                 Toggle("Reveal", isOn: $model.revealToken).toggleStyle(.switch).controlSize(.small)
                 Button("Copy token") { model.copy(t.token, note: "Token copied to clipboard.") }
                     .buttonStyle(PrimaryButtonStyle())
+                Button("Copy for UEM") { model.copyForUEM(t) }
+                    .buttonStyle(SecondaryButtonStyle())
             }
             Divider()
             Text("Workspace ONE UEM Software Update:Settings > Beta").font(Brand.font(12)).foregroundColor(Brand.slate)
@@ -144,6 +172,9 @@ struct ContentView: View {
                 ForEach(EnrollmentMode.allCases) { Text($0.title).tag($0) }
             }
             Text("UEM: " + model.mode.uemSummary).font(Brand.font(12)).foregroundColor(Brand.slate)
+            Text(model.mode.fieldChecklist)
+                .font(Brand.font(12))
+                .foregroundColor(Brand.slate)
         }
         .foregroundColor(Brand.text)
         .padding(12)

@@ -3,13 +3,13 @@
 #
 #   tools/release.sh                       # full build (needs Swift tools for the app)
 #   SKIP_APP_BUILD=1 tools/release.sh      # reuse the existing dist/*.app
-#   PYI_PYTHON=/path/to/python tools/release.sh   # python that has PyInstaller installed
+#   SKIP_PY_TESTS=1 tools/release.sh       # skip Python unit tests
 #   SIGN_IDENTITY="Developer ID Application: ..." tools/release.sh   # passed to make_app.sh
 #
 # Outputs (dist/release/):
 #   Omnissa-Beta-Token-Utility-<ver>-macos.zip   the SwiftUI app
-#   omnissa-beta-tokens-<ver>-arm64              single-file arm64 binary (if PyInstaller is available)
-#   omnissa-beta-tokens-<ver>.py                 single-file script
+#   omnissa-beta-tokens-<ver>-macos-arm64        primary CLI (Rust release binary; required)
+#   omnissa-beta-tokens-<ver>.py                 legacy single-file Python script
 #   omnissa-beta-guide-<ver>.html                branded guide (embeds the script)
 #   SHA256SUMS
 #
@@ -21,34 +21,40 @@ cd "$ROOT"
 VERSION="$(sed -n 's/^__version__ = "\(.*\)"/\1/p' src/omnissa_beta_tokens/__init__.py)"
 REL="$ROOT/dist/release"
 APP="$ROOT/dist/Omnissa Beta Token Utility.app"
+RUST_BIN="$ROOT/rust/target/release/omnissa-beta-tokens"
 mkdir -p "$REL"
 rm -f "$REL"/*
 
 step() { printf '\n== %s\n' "$*"; }
 
-step "Tests (Python)"
-PYTHONPATH=src python3 -m unittest discover -s tests 2>&1 | tail -3
+if [[ -z "${SKIP_PY_TESTS:-}" ]]; then
+  step "Tests (Python)"
+  PYTHONPATH=src python3 -m unittest discover -s tests 2>&1 | tail -3
+else
+  step "Tests (Python) [skipped]"
+fi
 
-step "Single-file script"
+step "Rust CLI (primary)"
+if ! command -v cargo >/dev/null 2>&1; then
+  echo "error: cargo not found; install Rust toolchain to build the primary CLI" >&2
+  exit 1
+fi
+(cd "$ROOT/rust" && cargo build --release)
+if [[ ! -f "$RUST_BIN" ]]; then
+  echo "error: expected release binary missing: $RUST_BIN" >&2
+  exit 1
+fi
+cp "$RUST_BIN" "$REL/omnissa-beta-tokens-$VERSION-macos-arm64"
+chmod +x "$REL/omnissa-beta-tokens-$VERSION-macos-arm64"
+echo "built omnissa-beta-tokens-$VERSION-macos-arm64"
+
+step "Single-file script (legacy)"
 python3 tools/bundle.py
 cp dist/omnissa-beta-tokens.py "$REL/omnissa-beta-tokens-$VERSION.py"
 
 step "Guide"
 python3 tools/build_guide.py
 cp dist/omnissa-beta-guide.html "$REL/omnissa-beta-guide-$VERSION.html"
-
-step "arm64 binary (PyInstaller)"
-PYI="${PYI_PYTHON:-python3}"
-if "$PYI" -m PyInstaller --version >/dev/null 2>&1; then
-  WORK="$(mktemp -d "${TMPDIR:-/tmp}/obt-pyi.XXXXXX")"
-  "$PYI" -m PyInstaller --onefile --clean --noconfirm --name omnissa-beta-tokens \
-    --distpath "$ROOT/dist/bin" --workpath "$WORK/build" --specpath "$WORK/spec" \
-    dist/omnissa-beta-tokens.py >/dev/null 2>&1
-  cp dist/bin/omnissa-beta-tokens "$REL/omnissa-beta-tokens-$VERSION-arm64"
-  echo "built dist/bin/omnissa-beta-tokens"
-else
-  echo "[skip] PyInstaller not found for '$PYI' (set PYI_PYTHON to a python with PyInstaller installed)"
-fi
 
 step "SwiftUI app"
 if [[ -z "${SKIP_APP_BUILD:-}" ]]; then

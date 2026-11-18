@@ -62,16 +62,48 @@ final class AppModel: ObservableObject {
         Task {
             do {
                 let creds = try await Task.detached { try ServerToken.decrypt(p7m: p7m, workdir: wd) }.value
+                let expired = creds.isAccessTokenExpired
+                if expired {
+                    errorText = "The Apple Business server token expired" +
+                        (creds.accessTokenExpiry.isEmpty ? "" : " (\(creds.accessTokenExpiry))") +
+                        ". Regenerate the .p7m in Apple Business, then choose the new file."
+                }
                 let result = try await ABMClient().fetchBetaTokens(creds)
                 tokens = result
                 selection = nil
-                message = "Loaded \(result.count) beta programs."
+                if expired {
+                    message = "Loaded \(result.count) beta programs, but the server token is expired — regenerate the .p7m in Apple Business."
+                } else {
+                    message = "Loaded \(result.count) beta programs."
+                }
             } catch {
                 tokens = []
                 errorText = error.localizedDescription
             }
             isLoading = false
         }
+    }
+
+    /// Securely delete local key/cert/*.p7m and clear in-memory tokens.
+    /// Caller must confirm first. Reminds the user to remove the ABM management service.
+    func teardownLocalCredentials() {
+        errorText = nil
+        do {
+            _ = try ServerToken.teardown(in: workdir)
+            p7m = nil
+            tokens = []
+            selection = nil
+            refresh()
+            message = "Deleted local key, certificate, and .p7m files. " +
+                "Also delete the \"\(Self.serviceName)\" management service in Apple Business if you no longer need it."
+        } catch {
+            errorText = error.localizedDescription
+        }
+    }
+
+    func copyForUEM(_ token: BetaToken) {
+        let block = Render.uemClipboardBlock(title: token.title, token: token.token, mode: mode)
+        copy(block, note: "UEM paste block copied (title, token, and field checklist).")
     }
 
     var osOptions: [String] {

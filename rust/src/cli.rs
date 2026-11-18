@@ -1,4 +1,4 @@
-//! Command line interface: omnissa-beta-tokens {init,fetch}.
+//! Command line interface: omnissa-beta-tokens {init,fetch,cleanup}.
 
 use std::fs;
 use std::io::{self, Write};
@@ -11,6 +11,7 @@ use std::time::Duration;
 use clap::{Parser, Subcommand, ValueEnum};
 
 use crate::abm::{self, default_transport};
+use crate::credentials::access_token_expired;
 use crate::render;
 use crate::servertoken::{self, CERT_NAME};
 
@@ -44,7 +45,7 @@ fn expand_path(p: PathBuf) -> PathBuf {
 #[command(
     name = "omnissa-beta-tokens",
     version = VERSION,
-    about = "Get Apple beta enrollment tokens for Workspace ONE UEM."
+    about = "Primary CLI: get Apple beta enrollment tokens for Workspace ONE UEM."
 )]
 pub struct Args {
     #[arg(long, global = true)]
@@ -81,6 +82,15 @@ pub enum Commands {
         format: OutputFormat,
         #[arg(long)]
         reveal: bool,
+        /// Print UEM paste block for exactly one filtered program (not declaration JSON)
+        #[arg(long = "uem-block")]
+        uem_block: bool,
+    },
+    /// Delete key, certificate, and .p7m files in --workdir
+    Cleanup {
+        /// Required confirmation (non-interactive safety)
+        #[arg(long)]
+        yes: bool,
     },
 }
 
@@ -108,6 +118,10 @@ fn err(msg: impl AsRef<str>) -> i32 {
 
 fn info(msg: impl AsRef<str>) {
     let _ = writeln!(io::stderr(), "[INFO] {}", msg.as_ref());
+}
+
+fn warn(msg: impl AsRef<str>) {
+    let _ = writeln!(io::stderr(), "[WARNING] {}", msg.as_ref());
 }
 
 fn copy_clipboard(text: &str) -> bool {
@@ -172,6 +186,7 @@ pub fn run(args: Args) -> i32 {
             match_text,
             format,
             reveal,
+            uem_block,
         } => cmd_fetch(
             &args.workdir,
             p7m,
@@ -181,7 +196,9 @@ pub fn run(args: Args) -> i32 {
             match_text.as_deref(),
             format,
             reveal,
+            uem_block,
         ),
+        Commands::Cleanup { yes } => cmd_cleanup(&args.workdir, yes),
     }
 }
 
@@ -221,6 +238,29 @@ fn cmd_init(workdir: &Path) -> i32 {
     }
 }
 
+fn cmd_cleanup(workdir: &Path, yes: bool) -> i32 {
+    if !yes {
+        return err(
+            "cleanup requires --yes to delete key, certificate, and .p7m files in --workdir.",
+        );
+    }
+    match servertoken::cleanup_workdir(workdir) {
+        Ok(removed) => {
+            for p in &removed {
+                info(format!("Deleted {}", p.display()));
+            }
+            let _ = writeln!(
+                io::stderr(),
+                "\nReminder: also delete the management service in Apple Business\n\
+                 (Devices > Management Services — typically '{SERVICE_NAME}').\n\
+                 Local key/cert/*.p7m are gone; the ABM service is not removed by this tool.\n"
+            );
+            0
+        }
+        Err(e) => err(e.to_string()),
+    }
+}
+
 #[allow(clippy::too_many_arguments)]
 fn cmd_fetch(
     workdir: &Path,
@@ -231,6 +271,7 @@ fn cmd_fetch(
     match_text: Option<&str>,
     format: OutputFormat,
     reveal: bool,
+    uem_block: bool,
 ) -> i32 {
     if let Err(e) = servertoken::ensure_workdir(workdir) {
         return err(e.to_string());
@@ -263,6 +304,12 @@ fn cmd_fetch(
         Err(e) => return err(e.to_string()),
     };
     info(format!("Server token read: {creds:?}"));
+    if access_token_expired(&creds, None) {
+        warn(
+            "Server token access_token_expiry is in the past. \
+             Regenerate the server token in Apple Business and retry.",
+        );
+    }
 
     let transport = default_transport();
     let tokens = match abm::fetch_beta_tokens(&creds, &transport) {
@@ -273,11 +320,50 @@ fn cmd_fetch(
         return err("No beta programs matched.");
     }
 
+    let unsupported = render::unsupported_uem_beta_oses(&tokens);
+    if !unsupported.is_empty() {
+        warn(format!(
+            "UEM Software Update:Settings > Beta cannot deliver {}. \
+             Those platforms are not applicable for this setting.",
+            unsupported.join(", ")
+        ));
+    }
+
     let out = match format {
         OutputFormat::Json => render::to_json(&tokens),
         OutputFormat::Csv => render::to_csv(&tokens),
         OutputFormat::Table => render::to_table(&tokens, reveal),
     };
     println!("{out}");
+
+    if uem_block {
+        if tokens.len() != 1 {
+            return err(format!(
+                "--uem-block needs exactly one program; got {}. \
+                 Narrow with --os and/or --match.",
+                tokens.len()
+            ));
+        }
+        let block = render::uem_paste_block(&tokens[0]);
+        println!("\n{block}");
+        if copy_clipboard(&block) {
+            info("UEM paste block copied to clipboard.");
+        }
+    }
     0
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn expand_tilde_home() {
+        let home = dirs_home().expect("HOME");
+        assert_eq!(expand_path(PathBuf::from("~")), home);
+        assert_eq!(
+            expand_path(PathBuf::from("~/foo/bar")),
+            home.join("foo/bar")
+        );
+    }
 }

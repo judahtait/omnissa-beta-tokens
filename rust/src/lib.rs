@@ -1,7 +1,8 @@
-//! Omnissa Beta Token Utility — Rust port of the Python / Swift core.
+//! Omnissa Beta Token Utility — primary CLI (Rust).
 //!
-//! Experimental alongside the Python CLI and SwiftUI app. Same security model:
-//! system `openssl` for key/cert and `.p7m` decrypt, fabricated credentials in tests only.
+//! Same security model as the Python/Swift surfaces: pinned system `openssl` for
+//! key/cert and `.p7m` decrypt, `redirects(0)` for Apple HTTP, fabricated
+//! credentials in tests only.
 
 pub mod abm;
 pub mod cli;
@@ -10,4 +11,6 @@ pub mod oauth;
 pub mod render;
 pub mod servertoken;
 
-pub use credentials::{BetaToken, Credentials, ToolError};
+pub use credentials::{
+    access_token_expired, parse_access_token_expiry, BetaToken, Credentials, ToolError,
+};

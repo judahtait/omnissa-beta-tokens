@@ -39,6 +39,15 @@ public enum EnrollmentMode: String, CaseIterable, Identifiable, Sendable {
 
     public var usesRequireProgram: Bool { self == .automatic }
     public var usesOfferPrograms: Bool { self == .offer || self == .offerAlwaysOn }
+
+    /// Short Program enrollment / Require / Offer checklist for clipboard paste into UEM.
+    public var fieldChecklist: String {
+        """
+        Program enrollment = \(programEnrollment.rawValue)
+        Require program = \(usesRequireProgram ? "on" : "off")
+        Offer programs = \(usesOfferPrograms ? "on" : "off")
+        """
+    }
 }
 
 public enum Render {
@@ -49,6 +58,21 @@ public enum Render {
         if let os, !os.isEmpty { out = out.filter { $0.osDisplay.caseInsensitiveCompare(os) == .orderedSame } }
         if let text, !text.isEmpty { out = out.filter { $0.title.localizedCaseInsensitiveContains(text) } }
         return out
+    }
+
+    /// Single clipboard block for pasting into UEM Software Update:Settings > Beta (not declaration JSON).
+    public static func uemClipboardBlock(title: String, token: String, mode: EnrollmentMode) -> String {
+        """
+        Program: \(title)
+        Token: \(token)
+
+        Workspace ONE UEM Software Update:Settings > Beta
+        Mode: \(mode.title)
+        UEM: \(mode.uemSummary)
+
+        Field checklist:
+        \(mode.fieldChecklist.trimmingCharacters(in: .whitespacesAndNewlines))
+        """
     }
 
     public static func json(_ tokens: [BetaToken]) -> String {

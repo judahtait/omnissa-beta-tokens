@@ -3,9 +3,9 @@ name = "omnissa-beta-tokens"
 version = "0.1.0"
 edition = "2021"
 rust-version = "1.70"
-description = "Get Apple beta enrollment tokens for Workspace ONE UEM"
+description = "Primary CLI: get Apple beta enrollment tokens for Workspace ONE UEM"
 license = "MIT"
-readme = "../README.md"
+readme = "README.md"
 
 [[bin]]
 name = "omnissa-beta-tokens"

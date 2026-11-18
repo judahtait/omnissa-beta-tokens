@@ -76,6 +76,49 @@ public enum ServerToken {
         }
     }
 
+    /// Securely overwrite then delete key, cert, and any `*.p7m` in `dir`.
+    /// Returns the paths removed. Throws if nothing was present to delete.
+    @discardableResult
+    public static func teardown(in dir: URL) throws -> [URL] {
+        let fm = FileManager.default
+        var targets: [URL] = [
+            dir.appendingPathComponent(keyName),
+            dir.appendingPathComponent(certName),
+        ]
+        let listed = (try? fm.contentsOfDirectory(at: dir, includingPropertiesForKeys: nil)) ?? []
+        targets += listed.filter { $0.pathExtension.lowercased() == "p7m" }
+        let existing = targets.filter { fm.fileExists(atPath: $0.path) }
+        guard !existing.isEmpty else {
+            throw ToolError("No key, certificate, or .p7m found in \(dir.path).")
+        }
+        var removed: [URL] = []
+        for url in existing {
+            try secureDelete(url)
+            removed.append(url)
+        }
+        return removed
+    }
+
+    /// Overwrite file contents with zeros, then unlink. Falls back to unlink-only if overwrite fails.
+    static func secureDelete(_ url: URL) throws {
+        let fm = FileManager.default
+        if let size = (try? fm.attributesOfItem(atPath: url.path)[.size] as? NSNumber)?.uint64Value,
+           size > 0,
+           let handle = try? FileHandle(forWritingTo: url) {
+            defer { try? handle.close() }
+            let chunkSize = 64 * 1024
+            var remaining = size
+            let zeros = Data(count: chunkSize)
+            while remaining > 0 {
+                let n = Int(min(UInt64(chunkSize), remaining))
+                try handle.write(contentsOf: zeros.prefix(n))
+                remaining -= UInt64(n)
+            }
+            try? handle.synchronize()
+        }
+        try fm.removeItem(at: url)
+    }
+
     public static func decrypt(p7m: URL, workdir: URL) throws -> Credentials {
         let key = workdir.appendingPathComponent(keyName), cert = workdir.appendingPathComponent(certName)
         for f in [p7m, key, cert] where !FileManager.default.fileExists(atPath: f.path) {

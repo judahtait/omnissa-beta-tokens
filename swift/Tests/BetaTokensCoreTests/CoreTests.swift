@@ -69,6 +69,32 @@ private func makeP7M(dir: URL, payload: String) throws -> URL {
         let p7m = try makeP7M(dir: a, payload: "{}")
         #expect(throws: (any Error).self) { try ServerToken.decrypt(p7m: p7m, workdir: b) }
     }
+
+    @Test func teardownRemovesKeyCertAndP7M() throws {
+        let dir = tempDir()
+        let (key, cert) = try ServerToken.generateKeypair(in: dir)
+        let p7m = dir.appendingPathComponent("server.p7m")
+        try Data("fake-p7m".utf8).write(to: p7m)
+        let removed = try ServerToken.teardown(in: dir)
+        #expect(removed.count == 3)
+        #expect(!FileManager.default.fileExists(atPath: key.path))
+        #expect(!FileManager.default.fileExists(atPath: cert.path))
+        #expect(!FileManager.default.fileExists(atPath: p7m.path))
+        #expect(throws: (any Error).self) { try ServerToken.teardown(in: dir) }
+    }
+}
+
+@Suite struct CredentialsExpiryTests {
+    @Test func pastExpiryIsDetected() {
+        #expect(Credentials.accessTokenExpiryIsPast("2020-01-01T00:00:00Z"))
+        #expect(!Credentials.accessTokenExpiryIsPast("2099-01-01T00:00:00Z"))
+        #expect(!Credentials.accessTokenExpiryIsPast(""))
+        #expect(!Credentials.accessTokenExpiryIsPast("not-a-date"))
+        let past = Credentials(consumerKey: "CK", consumerSecret: "CS",
+                               accessToken: "AT", accessSecret: "AS",
+                               accessTokenExpiry: "2020-06-15T12:00:00Z")
+        #expect(past.isAccessTokenExpired)
+    }
 }
 
 @Suite struct ABMClientTests {
@@ -138,5 +164,25 @@ private func makeP7M(dir: URL, payload: String) throws -> URL {
             #expect(mode.programEnrollment == .alwaysOn)
             #expect(!mode.usesOfferPrograms)
         }
+    }
+
+    @Test func uemClipboardBlockIncludesTitleTokenAndChecklist() {
+        let token = String(repeating: "T", count: 40)
+        let block = Render.uemClipboardBlock(title: "macOS Test Beta", token: token, mode: .automatic)
+        #expect(block.contains("Program: macOS Test Beta"))
+        #expect(block.contains("Token: \(token)"))
+        #expect(block.contains("Program enrollment = AlwaysOn"))
+        #expect(block.contains("Require program = on"))
+        #expect(block.contains("Offer programs = off"))
+        #expect(!block.contains("\"Declarations\""))
+        #expect(!block.contains("com.apple.configuration.softwareupdate.settings"))
+    }
+
+    @Test func unsupportedBetaPlatforms() {
+        #expect(BetaToken(title: "tv", os: "tvOS", token: "x").isUnsupportedBetaPlatform)
+        #expect(BetaToken(title: "vision", os: "visionOS", token: "x").isUnsupportedBetaPlatform)
+        #expect(BetaToken(title: "TV", os: "TvOS", token: "x").isUnsupportedBetaPlatform)
+        #expect(!BetaToken(title: "mac", os: "OSX", token: "x").isUnsupportedBetaPlatform)
+        #expect(!BetaToken(title: "ios", os: "iOS", token: "x").isUnsupportedBetaPlatform)
     }
 }

@@ -12,6 +12,7 @@ import os
 import re
 import subprocess
 from dataclasses import dataclass
+from datetime import datetime, timezone
 from pathlib import Path
 
 KEY_NAME = "mdm_private.key"
@@ -28,6 +29,33 @@ def mask(value: str, keep: int = 4) -> str:
     if len(value) <= keep:
         return "[REDACTED]"
     return f"[REDACTED]...{value[-keep:]}"
+
+
+def parse_access_token_expiry(value: str) -> datetime | None:
+    """Parse Apple's access_token_expiry (ISO-8601, often with trailing Z)."""
+    text = (value or "").strip()
+    if not text:
+        return None
+    if text.endswith("Z"):
+        text = text[:-1] + "+00:00"
+    try:
+        dt = datetime.fromisoformat(text)
+    except ValueError:
+        return None
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    return dt
+
+
+def access_token_expired(creds: Credentials, now: datetime | None = None) -> bool:
+    """True when access_token_expiry is present and strictly before now (UTC)."""
+    expiry = parse_access_token_expiry(creds.access_token_expiry)
+    if expiry is None:
+        return False
+    current = now or datetime.now(timezone.utc)
+    if current.tzinfo is None:
+        current = current.replace(tzinfo=timezone.utc)
+    return expiry < current
 
 
 @dataclass(frozen=True)

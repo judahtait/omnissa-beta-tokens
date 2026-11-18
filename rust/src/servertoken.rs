@@ -120,6 +120,41 @@ pub fn find_p7m(workdir: &Path) -> Option<PathBuf> {
     files.pop()
 }
 
+/// Delete key, certificate, and any `*.p7m` files under `workdir`.
+/// Errors if the directory is missing or nothing matching was found.
+pub fn cleanup_workdir(workdir: &Path) -> Result<Vec<PathBuf>, ToolError> {
+    if !workdir.is_dir() {
+        return Err(ToolError::msg(format!(
+            "Workdir does not exist: {}",
+            workdir.display()
+        )));
+    }
+    let mut targets = vec![workdir.join(KEY_NAME), workdir.join(CERT_NAME)];
+    if let Ok(rd) = fs::read_dir(workdir) {
+        for e in rd.flatten() {
+            let p = e.path();
+            if p.extension().and_then(|s| s.to_str()) == Some("p7m") {
+                targets.push(p);
+            }
+        }
+    }
+    let mut removed = Vec::new();
+    for p in targets {
+        if p.is_file() {
+            fs::remove_file(&p)
+                .map_err(|e| ToolError::msg(format!("Failed to delete {}: {e}", p.display())))?;
+            removed.push(p);
+        }
+    }
+    if removed.is_empty() {
+        return Err(ToolError::msg(format!(
+            "No key, certificate, or .p7m files found in {}",
+            workdir.display()
+        )));
+    }
+    Ok(removed)
+}
+
 pub fn decrypt_server_token(p7m: &Path, workdir: &Path) -> Result<Credentials, ToolError> {
     let key = workdir.join(KEY_NAME);
     let cert = workdir.join(CERT_NAME);
@@ -241,5 +276,20 @@ mod tests {
         let creds = decrypt_server_token(&p7m, &wd).unwrap();
         assert_eq!(creds.consumer_key, "CK_FAKE");
         assert_eq!(creds.access_secret, "AS_FAKE");
+    }
+
+    #[test]
+    fn cleanup_removes_key_cert_p7m() {
+        let dir = tempfile::tempdir().unwrap();
+        let wd = dir.path().join("wd");
+        generate_keypair(&wd, 1).unwrap();
+        let p7m = wd.join("token.p7m");
+        fs::write(&p7m, b"fake").unwrap();
+        let removed = cleanup_workdir(&wd).unwrap();
+        assert!(removed.len() >= 3);
+        assert!(!wd.join(KEY_NAME).exists());
+        assert!(!wd.join(CERT_NAME).exists());
+        assert!(!p7m.exists());
+        assert!(cleanup_workdir(&wd).is_err());
     }
 }

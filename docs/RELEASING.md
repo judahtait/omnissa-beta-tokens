@@ -3,13 +3,27 @@
 ## Build
 
 ```bash
-tools/release.sh        # tests, script, guide, binary, app zip, SHA256SUMS -> dist/release/
+tools/release.sh        # Rust CLI, legacy .py, guide, app zip, SHA256SUMS -> dist/release/
 ```
 
-Set `PYI_PYTHON` to a Python that has PyInstaller installed to include the arm64
-binary, and `SKIP_APP_BUILD=1` to reuse an existing `dist/*.app`.
+Requires a Rust toolchain (`cargo`). The primary CLI is built with
+`cargo build --release` in `rust/` and shipped as
+`omnissa-beta-tokens-<ver>-macos-arm64`. A cargo failure fails the release.
+
+Optional: `SKIP_PY_TESTS=1` to skip Python unit tests; `SKIP_APP_BUILD=1` to
+reuse an existing `dist/*.app`. The single-file `.py` remains a legacy/secondary
+artifact via `tools/bundle.py`.
 
 ## Sign and notarize (needs an Omnissa Developer ID Application certificate)
+
+Ad-hoc or unsigned builds still trigger Gatekeeper. **Notarization (after
+Developer ID Application signing) is still required for Gatekeeper-free
+first launch** for end users. Signing alone is not enough.
+
+The primary CLI binary (`omnissa-beta-tokens-<ver>-macos-arm64`) is produced by
+`cargo build --release` in `rust/` (required for `tools/release.sh`). It is not
+a PyInstaller/`PYI_PYTHON` artifact. Published **v0.1.0** may still lack that
+binary until a rebuild/republish attaches it and lists it in `SHA256SUMS`.
 
 ```bash
 SIGN_IDENTITY="Developer ID Application: <team>" tools/make_app.sh
@@ -30,6 +44,9 @@ Create a GitHub release and attach everything in `dist/release/`:
 gh release create v0.1.0 dist/release/* --title "v0.1.0" --notes-file docs/RELEASE_NOTES.md
 ```
 
+Attach only files that exist in `dist/release/` and that appear in
+`SHA256SUMS`. Do not advertise an arm64 asset that was not built.
+
 Do not commit binaries to git; they belong on the release.
 
 ## Before making the repository public
@@ -39,3 +56,5 @@ Do not commit binaries to git; they belong on the release.
 - [ ] Confirm the copyright holder name in `LICENSE` and `NOTICE`.
 - [ ] Confirm the commit author identity you want public (history includes it).
 - [ ] No tokens, tenant names or session data in any screenshot.
+- [ ] Developer ID signing + notarization complete (or Gatekeeper workaround
+      still documented honestly).
