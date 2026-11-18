@@ -62,13 +62,15 @@ def cmd_init(args: argparse.Namespace) -> int:
         return _err(str(exc))
     print(f"[INFO] Created key and certificate in {args.workdir} (private key mode 600).")
     copied = " (copied to clipboard - paste it into the form)" if _copy_to_clipboard(SERVICE_NAME) else ""
+    # Echo --workdir when it is not the default, so the next command looks in the right place.
+    workdir_opt = "" if args.workdir == DEFAULT_WORKDIR else f"--workdir {args.workdir} "
     print(
         "\nNext steps in Apple Business:\n"
         f"  1. Devices > Management Services > Add\n     {APPLE_ADD_SERVICE_URL}\n"
         f"  2. Service Name: {SERVICE_NAME}{copied}\n"
         f"  3. Upload this file: {cert}\n"
         "  4. Download the .p7m server token\n"
-        "  5. Run: omnissa-beta-tokens fetch\n"
+        f"  5. Run: omnissa-beta-tokens {workdir_opt}fetch --watch\n"
     )
     return 0
 
