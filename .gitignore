@@ -1,0 +1,18 @@
+# Credentials and secrets - never commit
+*.p7m
+*.pem
+*.key
+*.csr
+abm_auth/
+.omnissa-beta-tokens/
+token.json
+server_token.json
+
+# Python
+__pycache__/
+*.egg-info/
+.venv/
+build/
+dist/
+
+.DS_Store

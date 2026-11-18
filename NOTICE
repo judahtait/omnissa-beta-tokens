@@ -1,0 +1,24 @@
+omnissa-beta-tokens
+Copyright (c) 2026 Omnissa, LLC. Maintained by Omnissa. Licensed under MIT (see LICENSE).
+
+Third-party notice
+------------------
+This project is an improved version of betaTokens.sh from
+microsoft/shell-intune-samples (macOS/Tools/getBetaTokens), which is licensed
+under the MIT License. The upstream notice is retained below as the MIT License
+requires.
+
+    Copyright (c) Microsoft Corporation.
+    Licensed under the MIT License.
+    (Original author credited in the upstream file: Neil Johnson.)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of
+the upstream software and associated documentation files, to deal in it without
+restriction, subject to the conditions of the MIT License reproduced in LICENSE.
+
+Changes by Omnissa: rewritten in Python; secrets are masked and never printed;
+decrypted server token is kept in memory only; added filtering, JSON/CSV output,
+reference declaration output, and clearer error handling.
+
+Draft only. Review required by Legal, Compliance, or relevant Omnissa control
+owner before any external publication.
