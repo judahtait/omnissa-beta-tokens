@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/branding/icons/v1-layered-omnissa-1024.png" alt="Omnissa Beta Token Utility icon" width="160">
+  <img src="docs/branding/icons/v2-key-bow-abm-1024.png" alt="Omnissa Beta Token Utility icon" width="160">
 </p>
 
 # Omnissa Beta Token Utility
