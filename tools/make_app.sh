@@ -29,8 +29,10 @@ mkdir -p "$OUT/Contents/Resources/Fonts"
 cp "$ROOT"/assets/fonts/*.ttf "$ROOT"/assets/fonts/OFL.txt "$OUT/Contents/Resources/Fonts/"
 mkdir -p "$OUT/Contents/Resources/Guidance"
 cp "$ROOT"/assets/guidance/*.png "$OUT/Contents/Resources/Guidance/"
-# Desktop screenshots often carry Finder xattrs that break codesign.
-xattr -cr "$OUT/Contents/Resources" 2>/dev/null || true
+# Desktop screenshots often carry Finder xattrs / AppleDouble that break codesign.
+export COPYFILE_DISABLE=1
+xattr -cr "$OUT" 2>/dev/null || true
+find "$OUT" -name '._*' -delete
 if [[ -f "$ROOT/assets/AppIcon.icns" ]]; then
   cp "$ROOT/assets/AppIcon.icns" "$OUT/Contents/Resources/AppIcon.icns"
   ICON_KEY='<key>CFBundleIconFile</key><string>AppIcon</string>'

@@ -12,17 +12,20 @@ cd rust
 cargo test
 cargo build --release
 # or package everything:
-tools/release.sh          # Rust CLI + SwiftUI .app zip + guide + SHA256SUMS
+tools/release.sh          # Rust CLI + SwiftUI .app zip + .pkg + guide + SHA256SUMS
 ```
 
 `tools/make_app.sh` builds the **SwiftUI** shell into
 `dist/Omnissa Beta Token Utility.app` (version from `rust/Cargo.toml`).
 `SKIP_APP_BUILD=1` reuses an existing `.app`.
+`tools/make_pkg.sh` wraps that `.app` in an Installer package that installs to
+`/Applications` (`INSTALLER_IDENTITY` for Developer ID Installer when available).
 
 Ship:
 
 - `omnissa-beta-tokens-<ver>-macos-arm64` — Rust CLI
 - `Omnissa-Beta-Token-Utility-<ver>-macos.zip` — SwiftUI `.app`
+- `Omnissa-Beta-Token-Utility-<ver>-macos.pkg` — Installer → `/Applications`
 - `omnissa-beta-guide-<ver>.html` — offline guide
 - `SHA256SUMS`
 

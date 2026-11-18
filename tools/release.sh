@@ -7,6 +7,7 @@
 #
 # Outputs (dist/release/):
 #   Omnissa-Beta-Token-Utility-<ver>-macos.zip   SwiftUI .app
+#   Omnissa-Beta-Token-Utility-<ver>-macos.pkg   Installer → /Applications
 #   omnissa-beta-tokens-<ver>-macos-arm64        Rust CLI (required)
 #   omnissa-beta-guide-<ver>.html                branded guide (best-effort)
 #   SHA256SUMS
@@ -63,8 +64,24 @@ else
   echo "[skip] $APP not found; run tools/make_app.sh first"
 fi
 
+step "Installer package"
+if [[ -d "$APP" ]]; then
+  SKIP_APP_BUILD=1 tools/make_pkg.sh
+else
+  echo "[skip] no .app for pkgbuild"
+fi
+
 step "Checksums"
-(cd "$REL" && shasum -a 256 -- * | grep -v SHA256SUMS > SHA256SUMS && cat SHA256SUMS)
+# Hash release files only (skip directories / SHA256SUMS itself).
+(
+  cd "$REL"
+  : > SHA256SUMS
+  for f in *; do
+    [[ -f "$f" && "$f" != SHA256SUMS ]] || continue
+    shasum -a 256 -- "$f" >> SHA256SUMS
+  done
+  cat SHA256SUMS
+)
 
 step "Release $VERSION"
 ls -lh "$REL"

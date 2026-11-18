@@ -23,16 +23,20 @@ Version is always read from [`rust/Cargo.toml`](rust/Cargo.toml).
 ## Install locally
 
 ```bash
-tools/release.sh          # CLI + guide + SwiftUI .app → dist/release/
-# or app only:
+tools/release.sh          # CLI + guide + .app zip + .pkg → dist/release/
+# or app / pkg only:
 tools/make_app.sh
+tools/make_pkg.sh         # → dist/release/Omnissa-Beta-Token-Utility-*-macos.pkg
 open "dist/Omnissa Beta Token Utility.app"
-# if Gatekeeper blocks:
+# Installer (local test; unsigned pkg may need right-click → Open):
+open dist/release/Omnissa-Beta-Token-Utility-0.1.0-macos.pkg
+# if Gatekeeper blocks the .app:
 xattr -dr com.apple.quarantine "dist/Omnissa Beta Token Utility.app"
 ```
 
 CLI: `dist/release/omnissa-beta-tokens-0.1.0-macos-arm64`  
-Guide: `dist/release/omnissa-beta-guide-0.1.0.html`
+Guide: `dist/release/omnissa-beta-guide-0.1.0.html`  
+Pkg: `dist/release/Omnissa-Beta-Token-Utility-0.1.0-macos.pkg` → `/Applications`
 
 ## How it works
 
