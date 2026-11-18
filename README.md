@@ -59,6 +59,49 @@ The guide HTML embeds the single-file utility with a Download button, SHA-256
 hash and a Copy button, so it works offline and needs no public hosting.
 `dist/` is generated and git-ignored.
 
+## Standalone formats
+
+| Format | Build | Output |
+|---|---|---|
+| Python single file | `python3 tools/bundle.py` | `dist/omnissa-beta-tokens.py` |
+| arm64 binary (no Python needed) | see below | `dist/bin/omnissa-beta-tokens` |
+| Native SwiftUI app | `tools/make_app.sh` | `dist/Omnissa Beta Token Utility.app` |
+
+Binary (PyInstaller, in a throwaway venv):
+
+```bash
+python3 -m venv .venv && .venv/bin/pip install pyinstaller
+.venv/bin/python -m PyInstaller --onefile --name omnissa-beta-tokens \
+  --distpath dist/bin dist/omnissa-beta-tokens.py
+```
+
+SwiftUI app: `swift/` is a Swift package. `BetaTokensCore` holds the logic
+(OAuth, server token, Apple client, rendering) and `OmnissaBetaTokensApp` is the
+UI. Requires macOS 13+ and the Xcode command line tools.
+
+```bash
+cd swift && swift build && swift test     # build and run XCTest suite
+tools/make_app.sh                         # release build -> .app, ad-hoc signed
+```
+
+### Signing and Gatekeeper
+
+Builds are unsigned or ad-hoc signed. A downloaded copy gets a Gatekeeper
+warning until it is signed with an Omnissa Developer ID Application certificate
+and notarized:
+
+```bash
+SIGN_IDENTITY="Developer ID Application: <team>" tools/make_app.sh
+ditto -c -k --keepParent "dist/Omnissa Beta Token Utility.app" dist/app.zip
+xcrun notarytool submit dist/app.zip --keychain-profile <profile> --wait
+xcrun stapler staple "dist/Omnissa Beta Token Utility.app"
+```
+
+Until then, a user can right-click > Open, or run
+`xattr -d com.apple.quarantine <path>`. The bundle identifier
+(`com.omnissa.betatokenutility`) is a placeholder; confirm with the Omnissa
+app owner before shipping.
+
 ## Docs
 
 - `docs/guide.md` - Workspace ONE enrollment guide (source for the branded HTML).
