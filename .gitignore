@@ -24,3 +24,8 @@ swift/.build/
 *.xcodeproj/
 
 .DS_Store
+
+# Local agent continuity (not for public repo)
+_memory.md
+_PROJECT_BRIEF.md
+_projectbrief.md

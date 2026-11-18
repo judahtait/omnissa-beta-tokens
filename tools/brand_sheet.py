@@ -2,8 +2,8 @@
 """Generate docs/branding/brand-template.html: the brand tokens and components on one page.
 
 Usage: python3 tools/brand_sheet.py
-Palette: HubControl's Brand (hubcontrol-rs, crates/hc-menubar/src/brand.rs). Gradient: the Omnissa
-toolkit theme (navy, indigo, magenta). Font: Outfit Light and Medium (SIL OFL 1.1), embedded.
+Palette: Omnissa app palette (light and dark pairs). Gradient: Omnissa brand toolkit theme (navy, indigo,
+magenta). Font: Outfit Light and Medium (SIL OFL 1.1), embedded.
 """
 
 from __future__ import annotations
@@ -146,7 +146,7 @@ def main() -> None:
 <div class="glass"><h3>Do not</h3><ul class="dont"><li>Use magenta as a default accent. It is for negative data and the gradient end.</li><li>Fix a light background and rely on default text color, which turns white in dark mode.</li><li>Use Apple's logo, or copy an existing Omnissa product mark, without brand approval.</li><li>Put tokens, tenant names or session data in screenshots.</li></ul></div></div>
 
 <h2>7. Sources and status</h2>
-<div class="callout"><b style="font-weight:500">Sources.</b> Palette and font: HubControl <code>brand.rs</code> and <code>docs/REUSE.md</code>. Gradient: Omnissa PowerPoint toolkit theme. <br>
+<div class="callout"><b style="font-weight:500">Sources.</b> Palette and font: Omnissa app palette with Outfit Light and Medium. Gradient: Omnissa brand toolkit theme. <br>
 <b style="font-weight:500">Not verified.</b> The formal Omnissa brand guidelines were not read, no official logo was available, and the Liquid Glass look uses a material fallback unless built with Swift 6.2 or newer on macOS 26. This page is a working template, not an approved brand asset.</div>
 </main></body></html>"""
     OUT.write_text(html, encoding="utf-8")

@@ -2,9 +2,8 @@ import SwiftUI
 import AppKit
 import CoreText
 
-// Brand values mirror HubControl's `Brand` (hubcontrol-rs: crates/hc-menubar/src/brand.rs and
-// docs/REUSE.md): the palette as (light, dark) pairs, Outfit Light and Medium, the graphite
-// header band with the indigo-to-magenta edge under it.
+// Omnissa brand values: the palette as (light, dark) pairs, Outfit Light and Medium, and the
+// Omnissa gradient (navy, indigo, magenta) for the header band.
 
 extension NSColor {
     convenience init(hex: UInt32) {
