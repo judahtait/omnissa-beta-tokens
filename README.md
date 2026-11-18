@@ -35,9 +35,8 @@ Get the latest files from the **Releases** page of this repository:
 - `SHA256SUMS`: checksums for all of the above
 
 `tools/release.sh` builds the Rust binary as
-`omnissa-beta-tokens-<version>-macos-arm64`. **Published v0.1.0 may not yet
-attach that asset** — check `SHA256SUMS` on the release. Until it appears, build
-from source (`cd rust && cargo build --release`) or use the app / legacy `.py`.
+`omnissa-beta-tokens-<version>-macos-arm64` (attached on v0.1.0). Verify with
+`SHA256SUMS`, or build from source (`cd rust && cargo build --release`).
 
 Verify what you downloaded:
 

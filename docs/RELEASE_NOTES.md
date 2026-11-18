@@ -12,11 +12,8 @@ The **Rust CLI** (`omnissa-beta-tokens-<version>-macos-arm64` from
 binary for 0.1.x**. Use `omnissa-beta-tokens init|fetch|cleanup` (including
 `fetch --uem-block` for UEM field paste guidance — not declaration JSON).
 
-Published **v0.1.0** may not yet attach the macos-arm64 asset; check `SHA256SUMS`
-on the release, or build from `rust/`.
-
 ### Included
-- **Rust CLI** (primary when attached / built) — macos-arm64
+- **Rust CLI** (primary) — `omnissa-beta-tokens-0.1.0-macos-arm64`
 - macOS app (SwiftUI) zip
 - Single-file Python script (`omnissa-beta-tokens-0.1.0.py`) — legacy / readable fallback
 - Step-by-step guide (`omnissa-beta-guide-0.1.0.html`, works offline)
