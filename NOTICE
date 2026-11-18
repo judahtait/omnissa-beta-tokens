@@ -18,7 +18,7 @@ restriction, subject to the conditions of the MIT License reproduced in LICENSE.
 
 Changes by Omnissa: rewritten in Python; secrets are masked and never printed;
 decrypted server token is kept in memory only; added filtering, JSON/CSV output,
-reference declaration output, and clearer error handling.
+and clearer error handling.
 
 Draft only. Review required by Legal, Compliance, or relevant Omnissa control
 owner before any external publication.
