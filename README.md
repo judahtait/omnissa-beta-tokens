@@ -8,15 +8,13 @@ Get Apple beta enrollment tokens (AppleSeed for IT) and use them in a
 Workspace ONE UEM declarative **Software Update: Settings** profile, so managed
 Apple devices can enroll in a beta program.
 
-**Primary for 0.1.x:** the Rust CLI (`omnissa-beta-tokens`) and the macOS
-SwiftUI app. The single-file Python script is a legacy / readable secondary
-fallback.
+**All Rust.** The CLI and the macOS app share one core in `rust/`. Build with
+`cargo`. Version comes from `rust/Cargo.toml`.
 
 | Format | For | Needs |
 |---|---|---|
-| **Rust CLI** (`omnissa-beta-tokens-<ver>-macos-arm64`) | Command line (primary) | Apple Silicon Mac |
-| **macOS app** (SwiftUI) | Admins who want a window | macOS 13 or later |
-| **Single-file script** (`omnissa-beta-tokens.py`) | Legacy / read-the-code fallback | Python 3.9+ and system `openssl` |
+| **Rust CLI** (`omnissa-beta-tokens-<ver>-macos-arm64`) | Command line | Apple Silicon Mac |
+| **macOS app** (egui `.app`) | Admins who want a window | macOS 13 or later |
 
 > **Status: pre-release (0.1.0).** Builds are not yet signed or notarized by
 > Omnissa, so macOS shows a Gatekeeper warning on first launch (see below). The
@@ -28,17 +26,13 @@ fallback.
 
 Get the latest files from the **Releases** page of this repository:
 
-- `omnissa-beta-tokens-<version>-macos-arm64`: **Rust** CLI (primary binary for 0.1.x)
-- `Omnissa-Beta-Token-Utility-<version>-macos.zip`: the SwiftUI app
-- `omnissa-beta-tokens-<version>.py`: single-file Python script (legacy / secondary)
+- `omnissa-beta-tokens-<version>-macos-arm64`: Rust CLI
+- `Omnissa-Beta-Token-Utility-<version>-macos.zip`: Rust (egui) macOS app
 - `omnissa-beta-guide-<version>.html`: the step-by-step guide (works offline)
 - `SHA256SUMS`: checksums for all of the above
 
-`tools/release.sh` builds the Rust binary as
-`omnissa-beta-tokens-<version>-macos-arm64` (attached on v0.1.0). Verify with
-`SHA256SUMS`, or build from source (`cd rust && cargo build --release`).
-
-Verify what you downloaded:
+Version for releases is taken from `rust/Cargo.toml`. Verify what you
+downloaded, or build from source (`cd rust && cargo build --release`):
 
 ```bash
 shasum -a 256 -c SHA256SUMS
@@ -74,9 +68,10 @@ The full walkthrough, with screenshots, is in [docs/guide.md](docs/guide.md).
 ## Quick start
 
 **App:** open it, choose **Create certificate**, upload the `.pem` in Apple
-Business, choose the downloaded `.p7m`, then **Fetch beta tokens**.
+Business, choose the downloaded `.p7m`, then **Fetch beta tokens**. Same Rust
+core as the CLI.
 
-**Command line (Rust binary):**
+**Command line:**
 
 ```bash
 omnissa-beta-tokens init                      # key + certificate in ~/.omnissa-beta-tokens
@@ -85,14 +80,6 @@ omnissa-beta-tokens fetch --p7m token.p7m --os macOS --reveal
 omnissa-beta-tokens fetch --match "macOS 27" --format json
 omnissa-beta-tokens fetch --os macOS --match "27" --uem-block
 omnissa-beta-tokens cleanup --yes             # delete local key/cert/*.p7m; still remove ABM service
-```
-
-Optional readable fallback:
-
-```bash
-python3 omnissa-beta-tokens.py init
-python3 omnissa-beta-tokens.py fetch --watch
-python3 omnissa-beta-tokens.py cleanup --yes
 ```
 
 ### CLI reference
@@ -163,31 +150,15 @@ anything else and sends nothing elsewhere.
 ## Build from source
 
 ```bash
-# Rust CLI (primary binary)
-cd rust && cargo test && cargo build --release
-# binary: rust/target/release/omnissa-beta-tokens
-cd ..
-
-# Swift app (needs the Xcode command line tools)
-cd swift && swift build && swift test   # Swift Testing; no full Xcode required
-cd .. && tools/make_app.sh              # dist/Omnissa Beta Token Utility.app, ad-hoc signed
-
-# Python (legacy script + tests + guide)
-PYTHONPATH=src python3 -m unittest discover -s tests -v
-python3 tools/bundle.py                 # dist/omnissa-beta-tokens.py
-pip install markdown && python3 tools/build_guide.py   # dist/omnissa-beta-guide.html
-
-# Everything, with checksums, into dist/release/
-tools/release.sh
+cd rust
+cargo test
+cargo build --release
+# CLI: rust/target/release/omnissa-beta-tokens
 ```
 
-`rust/` is the primary CLI (shipped as `macos-arm64` by `tools/release.sh`).
-`swift/BetaTokensCore` holds the app logic and
-`swift/Sources/OmnissaBetaTokensApp` is the UI. The Python package under
-`src/omnissa_beta_tokens/` remains a readable reference and single-file
-fallback. Tests use fabricated credentials only. For a signed build, set
-`SIGN_IDENTITY` and notarize as described in
-[docs/RELEASING.md](docs/RELEASING.md).
+The macOS `.app` is the same Rust core (egui UI). Package/release steps and
+signing are in [docs/RELEASING.md](docs/RELEASING.md). Version is read from
+`rust/Cargo.toml`. Tests use fabricated credentials only.
 
 ## Branding
 
@@ -195,7 +166,6 @@ Fonts: Outfit Light and Medium, bundled under the
 [SIL Open Font License 1.1](assets/fonts/OFL.txt). Colors, the Omnissa gradient
 and components: [docs/branding/brand-template.html](docs/branding/brand-template.html).
 Icon variants: [docs/branding/logo-d-beta.html](docs/branding/logo-d-beta.html).
-Regenerate the icon with `tools/make_icon.swift` and `tools/make_icns.py`.
 
 ## License and attribution
 

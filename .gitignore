@@ -8,7 +8,7 @@ abm_auth/
 token.json
 server_token.json
 
-# Python
+# Optional build-helper caches (tools/*.py)
 __pycache__/
 *.egg-info/
 .venv/
@@ -17,11 +17,6 @@ dist/
 
 # Generated icon sources
 assets/AppIcon.iconset/
-
-# Swift
-.build/
-swift/.build/
-*.xcodeproj/
 
 .DS_Store
 

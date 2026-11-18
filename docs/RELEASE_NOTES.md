@@ -1,23 +1,20 @@
 ## Omnissa Beta Token Utility 0.1.0 (pre-release)
 
-**Prerelease.** Token fetch against a live Apple Business org has been tested;
-on-device UEM enrollment, notarization, and public distribution are not done yet.
+Version from `rust/Cargo.toml`. **Prerelease.** Token fetch against a live Apple
+Business org has been tested; on-device UEM enrollment, notarization, and public
+distribution are not done yet.
 
 Get Apple beta enrollment tokens (AppleSeed for IT) and use them in a Workspace ONE UEM
 declarative Software Update: Settings profile.
 
-### Primary binary (0.1.x going forward)
-The **Rust CLI** (`omnissa-beta-tokens-<version>-macos-arm64` from
-`tools/release.sh` / `cargo build --release`) is the **primary command-line
-binary for 0.1.x**. Use `omnissa-beta-tokens init|fetch|cleanup` (including
-`fetch --uem-block` for UEM field paste guidance — not declaration JSON).
-
-### Included
-- **Rust CLI** (primary) — `omnissa-beta-tokens-0.1.0-macos-arm64`
-- macOS app (SwiftUI) zip
-- Single-file Python script (`omnissa-beta-tokens-0.1.0.py`) — legacy / readable fallback
+### Product (all Rust)
+- **Rust CLI** — `omnissa-beta-tokens-0.1.0-macos-arm64` (`cargo build --release` in `rust/`)
+- **Rust macOS app** — egui `.app` zip (same Rust core as the CLI)
 - Step-by-step guide (`omnissa-beta-guide-0.1.0.html`, works offline)
 - `SHA256SUMS`: verify with `shasum -a 256 -c SHA256SUMS`
+
+Use `omnissa-beta-tokens init|fetch|cleanup` (including `fetch --uem-block` for
+UEM field paste guidance — **not** declaration JSON).
 
 ### Notes
 - Builds are not signed or notarized yet. On first launch, right-click the app and choose

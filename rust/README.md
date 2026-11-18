@@ -1,11 +1,13 @@
-# Omnissa Beta Token Utility (Rust CLI)
+# Omnissa Beta Token Utility (Rust)
 
-**Primary** distribution of `omnissa-beta-tokens`. Python and Swift remain in-tree as secondary surfaces.
+All product surfaces live here: the **CLI** (`omnissa-beta-tokens`) and the
+**macOS egui app** (same core). Version is in `Cargo.toml`.
 
 ## Build / run
 
 ```bash
 cd rust
+cargo test
 cargo build --release
 ./target/release/omnissa-beta-tokens --help
 ```

@@ -3,7 +3,7 @@ name = "omnissa-beta-tokens"
 version = "0.1.0"
 edition = "2021"
 rust-version = "1.70"
-description = "Primary CLI: get Apple beta enrollment tokens for Workspace ONE UEM"
+description = "Rust CLI + macOS app: Apple beta enrollment tokens for Workspace ONE UEM"
 license = "MIT"
 readme = "README.md"
 
@@ -11,10 +11,16 @@ readme = "README.md"
 name = "omnissa-beta-tokens"
 path = "src/main.rs"
 
+[[bin]]
+name = "omnissa-beta-tokens-app"
+path = "src/bin/omnissa-beta-tokens-app.rs"
+
 [dependencies]
 base64 = "0.22"
 clap = { version = "4", features = ["derive"] }
+eframe = { version = "0.31", default-features = true }
 hmac = "0.12"
+rfd = "0.15"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 sha1 = "0.10"

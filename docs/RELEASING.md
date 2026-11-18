@@ -1,29 +1,39 @@
 # Releasing
 
+## Version
+
+Read the release version from `rust/Cargo.toml` (`[package] version`). Do not
+use a separate non-Rust version string for product assets.
+
 ## Build
 
 ```bash
-tools/release.sh        # Rust CLI, legacy .py, guide, app zip, SHA256SUMS -> dist/release/
+cd rust
+cargo test
+cargo build --release
+# or package everything:
+tools/release.sh          # CLI + egui .app zip + optional guide + SHA256SUMS
 ```
 
-Requires a Rust toolchain (`cargo`). The primary CLI is built with
-`cargo build --release` in `rust/` and shipped as
-`omnissa-beta-tokens-<ver>-macos-arm64`. A cargo failure fails the release.
+`tools/make_app.sh` builds the Rust egui binary into
+`dist/Omnissa Beta Token Utility.app` (version from `rust/Cargo.toml`).
+`SKIP_APP_BUILD=1` reuses an existing `.app`.
 
-Optional: `SKIP_PY_TESTS=1` to skip Python unit tests; `SKIP_APP_BUILD=1` to
-reuse an existing `dist/*.app`. The single-file `.py` remains a legacy/secondary
-artifact via `tools/bundle.py`.
+Ship:
+
+- `omnissa-beta-tokens-<ver>-macos-arm64` — CLI from `rust/target/release/omnissa-beta-tokens`
+- `Omnissa-Beta-Token-Utility-<ver>-macos.zip` — Rust egui `.app` (same core)
+- `omnissa-beta-guide-<ver>.html` — offline guide (optional companion)
+- `SHA256SUMS`
+
+Requires a Rust toolchain (`cargo`). A cargo failure fails the release. No
+Python or Swift product artifacts are shipped.
 
 ## Sign and notarize (needs an Omnissa Developer ID Application certificate)
 
 Ad-hoc or unsigned builds still trigger Gatekeeper. **Notarization (after
 Developer ID Application signing) is still required for Gatekeeper-free
 first launch** for end users. Signing alone is not enough.
-
-The primary CLI binary (`omnissa-beta-tokens-<ver>-macos-arm64`) is produced by
-`cargo build --release` in `rust/` (required for `tools/release.sh`). It is not
-a PyInstaller/`PYI_PYTHON` artifact. **v0.1.0** includes that binary; always
-verify against `SHA256SUMS` on the release.
 
 ```bash
 SIGN_IDENTITY="Developer ID Application: <team>" tools/make_app.sh
@@ -38,7 +48,8 @@ with the Omnissa app owner before the first signed release.
 
 ## Publish
 
-Create a GitHub release and attach everything in `dist/release/`:
+Create a GitHub release and attach the Rust CLI, Rust `.app` zip, guide HTML,
+and `SHA256SUMS`:
 
 ```bash
 gh release create v0.1.0 dist/release/* --title "v0.1.0" --notes-file docs/RELEASE_NOTES.md

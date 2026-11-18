@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 """Build the branded Omnissa guide (single HTML file) from docs/guide.md.
 Adapted from the Omnissa tech-validation-doc build script (not an official template).
-Usage: python3 tools/build_guide.py [input.md] [output.html] [--script path.py]
-The marker <!-- UTILITY_DOWNLOAD --> in the Markdown is replaced with a download
-block that embeds the single-file utility (offline, no hosting needed).
-Requires: pip install markdown"""
-import base64, hashlib, html as htmllib, re, sys, markdown
+Usage: python3 tools/build_guide.py [input.md] [output.html]
+The marker <!-- UTILITY_DOWNLOAD --> is replaced with Rust CLI / macOS app tips.
+Requires: pip install markdown.
+Callers: tools/release.sh Guide step. Same purpose as before; no other guide builder.
+User: convert entire product to Rust — stop embedding the deleted .py utility."""
+import base64, html as htmllib, re, sys, markdown
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -68,29 +69,27 @@ def has_timeline_table(md):
             return True
     return False
 
-def utility_block(script: Path) -> str:
-    raw = script.read_bytes()
-    sha = hashlib.sha256(raw).hexdigest()
-    b64 = base64.b64encode(raw).decode()
-    ver = re.search(r'__version__ = "([^"]+)"', raw.decode()).group(1)
-    src = htmllib.escape(raw.decode())
-    lines = raw.count(b"\n")
-    return f'''<div class="download">
-<a class="btn" download="omnissa-beta-tokens.py" href="data:text/x-python;base64,{b64}">Download omnissa-beta-tokens.py</a>
-<p>Version {ver} &middot; {lines} lines &middot; Python 3.9+ and system <code>openssl</code>, no other dependencies.<br>
-SHA-256: <code>{sha}</code></p>
-<p>Verify after download: <code>shasum -a 256 omnissa-beta-tokens.py</code></p>
-<details><summary>View or copy the full source</summary>
-<button class="btn2" type="button" onclick="var b=this;navigator.clipboard.writeText(document.getElementById('util-src').innerText).then(function(){{b.textContent='Copied'}})">Copy script</button>
-<pre id="util-src"><code>{src}</code></pre></details>
+def utility_block() -> str:
+    """Rust-only install tips (no embedded Python script)."""
+    return '''<div class="download">
+<p><strong>Download (Rust)</strong></p>
+<ul>
+<li><code>omnissa-beta-tokens-&lt;ver&gt;-macos-arm64</code> — CLI</li>
+<li><code>Omnissa-Beta-Token-Utility-&lt;ver&gt;-macos.zip</code> — macOS app (same Rust core)</li>
+</ul>
+<p>From a release: verify with <code>SHA256SUMS</code>, then:</p>
+<pre><code>chmod +x omnissa-beta-tokens-*-macos-arm64
+./omnissa-beta-tokens-*-macos-arm64 init
+./omnissa-beta-tokens-*-macos-arm64 fetch --watch</code></pre>
+<p>Or build from source:</p>
+<pre><code>cd rust &amp;&amp; cargo build --release
+./target/release/omnissa-beta-tokens --help
+./target/release/omnissa-beta-tokens-app</code></pre>
 </div>'''
 
 
 def main():
     argv = sys.argv[1:]
-    script = ROOT / 'dist' / 'omnissa-beta-tokens.py'
-    if '--script' in argv:
-        i = argv.index('--script'); script = Path(argv[i + 1]); del argv[i:i + 2]
     args = [a for a in argv if not a.startswith('--')]
     src = args[0] if args else str(ROOT / 'docs' / 'guide.md')
     out = args[1] if len(args) > 1 else str(ROOT / 'dist' / 'omnissa-beta-guide.html')
@@ -99,9 +98,7 @@ def main():
     title = re.search(r'^# (.*)$', meta, re.M).group(1)
     body = markdown.markdown(body_md, extensions=['tables', 'sane_lists'])
     status, date, author, claim = (field(meta, k) for k in ('Status', 'Date', 'Author', 'Ticket claim'))
-    if not script.is_file():
-        sys.exit(f'ERROR: {script} not found. Run python3 tools/bundle.py first.')
-    body = body.replace('<!-- UTILITY_DOWNLOAD -->', utility_block(script))
+    body = body.replace('<!-- UTILITY_DOWNLOAD -->', utility_block())
     img_root = Path(src).resolve().parent
     def inline_img(m):
         f = img_root / m.group(2)

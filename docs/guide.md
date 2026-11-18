@@ -5,7 +5,7 @@
 
 ---
 
-<!-- Source for the branded HTML guide (python3 tools/build_guide.py).
+<!-- Source for the branded HTML guide.
 Screenshots must be cropped and redacted (no tokens, tenant names, or session
 data) before external use. -->
 
@@ -41,31 +41,26 @@ High-level flow:
 
 ## 3. Download the utility
 
-Primary formats for 0.1.x:
+All-Rust product (version from `rust/Cargo.toml`):
 
 | Format | Best for | Needs |
 |---|---|---|
-| **Rust CLI** (`omnissa-beta-tokens`, macos-arm64) | Command line (primary) | Apple Silicon Mac |
-| **macOS app** | Click-through workflow | macOS 13 or later |
-| **Single-file script** (`omnissa-beta-tokens.py`) | Optional readable fallback | Python 3.9+ and system `openssl` |
+| **Rust CLI** (`omnissa-beta-tokens`, macos-arm64) | Command line | Apple Silicon Mac |
+| **macOS app** (egui `.app`, same Rust core) | Click-through workflow | macOS 13 or later |
 
-Get release builds from the repository **Releases** page (or use the embedded
-script below when you are reading this guide offline). The primary CLI asset is
-`omnissa-beta-tokens-<version>-macos-arm64` (Rust). **Published v0.1.0 may not
-yet attach that binary** — check `SHA256SUMS`, or build with
-`cd rust && cargo build --release`, or use the app / legacy `.py`. Until builds
-are signed and notarized, macOS may block the app on first launch: right-click →
-**Open**, or run `xattr -d com.apple.quarantine "Omnissa Beta Token Utility.app"`.
+Get release builds from the repository **Releases** page. The CLI asset is
+`omnissa-beta-tokens-<version>-macos-arm64`. Check `SHA256SUMS`, or build with
+`cd rust && cargo build --release`. Until builds are signed and notarized, macOS
+may block the app on first launch: right-click → **Open**, or run
+`xattr -d com.apple.quarantine "Omnissa Beta Token Utility.app"`.
 
 <!-- UTILITY_DOWNLOAD -->
 
-Command-line examples in this guide use the **Rust** binary
-`omnissa-beta-tokens`. The same subcommands work with the optional Python
-fallback if you prefer to read the code first:
+Command-line examples in this guide use `omnissa-beta-tokens`. The macOS app
+drives the same Rust core (no separate Python or Swift product path):
 
 ```
 omnissa-beta-tokens --help
-# optional: python3 omnissa-beta-tokens.py --help
 ```
 
 ## 4. Get the beta tokens
@@ -138,8 +133,9 @@ and/or `--match`). It prints Title, Token, and a Mode field checklist for the
 UEM console — **not** declaration JSON — and copies the block to the clipboard
 when `pbcopy` is available.
 
-In the app: choose the `.p7m`, then **Fetch beta tokens**, pick a program, copy
-the token, and use the Mode picker as a reminder of which UEM Beta fields to set.
+In the macOS app (same Rust core): choose the `.p7m`, then **Fetch beta tokens**,
+pick a program, copy the token, and use the Mode picker as a reminder of which
+UEM Beta fields to set.
 
 Security notes:
 
@@ -312,12 +308,6 @@ omnissa-beta-tokens cleanup --yes
 under `--workdir` (default `~/.omnissa-beta-tokens`). It does **not** delete the
 Apple Business service — do that in the portal. Without `--yes`, the CLI prompts
 on a TTY and refuses on a non-interactive terminal.
-
-Optional Python fallback:
-
-```
-python3 omnissa-beta-tokens.py cleanup --yes
-```
 
 ## 10. Troubleshooting
 

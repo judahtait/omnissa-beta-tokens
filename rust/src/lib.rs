@@ -1,8 +1,7 @@
-//! Omnissa Beta Token Utility — primary CLI (Rust).
+//! Omnissa Beta Token Utility — Rust library for the CLI and egui macOS app.
 //!
-//! Same security model as the Python/Swift surfaces: pinned system `openssl` for
-//! key/cert and `.p7m` decrypt, `redirects(0)` for Apple HTTP, fabricated
-//! credentials in tests only.
+//! Security model: pinned system `openssl` for key/cert and `.p7m` decrypt,
+//! `redirects(0)` for Apple HTTP, fabricated credentials in tests only.
 
 pub mod abm;
 pub mod cli;
