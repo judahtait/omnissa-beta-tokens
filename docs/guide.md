@@ -230,6 +230,10 @@ Workflow:
 
 1. In UEM: **Resources > Profiles & Baselines > Profiles > Add > Add Profile**.
 
+   ![UEM Profiles: Add menu with Add Profile selected.](images/uem-add-profile-menu.png)
+
+   Then select the Apple platform that matches the token (iOS or macOS).
+
    ![UEM Add Profile: Select a platform to start (Apple iOS, macOS, tvOS, visionOS).](images/uem-add-profile-platform.png)
 
    *Figure 4. Choose the platform — this choice must match the token’s OS.*

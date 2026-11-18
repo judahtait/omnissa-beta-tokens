@@ -12,8 +12,8 @@ struct UEMGuidanceSheet: View {
         [
             GuidanceStep(
                 number: 1,
-                title: "Add Profile → pick the platform",
-                detail: "Resources → Profiles & Baselines → Profiles → Add → Add Profile. Choose Apple \(platform) (match the token’s OS).",
+                title: "Add → Add Profile",
+                detail: "Resources → Profiles & Baselines → Profiles → Add → Add Profile. Then choose Apple \(platform) so the declaration matches the token’s OS.",
                 imageName: "01-add-profile-platform"
             ),
             GuidanceStep(
@@ -25,7 +25,7 @@ struct UEMGuidanceSheet: View {
             GuidanceStep(
                 number: 3,
                 title: "Software Update: Settings → Beta",
-                detail: "Turn Beta On. Use the copied program title as the UEM profile name and paste it into Description; paste the token into Token. Example title: “\(programTitle)”. Assign and publish.",
+                detail: "Turn Beta On, set enrollment as needed, Require program On. Paste the program title into Description (and use it as the profile name); paste the token into Token. Example: “\(programTitle)”. Assign and publish.",
                 imageName: "03-software-update-beta"
             ),
         ]
