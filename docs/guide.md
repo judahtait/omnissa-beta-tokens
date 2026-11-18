@@ -100,7 +100,9 @@ Device Management Services row).*
 
 1. Enter the service name `Workspace One Beta Token Service`. Apple's form
    cannot be prefilled, so `init` and the app's **Open Apple Business** action
-   copy this name to the clipboard. Paste it into **Service Name**.
+   copy this name to the clipboard and open a split view (app left, browser
+   right). Paste the name into **Service Name**. Allow Accessibility /
+   Automation if macOS prompts — that is how the browser window is tiled.
 2. Leave **Allow this service to release devices** unchecked.
 3. Select **Upload Certificate** and choose the `.pem` from step 4.1
    (`~/.omnissa-beta-tokens/mdm_public_cert.pem`).

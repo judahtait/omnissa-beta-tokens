@@ -11,7 +11,8 @@ struct OmnissaBetaTokensApp: App {
         WindowGroup("Omnissa Beta Token Utility") {
             ContentView()
                 .environmentObject(model)
-                .frame(minWidth: 760, minHeight: 720)
+                // 520 so left-half split fits laptop visible frames (Open Apple Business).
+                .frame(minWidth: 520, minHeight: 560)
                 .onAppear {
                     NSApp.setActivationPolicy(.regular)
                     NSApp.activate(ignoringOtherApps: true)
