@@ -82,7 +82,7 @@ Machine excluded). Copied tokens clear from the clipboard after 60 seconds.
 
 In-app walkthrough: **How to create the UEM profile** (⇧⌘/).
 
-### Modes (UEM fields only — no JSON from this tool)
+### Modes
 
 | Mode | Program enrollment | Require | Offer |
 |---|---|---|---|
