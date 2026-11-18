@@ -3,9 +3,23 @@ import ApplicationServices
 
 /// Side-by-side layout: this app on the left half, the default browser on the right.
 /// Used by `AppModel.openAppleBusiness()`.
+///
+/// Only targets the **default** browser that is actually installed. Never
+/// `tell application` for Edge/Firefox/etc. that are missing — macOS would
+/// open "Where is …?" pickers (and our old retry loop stacked several of them).
 enum SplitScreen {
     private static let gap: CGFloat = 8
     private static let minHalfWidth: CGFloat = 520
+
+    private static let browserNames: [String: String] = [
+        "com.apple.Safari": "Safari",
+        "com.google.Chrome": "Google Chrome",
+        "com.microsoft.edgemac": "Microsoft Edge",
+        "company.thebrowser.Browser": "Arc",
+        "com.brave.Browser": "Brave Browser",
+        "org.mozilla.firefox": "Firefox",
+        "com.apple.SafariTechnologyPreview": "Safari Technology Preview",
+    ]
 
     static func tileAppLeft() {
         guard let screen = NSScreen.main?.visibleFrame else { return }
@@ -23,30 +37,53 @@ enum SplitScreen {
 
     /// Open `url` in the default browser, then pin that browser’s front window to the right half.
     static func openURLAndTileBrowserRight(_ url: URL) {
-        let browserBundle = defaultBrowserBundleID(for: url)
-        if let browserURL = browserAppURL(bundleID: browserBundle) {
+        let browser = resolvedBrowser(for: url)
+        if let appURL = browser.appURL {
             let config = NSWorkspace.OpenConfiguration()
             config.activates = true
-            NSWorkspace.shared.open([url], withApplicationAt: browserURL, configuration: config) { _, _ in
-                scheduleBrowserTileRetries(preferredBundleID: browserBundle)
+            NSWorkspace.shared.open([url], withApplicationAt: appURL, configuration: config) { _, _ in
+                scheduleBrowserTileRetries(browser: browser)
             }
         } else {
             NSWorkspace.shared.open(url)
-            scheduleBrowserTileRetries(preferredBundleID: browserBundle)
+            scheduleBrowserTileRetries(browser: browser)
         }
     }
 
-    private static func scheduleBrowserTileRetries(preferredBundleID: String?) {
-        let delays: [TimeInterval] = [0.6, 1.2, 2.0, 3.0]
+    private struct BrowserTarget {
+        let bundleID: String?
+        let appURL: URL?
+        var appleScriptName: String? {
+            guard let bundleID else { return nil }
+            return browserNames[bundleID]
+        }
+    }
+
+    private static func resolvedBrowser(for url: URL) -> BrowserTarget {
+        let appURL = NSWorkspace.shared.urlForApplication(toOpen: url)
+        let bundleID = appURL.flatMap { Bundle(url: $0)?.bundleIdentifier }
+        // Only keep the ID if that app is really on disk (avoids "Where is …?" dialogs).
+        if let bundleID,
+           NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleID) != nil {
+            return BrowserTarget(bundleID: bundleID, appURL: appURL)
+        }
+        return BrowserTarget(bundleID: nil, appURL: appURL)
+    }
+
+    private static func scheduleBrowserTileRetries(browser: BrowserTarget) {
+        let delays: [TimeInterval] = [0.8, 1.6, 2.8]
         for delay in delays {
             DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
-                _ = tileBrowserRightHalf(preferredBundleID: preferredBundleID)
+                if tileBrowserRightHalf(browser: browser) {
+                    // Later scheduled retries become no-ops once the window is already placed;
+                    // they only re-assert the same frame on the same installed browser.
+                }
             }
         }
     }
 
     @discardableResult
-    private static func tileBrowserRightHalf(preferredBundleID: String?) -> Bool {
+    private static func tileBrowserRightHalf(browser: BrowserTarget) -> Bool {
         guard let screen = NSScreen.main?.visibleFrame else { return false }
         let leftWidth = max(minHalfWidth, screen.width / 2 - gap)
         let frame = CGRect(
@@ -56,56 +93,37 @@ enum SplitScreen {
             height: screen.height
         )
 
-        if let pid = browserPID(preferredBundleID: preferredBundleID),
+        if let pid = browserPID(bundleID: browser.bundleID),
            setFrontWindowFrame(pid: pid, frame: frame) {
-            if let app = NSRunningApplication(processIdentifier: pid) {
-                app.activate(options: [.activateIgnoringOtherApps])
-            }
+            NSRunningApplication(processIdentifier: pid)?
+                .activate(options: [.activateIgnoringOtherApps])
             tileAppLeft()
             return true
         }
 
-        if tileBrowserViaAppleScript(frame: frame, preferredBundleID: preferredBundleID) {
+        // AppleScript only for the one installed default browser — never probe others.
+        if let name = browser.appleScriptName,
+           tileBrowserViaAppleScript(appName: name, frame: frame) {
             tileAppLeft()
             return true
         }
         return false
     }
 
-    private static func defaultBrowserBundleID(for url: URL) -> String? {
-        guard let appURL = NSWorkspace.shared.urlForApplication(toOpen: url) else { return nil }
-        return Bundle(url: appURL)?.bundleIdentifier
-    }
-
-    private static func browserAppURL(bundleID: String?) -> URL? {
+    private static func browserPID(bundleID: String?) -> pid_t? {
         guard let bundleID else { return nil }
-        return NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleID)
-    }
-
-    private static func browserPID(preferredBundleID: String?) -> pid_t? {
-        let running = NSWorkspace.shared.runningApplications
-        if let preferredBundleID,
-           let match = running.first(where: { $0.bundleIdentifier == preferredBundleID && !$0.isTerminated }) {
-            return match.processIdentifier
-        }
-        let known: Set<String> = [
-            "com.apple.Safari",
-            "com.google.Chrome",
-            "com.microsoft.edgemac",
-            "company.thebrowser.Browser",
-            "com.brave.Browser",
-            "org.mozilla.firefox",
-            "com.apple.SafariTechnologyPreview",
-        ]
-        return running.first { app in
-            guard let id = app.bundleIdentifier else { return false }
-            return known.contains(id) && !app.isTerminated
-        }?.processIdentifier
+        return NSWorkspace.shared.runningApplications
+            .first { $0.bundleIdentifier == bundleID && !$0.isTerminated }?
+            .processIdentifier
     }
 
     private static func setFrontWindowFrame(pid: pid_t, frame: CGRect) -> Bool {
-        let opts = [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true] as CFDictionary
-        _ = AXIsProcessTrustedWithOptions(opts)
+        // Prompt at most when not yet trusted; avoid re-prompt storms on retries.
+        if !AXIsProcessTrusted() {
+            let opts = [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true] as CFDictionary
+            _ = AXIsProcessTrustedWithOptions(opts)
+        }
+        guard AXIsProcessTrusted() else { return false }
 
         let appRef = AXUIElementCreateApplication(pid)
         var windowsRef: CFTypeRef?
@@ -125,52 +143,25 @@ enum SplitScreen {
         return posStatus == .success && sizeStatus == .success
     }
 
-    private static func tileBrowserViaAppleScript(frame: CGRect, preferredBundleID: String?) -> Bool {
+    private static func tileBrowserViaAppleScript(appName: String, frame: CGRect) -> Bool {
         let left = Int(frame.minX.rounded())
         let bottom = Int(frame.minY.rounded())
         let right = Int(frame.maxX.rounded())
         let top = Int(frame.maxY.rounded())
-        let apps = appleScriptAppNames(preferredBundleID: preferredBundleID)
-        let tries = apps.map { name in
-            """
-            try
-              tell application "\(name)"
-                if (count of windows) > 0 then
-                  set bounds of front window to {\(left), \(bottom), \(right), \(top)}
-                  activate
-                  return "ok"
-                end if
-              end tell
-            end try
-            """
-        }.joined(separator: "\n")
+        // `tell application id` still resolves missing apps; we only pass names we verified exist.
         let script = """
         on run
-          \(tries)
-          return "miss"
+          tell application "\(appName)"
+            if (count of windows) = 0 then return "miss"
+            set bounds of front window to {\(left), \(bottom), \(right), \(top)}
+            activate
+          end tell
+          return "ok"
         end run
         """
         var error: NSDictionary?
         guard let appleScript = NSAppleScript(source: script) else { return false }
         let result = appleScript.executeAndReturnError(&error)
-        return result.stringValue == "ok"
-    }
-
-    private static func appleScriptAppNames(preferredBundleID: String?) -> [String] {
-        let map: [String: String] = [
-            "com.apple.Safari": "Safari",
-            "com.google.Chrome": "Google Chrome",
-            "com.microsoft.edgemac": "Microsoft Edge",
-            "company.thebrowser.Browser": "Arc",
-            "com.brave.Browser": "Brave Browser",
-            "org.mozilla.firefox": "Firefox",
-            "com.apple.SafariTechnologyPreview": "Safari Technology Preview",
-        ]
-        var names = ["Safari", "Google Chrome", "Microsoft Edge", "Arc", "Brave Browser", "Firefox"]
-        if let preferredBundleID, let preferred = map[preferredBundleID] {
-            names.removeAll { $0 == preferred }
-            names.insert(preferred, at: 0)
-        }
-        return names
+        return error == nil && result.stringValue == "ok"
     }
 }
