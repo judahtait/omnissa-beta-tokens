@@ -36,6 +36,20 @@ final class AppModel: ObservableObject {
         } catch { errorText = error.localizedDescription }
     }
 
+    static let appleAddServiceURL = URL(string: "https://business.apple.com/main/devices/managementservices/mdmservers/add")!
+
+    /// Apple's form cannot be prefilled from a URL, so the name goes on the clipboard to paste.
+    static let serviceName = "Workspace One Beta Token Service"
+
+    func copyServiceName() {
+        copy(Self.serviceName, note: "Service name copied. Paste it into the Service Name field in Apple Business.")
+    }
+
+    func openAppleBusiness() {
+        copyServiceName()
+        NSWorkspace.shared.open(Self.appleAddServiceURL)
+    }
+
     func revealCertificate() {
         NSWorkspace.shared.activateFileViewerSelecting([workdir.appendingPathComponent(ServerToken.certName)])
     }

@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import os
 import shutil
+import subprocess
 import sys
 import time
 from pathlib import Path
@@ -17,6 +18,18 @@ from .servertoken import (
 )
 
 DEFAULT_WORKDIR = Path("~/.omnissa-beta-tokens").expanduser()
+APPLE_ADD_SERVICE_URL = "https://business.apple.com/main/devices/managementservices/mdmservers/add"
+SERVICE_NAME = "Workspace One Beta Token Service"
+
+
+def _copy_to_clipboard(text: str) -> bool:
+    """Best effort (macOS pbcopy). Apple's form cannot be prefilled, so we put
+    the service name on the clipboard for the user to paste."""
+    try:
+        subprocess.run(["pbcopy"], input=text.encode(), check=True, timeout=5)
+        return True
+    except (OSError, subprocess.SubprocessError):
+        return False
 
 
 INDIGO = "\x1b[38;2;74;18;240m"   # Omnissa indigo #4A12F0
@@ -48,10 +61,11 @@ def cmd_init(args: argparse.Namespace) -> int:
     except ServerTokenError as exc:
         return _err(str(exc))
     print(f"[INFO] Created key and certificate in {args.workdir} (private key mode 600).")
+    copied = " (copied to clipboard - paste it into the form)" if _copy_to_clipboard(SERVICE_NAME) else ""
     print(
         "\nNext steps in Apple Business:\n"
-        "  1. Devices > Management Services > Add\n"
-        "  2. Name it (suggested: 'Apple Beta Token Service for MDM')\n"
+        f"  1. Devices > Management Services > Add\n     {APPLE_ADD_SERVICE_URL}\n"
+        f"  2. Service Name: {SERVICE_NAME}{copied}\n"
         f"  3. Upload this file: {cert}\n"
         "  4. Download the .p7m server token\n"
         "  5. Run: omnissa-beta-tokens fetch\n"

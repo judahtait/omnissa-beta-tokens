@@ -152,3 +152,9 @@ class RenderTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class ServiceNameTests(unittest.TestCase):
+    def test_default_service_name(self):
+        from omnissa_beta_tokens.cli import SERVICE_NAME
+        self.assertEqual(SERVICE_NAME, "Workspace One Beta Token Service")

@@ -21,6 +21,9 @@ struct ContentView: View {
             }
             .background(Brand.background)
         }
+        // The Omnissa look uses light surfaces; pin light mode so labels stay readable
+        // when the Mac is in dark mode.
+        .preferredColorScheme(.light)
         .fileImporter(isPresented: $importing,
                       allowedContentTypes: [UTType(filenameExtension: "p7m") ?? .data, .data]) { result in
             if case .success(let url) = result { model.p7m = url }
@@ -50,12 +53,19 @@ struct ContentView: View {
             Text("In Apple Business go to Devices > Management Services > Add, name the service, and upload the .pem file. Then download the .p7m server token.")
                 .font(.system(size: 13)).foregroundColor(Brand.text)
             HStack {
+                Text("Service name:").font(.system(size: 12)).foregroundColor(Brand.slate)
+                Text(AppModel.serviceName)
+                    .font(.system(size: 12, design: .monospaced)).textSelection(.enabled)
+                Button("Copy name") { model.copyServiceName() }.buttonStyle(SecondaryButtonStyle())
+            }
+            HStack {
                 if model.hasKeypair {
                     Label("Certificate ready", systemImage: "checkmark.circle.fill").foregroundColor(Brand.navy)
                     Button("Show in Finder") { model.revealCertificate() }.buttonStyle(SecondaryButtonStyle())
                 } else {
                     Button("Create certificate") { model.createCertificate() }.buttonStyle(PrimaryButtonStyle())
                 }
+                Button("Open Apple Business") { model.openAppleBusiness() }.buttonStyle(SecondaryButtonStyle())
             }
         }
     }
@@ -98,11 +108,14 @@ struct ContentView: View {
             }
             List(model.filtered, selection: $model.selection) { t in
                 HStack {
-                    Text(t.title).font(.system(size: 13))
+                    Text(t.title).font(.system(size: 13)).foregroundColor(Brand.text)
                     Spacer()
                     Text(t.osDisplay).font(.system(size: 12)).foregroundColor(Brand.slate)
                 }.tag(t.id)
             }
+            .scrollContentBackground(.hidden)
+            .background(Color.white)
+            .overlay(RoundedRectangle(cornerRadius: 6).stroke(Brand.tint, lineWidth: 1))
             .frame(height: 200)
             if let t = model.selected { detail(t) }
         }
@@ -114,7 +127,8 @@ struct ContentView: View {
             HStack {
                 Text(model.revealToken ? t.token : t.maskedToken)
                     .font(.system(size: 12, design: .monospaced)).textSelection(.enabled)
-                    .lineLimit(1).truncationMode(.middle)
+                    .foregroundColor(Brand.navy)
+                    .lineLimit(2).fixedSize(horizontal: false, vertical: true)
                 Toggle("Reveal", isOn: $model.revealToken).toggleStyle(.switch).controlSize(.small)
                 Button("Copy token") { model.copy(t.token, note: "Token copied to clipboard.") }
                     .buttonStyle(PrimaryButtonStyle())
@@ -132,6 +146,7 @@ struct ContentView: View {
                            note: "Declaration copied to clipboard.")
             }.buttonStyle(SecondaryButtonStyle())
         }
+        .foregroundColor(Brand.text)
         .padding(12)
         .background(RoundedRectangle(cornerRadius: 8).fill(Brand.background))
     }

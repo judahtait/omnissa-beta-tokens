@@ -46,16 +46,55 @@ python3 omnissa-beta-tokens.py --help
 
 ## 4. Get the beta tokens
 
-1. Run `python3 omnissa-beta-tokens.py init`. It creates a key and a certificate (`.pem`).
-2. In Apple Business: **Devices > Management Services > Add**.
-3. Name the service (suggested: `Apple Beta Token Service for MDM`). Leave
-   "Allow this service to release devices" unchecked.
-4. Upload the `.pem` and continue (Step 2 of 2), then download the `.p7m`.
-5. Run `python3 omnissa-beta-tokens.py fetch --watch` (or `--p7m <file>`).
-6. Pick the program you need, for example `macOS 27 Golden Gate AppleSeed Beta`.
+### 4.1 Create the certificate
+
+Run `python3 omnissa-beta-tokens.py init`. It creates a private key and a
+certificate (`.pem`) in `~/.omnissa-beta-tokens`. The utility prints the exact
+path of the `.pem` to upload.
+
+### 4.2 Open Management Services in Apple Business
+
+Go straight to the Add page:
+https://business.apple.com/main/devices/managementservices/mdmservers/add
+
+Or navigate there: sign in to Apple Business, choose **Devices** in the top
+bar, select **Management Services** in the left menu, and next to
+**Device Management Services** select **Add**.
+
+![Apple Business, Devices > Management Services. Select Add in the Device Management Services row.](images/apple-business-management-services.png)
+
+*Figure 1. Devices > Management Services. Select **Add** (right side of the
+Device Management Services row).*
+
+### 4.3 Add the external device management service
+
+1. Enter the service name `Workspace One Beta Token Service`. Apple's form
+   cannot be prefilled, so the utility copies this name to your clipboard when
+   you run `init` or select **Open Apple Business** in the app. Paste it into
+   **Service Name**.
+2. Leave **Allow this service to release devices** unchecked.
+3. Select **Upload Certificate** and choose the `.pem` file from step 4.1
+   (`~/.omnissa-beta-tokens/mdm_public_cert.pem`).
+4. Continue (Step 2 of 2), then select **Download Service Token** to get the
+   `.p7m`. Service tokens can be redownloaded.
+
+![Add your external device management service form: Service Name, release devices checkbox, Upload Certificate.](images/apple-business-add-service.png)
+
+*Figure 2. Add your external device management service. Name it, leave the
+release checkbox cleared, and upload the `.pem`.*
+
+![The same form filled in: Service Name set to Workspace One Beta Token Service, release checkbox cleared, mdm_public_cert.pem attached.](images/apple-business-form-filled.png)
+
+*Figure 3. The completed form, ready to continue.*
+
+### 4.4 Get the beta programs
+
+1. Run `python3 omnissa-beta-tokens.py fetch --watch` (or `--p7m <file>`).
+2. Pick the program you need, for example `macOS 27 Golden Gate AppleSeed Beta`.
    Use `--reveal` or `--format json` to get the full token.
 
-[Screenshot placeholder: Apple Business - Add external device management service]
+If you use the Omnissa Beta Token Utility app, the same steps are on screen:
+**Open Apple Business** takes you to the Add page, then choose the `.p7m`.
 
 Security: the `.p7m`, key and tokens are credentials. Do not share or commit
 them. When finished, delete the management service in Apple Business.

@@ -31,6 +31,7 @@ th{background:var(--navy);color:#fff;font-weight:500;text-align:left;padding:8px
 td{padding:8px 12px;border-bottom:1px solid var(--tint);vertical-align:top}
 tr:nth-child(even) td{background:var(--bg)}li{margin:4px 0}
 footer{border-top:2px solid var(--tint);margin-top:48px;padding:20px 0 40px;font-size:13px;color:var(--slate)}
+img{max-width:100%;height:auto;border:1px solid var(--tint);border-radius:8px;margin:10px 0 2px;display:block}
 .btn{display:inline-block;background:var(--indigo);color:#fff!important;font-weight:500;text-decoration:none;padding:10px 18px;border-radius:999px;border:0;cursor:pointer;font-family:inherit;font-size:15px}
 .btn2{background:#fff;color:var(--indigo);border:1px solid var(--indigo);border-radius:999px;padding:6px 14px;font-family:inherit;font-size:14px;cursor:pointer;margin:8px 0}
 .download{background:var(--bg);border-left:4px solid var(--indigo);padding:16px;margin:16px 0;border-radius:6px}
@@ -90,6 +91,14 @@ def main():
     if not script.is_file():
         sys.exit(f'ERROR: {script} not found. Run python3 tools/bundle.py first.')
     body = body.replace('<!-- UTILITY_DOWNLOAD -->', utility_block(script))
+    img_root = Path(src).resolve().parent
+    def inline_img(m):
+        f = img_root / m.group(2)
+        if not f.is_file():
+            sys.exit(f'ERROR: image not found: {f}')
+        mime = 'image/png' if f.suffix.lower() == '.png' else 'image/jpeg'
+        return m.group(1) + 'data:%s;base64,%s' % (mime, base64.b64encode(f.read_bytes()).decode()) + m.group(3)
+    body = re.sub(r'(<img[^>]*\ssrc=")(?!data:|https?:)([^"]+)(")', inline_img, body)
     draft_html = '<div class="draft"><strong>Draft only.</strong> %s</div>' % status.replace("Draft only. ", "") if status.startswith("Draft only") else ''
     claim_html = '<div class="claim"><strong>Ticket claim:</strong> %s</div>' % esc(claim) if claim else ''
     html = f'''<!doctype html>
