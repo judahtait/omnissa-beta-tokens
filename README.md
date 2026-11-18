@@ -8,13 +8,13 @@ Get Apple beta enrollment tokens (AppleSeed for IT) and use them in a
 Workspace ONE UEM declarative **Software Update: Settings** profile, so managed
 Apple devices can enroll in a beta program.
 
-**All Rust.** The CLI and the macOS app share one core in `rust/`. Build with
-`cargo`. Version comes from `rust/Cargo.toml`.
+**Rust CLI** is the primary command-line tool. The **macOS app** is the native
+**SwiftUI** shell (restored for UI quality). Version comes from `rust/Cargo.toml`.
 
 | Format | For | Needs |
 |---|---|---|
 | **Rust CLI** (`omnissa-beta-tokens-<ver>-macos-arm64`) | Command line | Apple Silicon Mac |
-| **macOS app** (egui `.app`) | Admins who want a window | macOS 13 or later |
+| **macOS app** (SwiftUI `.app`) | Admins who want a window | macOS 13 or later |
 
 > **Status: pre-release (0.1.0).** Builds are not yet signed or notarized by
 > Omnissa, so macOS shows a Gatekeeper warning on first launch (see below). The
@@ -27,7 +27,7 @@ Apple devices can enroll in a beta program.
 Get the latest files from the **Releases** page of this repository:
 
 - `omnissa-beta-tokens-<version>-macos-arm64`: Rust CLI
-- `Omnissa-Beta-Token-Utility-<version>-macos.zip`: Rust (egui) macOS app
+- `Omnissa-Beta-Token-Utility-<version>-macos.zip`: SwiftUI macOS app
 - `omnissa-beta-guide-<version>.html`: the step-by-step guide (works offline)
 - `SHA256SUMS`: checksums for all of the above
 
@@ -154,11 +154,13 @@ cd rust
 cargo test
 cargo build --release
 # CLI: rust/target/release/omnissa-beta-tokens
+
+# macOS app (SwiftUI shell):
+tools/make_app.sh
 ```
 
-The macOS `.app` is the same Rust core (egui UI). Package/release steps and
-signing are in [docs/RELEASING.md](docs/RELEASING.md). Version is read from
-`rust/Cargo.toml`. Tests use fabricated credentials only.
+Package/release steps and signing are in [docs/RELEASING.md](docs/RELEASING.md).
+Version is read from `rust/Cargo.toml`. Tests use fabricated credentials only.
 
 ## Branding
 

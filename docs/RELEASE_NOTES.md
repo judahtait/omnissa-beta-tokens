@@ -7,9 +7,9 @@ distribution are not done yet.
 Get Apple beta enrollment tokens (AppleSeed for IT) and use them in a Workspace ONE UEM
 declarative Software Update: Settings profile.
 
-### Product (all Rust)
+### Product
 - **Rust CLI** — `omnissa-beta-tokens-0.1.0-macos-arm64` (`cargo build --release` in `rust/`)
-- **Rust macOS app** — egui `.app` zip (same Rust core as the CLI)
+- **SwiftUI macOS app** — native shell (Brand / glass UI)
 - Step-by-step guide (`omnissa-beta-guide-0.1.0.html`, works offline)
 - `SHA256SUMS`: verify with `shasum -a 256 -c SHA256SUMS`
 

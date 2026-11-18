@@ -12,22 +12,21 @@ cd rust
 cargo test
 cargo build --release
 # or package everything:
-tools/release.sh          # CLI + egui .app zip + optional guide + SHA256SUMS
+tools/release.sh          # Rust CLI + SwiftUI .app zip + guide + SHA256SUMS
 ```
 
-`tools/make_app.sh` builds the Rust egui binary into
+`tools/make_app.sh` builds the **SwiftUI** shell into
 `dist/Omnissa Beta Token Utility.app` (version from `rust/Cargo.toml`).
 `SKIP_APP_BUILD=1` reuses an existing `.app`.
 
 Ship:
 
-- `omnissa-beta-tokens-<ver>-macos-arm64` — CLI from `rust/target/release/omnissa-beta-tokens`
-- `Omnissa-Beta-Token-Utility-<ver>-macos.zip` — Rust egui `.app` (same core)
-- `omnissa-beta-guide-<ver>.html` — offline guide (optional companion)
+- `omnissa-beta-tokens-<ver>-macos-arm64` — Rust CLI
+- `Omnissa-Beta-Token-Utility-<ver>-macos.zip` — SwiftUI `.app`
+- `omnissa-beta-guide-<ver>.html` — offline guide
 - `SHA256SUMS`
 
-Requires a Rust toolchain (`cargo`). A cargo failure fails the release. No
-No Python or Swift artifacts are shipped.
+Requires `cargo` (CLI/guide) and Swift toolchain (app).
 
 ## Sign and notarize (needs an Omnissa Developer ID Application certificate)
 

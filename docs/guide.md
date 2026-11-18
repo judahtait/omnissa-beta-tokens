@@ -46,7 +46,7 @@ All-Rust product (version from `rust/Cargo.toml`):
 | Format | Best for | Needs |
 |---|---|---|
 | **Rust CLI** (`omnissa-beta-tokens`, macos-arm64) | Command line | Apple Silicon Mac |
-| **macOS app** (egui `.app`, same Rust core) | Click-through workflow | macOS 13 or later |
+| **macOS app** (SwiftUI `.app`) | Click-through workflow | macOS 13 or later |
 
 Get release builds from the repository **Releases** page. The CLI asset is
 `omnissa-beta-tokens-<version>-macos-arm64`. Check `SHA256SUMS`, or build with
@@ -56,8 +56,8 @@ may block the app on first launch: right-click → **Open**, or run
 
 <!-- UTILITY_DOWNLOAD -->
 
-Command-line examples in this guide use `omnissa-beta-tokens`. The macOS app
-drives the same Rust core (no separate Python or Swift product path):
+Command-line examples in this guide use `omnissa-beta-tokens` (Rust). The macOS
+app is the SwiftUI shell for the same workflow:
 
 ```
 omnissa-beta-tokens --help

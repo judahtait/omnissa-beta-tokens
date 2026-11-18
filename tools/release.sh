@@ -6,7 +6,7 @@
 #   SIGN_IDENTITY="Developer ID Application: ..." tools/release.sh   # passed to make_app.sh
 #
 # Outputs (dist/release/):
-#   Omnissa-Beta-Token-Utility-<ver>-macos.zip   Rust egui .app
+#   Omnissa-Beta-Token-Utility-<ver>-macos.zip   SwiftUI .app
 #   omnissa-beta-tokens-<ver>-macos-arm64        Rust CLI (required)
 #   omnissa-beta-guide-<ver>.html                branded guide (best-effort)
 #   SHA256SUMS
@@ -52,7 +52,7 @@ fi
 cp "$ROOT/dist/omnissa-beta-guide.html" "$GUIDE_OUT"
 echo "built omnissa-beta-guide-$VERSION.html"
 
-step "Rust GUI app"
+step "SwiftUI app"
 if [[ -z "${SKIP_APP_BUILD:-}" ]]; then
   tools/make_app.sh
 fi
