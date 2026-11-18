@@ -18,6 +18,9 @@ dist/
 # Generated icon sources
 assets/AppIcon.iconset/
 
+# Raw E2E frame dumps (promote selected shots into docs/guide/images/)
+docs/guide/images/e2e-review/
+
 .DS_Store
 
 # Local agent continuity (not for public repo)

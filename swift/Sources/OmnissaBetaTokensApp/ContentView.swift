@@ -93,8 +93,18 @@ struct ContentView: View {
 
     private var stepChoose: some View {
         card(number: 2, title: "Choose server token (.p7m)") {
+            Text("After you click Download Service Token in Apple Business, the app can watch ~/Downloads, wait until the .p7m finishes, and move it into the work folder.")
+                .font(Brand.font(12)).foregroundColor(Brand.slate)
             HStack {
-                Button("Choose file...") { importing = true }.buttonStyle(SecondaryButtonStyle())
+                if model.isWatchingDownloads {
+                    ProgressView().controlSize(.small)
+                    Text("Watching Downloads…").font(Brand.font(12)).foregroundColor(Brand.slate)
+                    Button("Stop") { model.stopWatchingDownloads() }.buttonStyle(SecondaryButtonStyle())
+                } else {
+                    Button("Watch Downloads") { model.startWatchingDownloads() }
+                        .buttonStyle(PrimaryButtonStyle())
+                    Button("Choose file...") { importing = true }.buttonStyle(SecondaryButtonStyle())
+                }
                 Text(model.p7m?.lastPathComponent ?? "No file selected")
                     .font(Brand.font(12)).foregroundColor(Brand.slate).lineLimit(1).truncationMode(.middle)
             }
@@ -161,11 +171,15 @@ struct ContentView: View {
                     .foregroundColor(Brand.navy)
                     .lineLimit(2).fixedSize(horizontal: false, vertical: true)
                 Toggle("Reveal", isOn: $model.revealToken).toggleStyle(.switch).controlSize(.small)
-                Button("Copy token") { model.copy(t.token, note: "Token copied to clipboard.") }
+                Button("Copy title") { model.copyTitle(t) }
+                    .buttonStyle(SecondaryButtonStyle())
+                Button("Copy token") { model.copy(t.token, note: "Token copied — paste into UEM Beta Token only.") }
                     .buttonStyle(PrimaryButtonStyle())
                 Button("Copy for UEM") { model.copyForUEM(t) }
                     .buttonStyle(SecondaryButtonStyle())
             }
+            Text("One UEM declarative profile per platform (macOS vs iOS). Paste title → Description, token → Token; do not paste the mode checklist into Description.")
+                .font(Brand.font(12)).foregroundColor(Brand.slate)
             Divider()
             Text("Workspace ONE UEM Software Update:Settings > Beta").font(Brand.font(12)).foregroundColor(Brand.slate)
             Picker("Mode", selection: $model.mode) {

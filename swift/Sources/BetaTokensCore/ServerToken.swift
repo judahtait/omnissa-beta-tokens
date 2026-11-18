@@ -76,6 +76,62 @@ public enum ServerToken {
         }
     }
 
+    public static var downloadsDirectory: URL {
+        FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Downloads")
+    }
+
+    /// Snapshot of `.p7m` paths currently in Downloads (for watch baseline).
+    public static func p7mPaths(in directory: URL) -> Set<URL> {
+        let listed = (try? FileManager.default.contentsOfDirectory(
+            at: directory, includingPropertiesForKeys: nil)) ?? []
+        return Set(listed.filter { $0.pathExtension.lowercased() == "p7m" })
+    }
+
+    /// Wait until `url` exists and its size is unchanged for `stablePasses` checks (~download finished).
+    public static func waitUntilDownloadStable(
+        _ url: URL,
+        stablePasses: Int = 3,
+        pollNanoseconds: UInt64 = 500_000_000
+    ) async throws {
+        var lastSize: Int64 = -1
+        var stable = 0
+        while stable < stablePasses {
+            try Task.checkCancellation()
+            let values = try url.resourceValues(forKeys: [.fileSizeKey, .isRegularFileKey])
+            guard values.isRegularFile == true, let size = values.fileSize else {
+                stable = 0
+                lastSize = -1
+                try await Task.sleep(nanoseconds: pollNanoseconds)
+                continue
+            }
+            let size64 = Int64(size)
+            if size64 > 0, size64 == lastSize {
+                stable += 1
+            } else {
+                stable = 0
+                lastSize = size64
+            }
+            try await Task.sleep(nanoseconds: pollNanoseconds)
+        }
+    }
+
+    /// Copy a `.p7m` into `workdir` with mode 600 and return the destination URL.
+    public static func importP7M(_ source: URL, into workdir: URL) throws -> URL {
+        try ensureWorkdir(workdir)
+        let name = source.lastPathComponent
+        guard name.lowercased().hasSuffix(".p7m") else {
+            throw ToolError("Not a .p7m file: \(name)")
+        }
+        let dest = workdir.appendingPathComponent(name)
+        let fm = FileManager.default
+        if fm.fileExists(atPath: dest.path) {
+            try fm.removeItem(at: dest)
+        }
+        try fm.copyItem(at: source, to: dest)
+        try fm.setAttributes([.posixPermissions: 0o600], ofItemAtPath: dest.path)
+        return dest
+    }
+
     /// Securely overwrite then delete key, cert, and any `*.p7m` in `dir`.
     /// Returns the paths removed. Throws if nothing was present to delete.
     @discardableResult

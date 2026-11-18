@@ -102,7 +102,13 @@ Device Management Services row).*
 3. Select **Upload Certificate** and choose the `.pem` from step 4.1
    (`~/.omnissa-beta-tokens/mdm_public_cert.pem`).
 4. Continue (Step 2 of 2), then select **Download Service Token** to get the
-   `.p7m`. Service tokens can be redownloaded later if needed.
+   `.p7m`. Prefer the app’s **Watch Downloads** (or CLI `fetch --watch`) so the
+   new file is imported automatically — do not keep a stale `.p7m` selected.
+   Service tokens can be redownloaded later if needed.
+
+![Apple Business Step 2 of 2: Download Service Token.](images/abm-download-service-token.jpg)
+
+*Figure 2a. Download Service Token — then let the utility pick up the new `.p7m`.*
 
 ![Add your external device management service form: Service Name, release devices checkbox, Upload Certificate.](images/apple-business-add-service.png)
 
@@ -116,7 +122,8 @@ release checkbox cleared, and upload the `.pem`.*
 ### 4.4 Fetch the beta programs
 
 ```
-omnissa-beta-tokens fetch --watch
+omnissa-beta-tokens fetch --watch   # waits for a new .p7m in ~/Downloads, copies it in
+# App: Step 2 → Watch Downloads (same behavior)
 # or: omnissa-beta-tokens fetch --p7m ~/Downloads/something.p7m
 ```
 
@@ -164,33 +171,62 @@ configuration. Source: Apple's `softwareupdate.settings` declaration schema.
 On unsupervised devices only **Offer programs** can be used (the user enrolls
 manually). The organization must also be enrolled in AppleSeed for IT.
 
-### 5.2 Create the profile
+### 5.2 Separate declarations per platform (required)
+
+Apple’s Software Update: Settings **Beta** payload is **platform-scoped** in
+UEM: you pick **Apple macOS** or **Apple iOS** (or iPadOS) when creating the
+profile. A macOS beta token cannot ride inside an iOS declaration, and the
+reverse is also true.
+
+**Rule:** create **one declarative Software Update: Settings profile per
+platform (and usually per program)** you intend to assign.
+
+| Platform filter in the utility | UEM Add Profile platform | Example profile name |
+|---|---|---|
+| macOS | Apple **macOS** | `macOS 27 Golden Gate AppleSeed Beta` |
+| iOS | Apple **iOS** | `iOS 27 AppleSeed Beta` |
+| iPadOS (if listed separately) | Apple **iOS** / iPadOS as your tenant labels it | `iPadOS 27 AppleSeed Beta` |
+| tvOS / visionOS | — | **Do not** create a Beta declaration; UEM cannot deliver these |
+
+Workflow:
+
+1. In the utility, filter **OS** to one platform (for example macOS).
+2. Select that platform’s program → **Copy title** into UEM **Description**,
+   **Copy token** into UEM **Token** (or use **Copy for UEM** as a reference
+   block — paste only title and token into those two fields, **not** the mode
+   checklist into Description).
+3. Repeat with a **new** UEM profile for the next platform (new Add Profile →
+   choose that platform again).
+4. Assign each profile to Smart Groups that match that platform only.
+
+### 5.3 Create the profile
 
 1. In UEM: **Resources > Profiles & Baselines > Profiles > Add > Add Profile**.
 
    ![UEM Add Profile: Select a platform to start (Apple iOS, macOS, tvOS, visionOS).](images/uem-add-profile-platform.png)
 
-   *Figure 4. Choose the platform.*
+   *Figure 4. Choose the platform — this choice must match the token’s OS.*
 
 2. Set **Management Type** = Declarative, **Declaration Type** = Configuration,
    **Context** = Device. Select Next.
 
-   ![UEM Apple iOS profile: Management Type Declarative, Declaration Type Configuration, Context Device.](images/uem-declarative-configuration.png)
+   ![UEM Apple declarative profile: Management Type Declarative, Declaration Type Configuration, Context Device.](images/uem-declarative-configuration.png)
 
    *Figure 5. Declarative, Configuration, Device.*
 
-3. Name the profile (for example `macOS 27 Golden Gate AppleSeed Beta`).
+3. Name the profile for **that platform and program** (for example
+   `macOS 27 Golden Gate AppleSeed Beta`).
 4. Add the **Software Update: Settings** payload and turn on **Beta**.
-5. Choose a mode from the table below. Enter the **Description** (program
-   title) and **Token** for that OS and program, matching the utility output
-   (or paste from `--uem-block`).
-6. Select Next, set the assignment (see [Assignment checklist](#5-4-assignment-checklist)), then save and publish.
+5. Choose a mode from the table below. Enter **only** the program **title** in
+   **Description** and the **token** in **Token** (see [5.2](#52-separate-declarations-per-platform-required)).
+6. Select Next, set the assignment (see [Assignment checklist](#55-assignment-checklist)), then save and publish.
 
-[Screenshot to add: Software Update: Settings > Beta in Automatic mode
-(Program enrollment = AlwaysOn, Require program = on). Redact the token field.
-No tenant name or session data.]
+![UEM Software Update: Settings > Beta with Program enrollment / Require program / Description / Token (redact the token before publishing).](images/uem-software-update-beta.png)
 
-### 5.3 Choose a mode (UEM field guidance only)
+*Figure 6. Paste Description = program title, Token = enrollment token. Mode
+fields must match the table below (Automatic = AlwaysOn + Require on, Offer off).*
+
+### 5.4 Choose a mode (UEM field guidance only)
 
 Apple's schema only allows these combinations. Enter them in the UEM Beta
 payload (the app **Mode** picker and `fetch --uem-block` show the matching
@@ -213,7 +249,7 @@ Rules from the schema:
 Do **not** use Allowed together with Require program. That combination is
 invalid under Apple's schema. Use **Automatic** instead.
 
-### 5.4 Assignment checklist
+### 5.5 Assignment checklist
 
 Use this before publishing the profile:
 
@@ -232,7 +268,10 @@ Use this before publishing the profile:
 - [ ] **Assignment exclusivity** — devices should not receive conflicting Beta
       modes at once; assign the Block and unenroll profile when exiting, and
       remove or exclude the enroll profile for those devices.
-- [ ] **Title and token** match `fetch` / `--uem-block` (no extra whitespace).
+- [ ] **One profile per platform** — macOS token in a macOS declaration; iOS
+      token in an iOS declaration (see [5.2](#52-separate-declarations-per-platform-required)).
+- [ ] **Title and token** match `fetch` / Copy title + Copy token (no checklist
+      text in Description; no extra whitespace).
 - [ ] Publish / activate completed; no draft-only assignment left behind.
 
 ## 6. On-device validation checklist

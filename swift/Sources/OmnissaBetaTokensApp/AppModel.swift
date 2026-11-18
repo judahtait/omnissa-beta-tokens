@@ -10,6 +10,7 @@ final class AppModel: ObservableObject {
     @Published var p7m: URL?
     @Published var tokens: [BetaToken] = []
     @Published var isLoading = false
+    @Published var isWatchingDownloads = false
     @Published var message: String?
     @Published var errorText: String?
     @Published var search = ""
@@ -17,6 +18,8 @@ final class AppModel: ObservableObject {
     @Published var selection: BetaToken.ID?
     @Published var revealToken = false
     @Published var mode: EnrollmentMode = .automatic
+
+    private var downloadsWatchTask: Task<Void, Never>?
 
     init() { refresh() }
 
@@ -29,10 +32,74 @@ final class AppModel: ObservableObject {
         errorText = nil
         do {
             try ServerToken.generateKeypair(in: workdir)
-            message = "Certificate created. Upload the .pem to Apple Business, then download the .p7m."
+            // New cert cannot decrypt an old .p7m — clear selection and watch Downloads.
+            p7m = nil
+            tokens = []
+            selection = nil
+            message = "Certificate created. Upload the .pem to Apple Business, then download the .p7m — watching Downloads…"
             refresh()
             revealCertificate()
+            startWatchingDownloads()
         } catch { errorText = error.localizedDescription }
+    }
+
+    /// Watch ~/Downloads for a new `.p7m`, wait until download finishes, copy into workdir.
+    /// Callers: ContentView step 2; createCertificate. User: watch Downloads and move .p7m.
+    func startWatchingDownloads() {
+        downloadsWatchTask?.cancel()
+        isWatchingDownloads = true
+        errorText = nil
+        let downloads = ServerToken.downloadsDirectory
+        let baseline = ServerToken.p7mPaths(in: downloads)
+        message = "Watching \(downloads.path) for a new .p7m…"
+        let wd = workdir
+        downloadsWatchTask = Task { [weak self] in
+            while !Task.isCancelled {
+                let current = ServerToken.p7mPaths(in: downloads)
+                if let newest = current.subtracting(baseline).max(by: {
+                    let a = (try? $0.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate) ?? .distantPast
+                    let b = (try? $1.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate) ?? .distantPast
+                    return a < b
+                }) {
+                    do {
+                        try await ServerToken.waitUntilDownloadStable(newest)
+                        let dest = try ServerToken.importP7M(newest, into: wd)
+                        await MainActor.run {
+                            guard let self, !Task.isCancelled else { return }
+                            self.p7m = dest
+                            self.isWatchingDownloads = false
+                            self.message = "Imported \(dest.lastPathComponent) from Downloads. You can Fetch beta tokens."
+                            self.downloadsWatchTask = nil
+                        }
+                        return
+                    } catch is CancellationError {
+                        return
+                    } catch {
+                        await MainActor.run {
+                            guard let self else { return }
+                            self.isWatchingDownloads = false
+                            self.errorText = error.localizedDescription
+                            self.downloadsWatchTask = nil
+                        }
+                        return
+                    }
+                }
+                try? await Task.sleep(nanoseconds: 1_000_000_000)
+            }
+            await MainActor.run {
+                self?.isWatchingDownloads = false
+                self?.downloadsWatchTask = nil
+            }
+        }
+    }
+
+    func stopWatchingDownloads() {
+        downloadsWatchTask?.cancel()
+        downloadsWatchTask = nil
+        isWatchingDownloads = false
+        if message?.contains("Watching") == true {
+            message = "Stopped watching Downloads."
+        }
     }
 
     static let appleAddServiceURL = URL(string: "https://business.apple.com/main/devices/managementservices/mdmservers/add")!
@@ -88,6 +155,7 @@ final class AppModel: ObservableObject {
     /// Caller must confirm first. Reminds the user to remove the ABM management service.
     func teardownLocalCredentials() {
         errorText = nil
+        stopWatchingDownloads()
         do {
             _ = try ServerToken.teardown(in: workdir)
             p7m = nil
@@ -103,7 +171,14 @@ final class AppModel: ObservableObject {
 
     func copyForUEM(_ token: BetaToken) {
         let block = Render.uemClipboardBlock(title: token.title, token: token.token, mode: mode)
-        copy(block, note: "UEM paste block copied (title, token, and field checklist).")
+        copy(
+            block,
+            note: "UEM paste block copied. Paste Program title into Description and Token into Token only — not the checklist. Use a separate UEM declaration per platform (macOS vs iOS)."
+        )
+    }
+
+    func copyTitle(_ token: BetaToken) {
+        copy(token.title, note: "Program title copied — paste into UEM Beta Description only.")
     }
 
     var osOptions: [String] {

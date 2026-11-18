@@ -82,6 +82,19 @@ private func makeP7M(dir: URL, payload: String) throws -> URL {
         #expect(!FileManager.default.fileExists(atPath: p7m.path))
         #expect(throws: (any Error).self) { try ServerToken.teardown(in: dir) }
     }
+
+    @Test func importP7MCopiesIntoWorkdir() throws {
+        let downloads = tempDir()
+        let work = tempDir()
+        let src = downloads.appendingPathComponent("Token_smime.p7m")
+        try Data("fake-p7m-body".utf8).write(to: src)
+        let dest = try ServerToken.importP7M(src, into: work)
+        #expect(dest.lastPathComponent == "Token_smime.p7m")
+        #expect(FileManager.default.fileExists(atPath: dest.path))
+        let mode = try FileManager.default.attributesOfItem(atPath: dest.path)[.posixPermissions] as? NSNumber
+        #expect((mode?.uint16Value ?? 0) & 0o777 == 0o600)
+        #expect(ServerToken.p7mPaths(in: downloads).contains(src))
+    }
 }
 
 @Suite struct CredentialsExpiryTests {
