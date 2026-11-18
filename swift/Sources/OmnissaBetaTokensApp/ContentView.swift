@@ -245,7 +245,7 @@ struct ContentView: View {
                     .lineLimit(3).fixedSize(horizontal: false, vertical: true)
                 Toggle("Reveal", isOn: $model.revealToken).toggleStyle(.switch).controlSize(.small)
             }
-            Text("Create one declarative Software Update: Settings profile for \(t.osDisplay). Paste title → Description, token → Token.")
+            Text("Each AppleSeed beta needs its own token, declarative Software Update: Settings profile, and assignment. For this program: paste title → Description, token → Token (\(t.osDisplay) platform).")
                 .font(Brand.font(12)).foregroundColor(Brand.slate)
             FlowButtons {
                 Button("Copy title") { model.copyTitle(t) }

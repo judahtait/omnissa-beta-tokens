@@ -20,7 +20,7 @@ struct UEMGuidanceSheet: View {
             GuidanceStep(
                 number: 2,
                 title: "Select the platform",
-                detail: "Choose the Apple platform that matches the beta program’s OS (one declarative profile per platform).",
+                detail: "Choose the Apple platform that matches this beta program’s OS. Each AppleSeed beta needs its own profile on the matching platform — do not reuse one profile for multiple programs.",
                 imageName: "02-select-platform",
                 showsEnrollmentGuidance: false
             ),
@@ -34,7 +34,7 @@ struct UEMGuidanceSheet: View {
             GuidanceStep(
                 number: 4,
                 title: "Software Update: Settings → Beta",
-                detail: "Turn Beta On. Paste the program title into Description (and use it as the profile name); paste the token into Token. Example: “\(programTitle)”. Assign and publish.",
+                detail: "Turn Beta On. Paste this program’s title into Description (and use it as the profile name); paste this program’s token into Token. Example: “\(programTitle)”. Assign this profile to the right Smart Group and publish. For another AppleSeed beta, fetch that program’s token and create a new profile + assignment — one token, one profile, one assignment per program.",
                 imageName: "04-software-update-beta",
                 showsEnrollmentGuidance: false
             ),
@@ -60,21 +60,49 @@ struct UEMGuidanceSheet: View {
     }
 
     private var header: some View {
-        HStack(alignment: .top) {
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Create the UEM profile")
-                    .font(Brand.font(20, medium: true))
-                    .foregroundColor(Brand.navy)
-                Text("Declarative Software Update: Settings — one profile per platform.")
-                    .font(Brand.font(13))
-                    .foregroundColor(Brand.slate)
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(alignment: .top) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Create the UEM profile")
+                        .font(Brand.font(20, medium: true))
+                        .foregroundColor(Brand.navy)
+                    Text("Declarative Software Update: Settings")
+                        .font(Brand.font(13))
+                        .foregroundColor(Brand.slate)
+                }
+                Spacer()
+                Button("Close") { dismiss() }
+                    .buttonStyle(SecondaryButtonStyle())
+                    .keyboardShortcut(.cancelAction)
             }
-            Spacer()
-            Button("Close") { dismiss() }
-                .buttonStyle(SecondaryButtonStyle())
-                .keyboardShortcut(.cancelAction)
+            oneProgramCallout
         }
         .padding(20)
+    }
+
+    /// Each AppleSeed beta = its own token, profile, and assignment.
+    private var oneProgramCallout: some View {
+        HStack(alignment: .top, spacing: 10) {
+            Image(systemName: "exclamationmark.circle.fill")
+                .foregroundColor(Brand.indigo)
+            VStack(alignment: .leading, spacing: 4) {
+                Text("One AppleSeed beta → one token, one profile, one assignment")
+                    .font(Brand.font(13, medium: true))
+                    .foregroundColor(Brand.navy)
+                Text("Every program (for example a macOS seed vs an iOS seed, or two different macOS seeds) needs its own enrollment token, its own declarative Software Update: Settings profile, and its own Smart Group assignment. Do not put multiple programs in one profile.")
+                    .font(Brand.font(12))
+                    .foregroundColor(Brand.text)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .padding(12)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Brand.indigo.opacity(0.08))
+        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                .strokeBorder(Brand.indigo.opacity(0.35), lineWidth: 1)
+        )
     }
 
     private var stepChrome: some View {

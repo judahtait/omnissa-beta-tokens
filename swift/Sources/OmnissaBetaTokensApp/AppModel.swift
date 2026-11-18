@@ -186,7 +186,7 @@ final class AppModel: ObservableObject {
     }
 
     func copyTitle(_ token: BetaToken) {
-        copy(token.title, note: "Title copied. Use this as the title for the UEM profile (and paste into Beta Description).")
+        copy(token.title, note: "Title copied. Use this as the UEM profile name and Beta Description — one profile per AppleSeed program.")
     }
 
     var osOptions: [String] {

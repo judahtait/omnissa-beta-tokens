@@ -143,7 +143,7 @@ release checkbox cleared, and upload the `.pem`.*
 | Apple Business service | Service created; you can **Download Service Token**. Device count for **this** service stays **0** (see callout above). |
 | `.p7m` import | App: **Watch Downloads** finishes with “Imported …p7m”; or CLI `fetch --watch` copies the new file. |
 | Fetch tokens | App/CLI: **Loaded N beta programs** (often ~20); filter by OS and pick one program. |
-| UEM profile | One declarative **Software Update: Settings** profile **per platform**; Beta On; Description = program title; Token = token; assigned and published. |
+| UEM profile | One declarative **Software Update: Settings** profile **per AppleSeed program** (token + profile + assignment); Beta On; Description = program title; Token = token; assigned and published. |
 | Device | In UEM: profile **Installed**. On the device: Software Update shows the expected beta (or Automatic enrollment completed). **Not** in Apple Business under this token service’s device list. |
 
 ### 4.5 Fetch the beta programs
@@ -199,15 +199,18 @@ configuration. Source: Apple's `softwareupdate.settings` declaration schema.
 On unsupervised devices only **Offer programs** can be used (the user enrolls
 manually). The organization must also be enrolled in AppleSeed for IT.
 
-### 5.2 Separate declarations per platform (required)
+### 5.2 One AppleSeed beta → one token, one profile, one assignment
 
 Apple’s Software Update: Settings **Beta** payload is **platform-scoped** in
 UEM: you pick **Apple macOS** or **Apple iOS** (or iPadOS) when creating the
 profile. A macOS beta token cannot ride inside an iOS declaration, and the
 reverse is also true.
 
-**Rule:** create **one declarative Software Update: Settings profile per
-platform (and usually per program)** you intend to assign.
+**Rule:** each AppleSeed beta program needs **its own enrollment token**, **its
+own declarative Software Update: Settings profile**, and **its own Smart Group
+assignment**. Do not put multiple programs in one profile. That applies across
+platforms (macOS vs iOS) and within a platform (for example two different macOS
+seed programs).
 
 | Platform filter in the app/CLI | UEM Add Profile platform | Example profile name |
 |---|---|---|
@@ -218,13 +221,14 @@ platform (and usually per program)** you intend to assign.
 
 Workflow:
 
-1. In the app/CLI, filter **OS** to one platform (for example macOS).
-2. Select that platform’s program → **Copy title** into UEM **Description**,
-   **Copy token** into UEM **Token**. In the app, **How to create the UEM
-   profile** shows the declarative Add Profile screenshots.
-3. Repeat with a **new** UEM profile for the next platform (new Add Profile →
-   choose that platform again).
-4. Assign each profile to Smart Groups that match that platform only.
+1. In the app/CLI, pick **one** program (filter OS if helpful).
+2. **Copy title** / **Copy token** → create **one** declarative profile for that
+   program’s platform → paste Description and Token → assign → publish. The
+   app’s **How to create the UEM profile** walkthrough covers the console steps.
+3. For the next AppleSeed beta, repeat from step 1 with a **new** token, **new**
+   profile, and **new** assignment (new Add Profile → matching platform).
+4. Assign each profile only to Smart Groups that match that program’s platform
+   and pilot scope.
 
 ### 5.3 Create the profile
 
