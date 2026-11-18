@@ -27,6 +27,8 @@ cp "$BIN" "$OUT/Contents/MacOS/OmnissaBetaTokens"
 
 mkdir -p "$OUT/Contents/Resources/Fonts"
 cp "$ROOT"/assets/fonts/*.ttf "$ROOT"/assets/fonts/OFL.txt "$OUT/Contents/Resources/Fonts/"
+mkdir -p "$OUT/Contents/Resources/Guidance"
+cp "$ROOT"/assets/guidance/*.png "$OUT/Contents/Resources/Guidance/"
 if [[ -f "$ROOT/assets/AppIcon.icns" ]]; then
   cp "$ROOT/assets/AppIcon.icns" "$OUT/Contents/Resources/AppIcon.icns"
   ICON_KEY='<key>CFBundleIconFile</key><string>AppIcon</string>'

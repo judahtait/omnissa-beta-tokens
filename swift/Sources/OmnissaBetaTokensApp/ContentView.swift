@@ -7,6 +7,7 @@ struct ContentView: View {
     @EnvironmentObject var model: AppModel
     @State private var importing = false
     @State private var confirmTeardown = false
+    @State private var showUEMGuidance = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -26,6 +27,13 @@ struct ContentView: View {
         .fileImporter(isPresented: $importing,
                       allowedContentTypes: [UTType(filenameExtension: "p7m") ?? .data, .data]) { result in
             if case .success(let url) = result { model.p7m = url }
+        }
+        .sheet(isPresented: $showUEMGuidance) {
+            if let t = model.selected {
+                UEMGuidanceSheet(platform: t.osDisplay, programTitle: t.title)
+            } else {
+                UEMGuidanceSheet(platform: "macOS / iOS", programTitle: "your beta program")
+            }
         }
         .confirmationDialog(
             "Delete local credentials?",
@@ -205,14 +213,14 @@ struct ContentView: View {
                     .lineLimit(2).fixedSize(horizontal: false, vertical: true)
                 Toggle("Reveal", isOn: $model.revealToken).toggleStyle(.switch).controlSize(.small)
             }
-            Text("Create a UEM declarative Software Update: Settings profile for \(t.osDisplay) (one profile per platform). Paste title → Description, token → Token.")
+            Text("Create one declarative Software Update: Settings profile for \(t.osDisplay). Paste title → Description, token → Token.")
                 .font(Brand.font(12)).foregroundColor(Brand.slate)
             HStack {
                 Button("Copy title") { model.copyTitle(t) }
                     .buttonStyle(SecondaryButtonStyle())
                 Button("Copy token") { model.copy(t.token, note: "Token copied — paste into UEM Beta Token only.") }
                     .buttonStyle(PrimaryButtonStyle())
-                Button("Copy UEM next steps") { model.copyForUEM(t) }
+                Button("How to create the UEM profile") { showUEMGuidance = true }
                     .buttonStyle(SecondaryButtonStyle())
             }
         }

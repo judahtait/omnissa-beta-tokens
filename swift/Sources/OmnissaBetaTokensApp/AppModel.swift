@@ -180,15 +180,6 @@ final class AppModel: ObservableObject {
         }
     }
 
-    func copyForUEM(_ token: BetaToken) {
-        let block = Render.uemClipboardBlock(
-            title: token.title, token: token.token, platform: token.osDisplay)
-        copy(
-            block,
-            note: "UEM next steps + title/token copied. Create one declarative profile for \(token.osDisplay), then paste Description = title, Token = token."
-        )
-    }
-
     func copyTitle(_ token: BetaToken) {
         copy(token.title, note: "Program title copied — paste into UEM Beta Description only.")
     }

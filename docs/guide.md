@@ -60,7 +60,7 @@ from `rust/Cargo.toml`. Until builds are notarized: right-click → **Open**, or
 <!-- UTILITY_DOWNLOAD -->
 
 CLI examples use `omnissa-beta-tokens`. The app is the SwiftUI shell for the same
-admin workflow (Watch Downloads, Copy title/token, UEM next steps).
+admin workflow (Watch Downloads, Copy title/token, in-app UEM profile screenshots).
 
 ```
 omnissa-beta-tokens --help
@@ -168,9 +168,9 @@ UEM console — **not** declaration JSON — and copies the block to the clipboa
 when `pbcopy` is available.
 
 In the macOS app: use **Watch Downloads** (or choose the `.p7m`), then **Fetch
-beta tokens**, pick a program, **Copy title** / **Copy token**, and create the
-UEM profile for that platform (**Copy UEM next steps** pastes the short
-checklist).
+beta tokens**, pick a program, **Copy title** / **Copy token**, and open
+**How to create the UEM profile** for screenshot steps (declarative Software
+Update: Settings).
 
 Security notes:
 
@@ -220,9 +220,8 @@ Workflow:
 
 1. In the app/CLI, filter **OS** to one platform (for example macOS).
 2. Select that platform’s program → **Copy title** into UEM **Description**,
-   **Copy token** into UEM **Token** (or use **Copy for UEM** as a reference
-   block — paste only title and token into those two fields, **not** the mode
-   checklist into Description).
+   **Copy token** into UEM **Token**. In the app, **How to create the UEM
+   profile** shows the declarative Add Profile screenshots.
 3. Repeat with a **new** UEM profile for the next platform (new Add Profile →
    choose that platform again).
 4. Assign each profile to Smart Groups that match that platform only.
