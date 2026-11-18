@@ -148,7 +148,12 @@ final class AppModel: ObservableObject {
                 }
                 let result = try await ABMClient().fetchBetaTokens(creds)
                 tokens = result
-                selection = nil
+                // Prefer a supported program for the current OS filter; otherwise first result.
+                let preferred = Render.filter(result, os: osFilter == "All" ? nil : osFilter, text: search)
+                    .first { !$0.isUnsupportedBetaPlatform }
+                    ?? result.first { !$0.isUnsupportedBetaPlatform }
+                    ?? result.first
+                selection = preferred?.id
                 if expired {
                     message = "Loaded \(result.count) beta programs, but the server token is expired — regenerate the .p7m in Apple Business."
                 } else {

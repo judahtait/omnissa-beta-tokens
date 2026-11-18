@@ -18,12 +18,13 @@ struct ContentView: View {
                     stepChoose
                     stepFetch
                     if !model.tokens.isEmpty { results }
-                    statusLine
                 }
                 .padding(20)
             }
             .background(GlassBackdrop())
+            statusBar
         }
+        .dynamicTypeSize(.medium ... .accessibility3)
         .fileImporter(isPresented: $importing,
                       allowedContentTypes: [UTType(filenameExtension: "p7m") ?? .data, .data]) { result in
             if case .success(let url) = result {
@@ -37,6 +38,9 @@ struct ContentView: View {
             } else {
                 UEMGuidanceSheet(platform: "macOS / iOS", programTitle: "your beta program")
             }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .showUEMGuidance)) { _ in
+            showUEMGuidance = true
         }
         .confirmationDialog(
             "Delete local credentials?",
@@ -83,15 +87,17 @@ struct ContentView: View {
             HStack {
                 Text("Service name:").font(Brand.font(12)).foregroundColor(Brand.slate)
                 Text(AppModel.serviceName)
-                    .font(.system(size: 12, design: .monospaced)).textSelection(.enabled)
+                    .font(Brand.mono(12)).textSelection(.enabled)
                 Button("Copy name") { model.copyServiceName() }.buttonStyle(SecondaryButtonStyle())
             }
             if model.hasKeypair {
                 draggableCertificate
             }
-            HStack {
+            FlowButtons {
                 if model.hasKeypair {
-                    Label("Certificate ready", systemImage: "checkmark.circle.fill").foregroundColor(Brand.navy)
+                    Label("Certificate ready", systemImage: "checkmark.circle.fill")
+                        .font(Brand.font(13, medium: true))
+                        .foregroundColor(Brand.navy)
                     Button("Show in Finder") { model.revealCertificate() }.buttonStyle(SecondaryButtonStyle())
                 } else {
                     Button("Create certificate") { model.createCertificate() }.buttonStyle(PrimaryButtonStyle())
@@ -219,7 +225,7 @@ struct ContentView: View {
             .background(Brand.card.opacity(0.6))
             .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
             .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous).stroke(Brand.rule, lineWidth: 1))
-            .frame(height: 200)
+            .frame(minHeight: 160, idealHeight: 220, maxHeight: 360)
             if let t = model.selected { detail(t) }
         }
     }
@@ -236,16 +242,16 @@ struct ContentView: View {
                 .foregroundColor(Brand.magenta)
                 .fixedSize(horizontal: false, vertical: true)
             }
-            HStack {
+            HStack(alignment: .top) {
                 Text(model.revealToken ? t.token : t.maskedToken)
-                    .font(.system(size: 12, design: .monospaced)).textSelection(.enabled)
+                    .font(Brand.mono(12)).textSelection(.enabled)
                     .foregroundColor(Brand.navy)
-                    .lineLimit(2).fixedSize(horizontal: false, vertical: true)
+                    .lineLimit(3).fixedSize(horizontal: false, vertical: true)
                 Toggle("Reveal", isOn: $model.revealToken).toggleStyle(.switch).controlSize(.small)
             }
             Text("Create one declarative Software Update: Settings profile for \(t.osDisplay). Paste title → Description, token → Token.")
                 .font(Brand.font(12)).foregroundColor(Brand.slate)
-            HStack {
+            FlowButtons {
                 Button("Copy title") { model.copyTitle(t) }
                     .buttonStyle(SecondaryButtonStyle())
                 Button("Copy token") { model.copy(t.token, note: "Token copied — paste into UEM Beta Token only.") }
@@ -261,13 +267,37 @@ struct ContentView: View {
 
     // MARK: Status
 
-    @ViewBuilder private var statusLine: some View {
-        if let e = model.errorText {
-            // Magenta is reserved for negative/exception data.
-            Label(e, systemImage: "exclamationmark.triangle.fill")
-                .font(Brand.font(13)).foregroundColor(Brand.magenta)
-        } else if let m = model.message {
-            Label(m, systemImage: "info.circle").font(Brand.font(13)).foregroundColor(Brand.slate)
+    private var statusBar: some View {
+        Group {
+            if let e = model.errorText {
+                Label(e, systemImage: "exclamationmark.triangle.fill")
+                    .font(Brand.font(13)).foregroundColor(Brand.magenta)
+            } else if let m = model.message {
+                Label(m, systemImage: "info.circle")
+                    .font(Brand.font(13)).foregroundColor(Brand.slate)
+            } else {
+                Label("Ready", systemImage: "checkmark.circle")
+                    .font(Brand.font(13)).foregroundColor(Brand.slate.opacity(0.7))
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 10)
+        .background(.ultraThinMaterial)
+        .overlay(alignment: .top) { Divider() }
+    }
+
+    /// Wraps action buttons when the window is narrow or text is enlarged.
+    private struct FlowButtons<Content: View>: View {
+        @ViewBuilder var content: () -> Content
+        var body: some View {
+            // macOS 13+: flexible wrap without a custom Layout type.
+            VStack(alignment: .leading, spacing: 8) {
+                ViewThatFits(in: .horizontal) {
+                    HStack(spacing: 8) { content() }
+                    VStack(alignment: .leading, spacing: 8) { content() }
+                }
+            }
         }
     }
 

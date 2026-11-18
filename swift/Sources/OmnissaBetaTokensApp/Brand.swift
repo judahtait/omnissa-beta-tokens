@@ -55,8 +55,33 @@ enum Brand {
     static let outfitLight = "Outfit-Light"
     static let outfitMedium = "Outfit-Medium"
 
-    static func font(_ size: CGFloat, medium: Bool = false) -> Font {
-        .custom(medium ? outfitMedium : outfitLight, size: size)
+    /// In-app multiplier (View menu / ⌘+ ⌘−). Combined with Dynamic Type via `relativeTo`.
+    static var textScale: CGFloat = 1.0
+
+    /// Brand font that grows with macOS text size (Dynamic Type) and `textScale`.
+    static func font(_ size: CGFloat, medium: Bool = false, relativeTo style: Font.TextStyle? = nil) -> Font {
+        let scaled = size * max(0.85, min(textScale, 1.6))
+        return .custom(
+            medium ? outfitMedium : outfitLight,
+            size: scaled,
+            relativeTo: style ?? textStyle(for: size)
+        )
+    }
+
+    static func mono(_ size: CGFloat) -> Font {
+        .system(size: size * max(0.85, min(textScale, 1.6)), design: .monospaced)
+    }
+
+    private static func textStyle(for size: CGFloat) -> Font.TextStyle {
+        switch size {
+        case ...11: return .caption2
+        case ...12: return .caption
+        case ...13: return .callout
+        case ...15: return .body
+        case ...18: return .title3
+        case ...22: return .title2
+        default: return .title
+        }
     }
 
     /// Registers the bundled fonts for this process only; the system font is used if missing.
@@ -141,6 +166,7 @@ struct PrimaryButtonStyle: ButtonStyle {
                                                    startPoint: .top, endPoint: .center)))  // gloss
             .foregroundColor(.white)
             .opacity(configuration.isPressed ? 0.8 : 1)
+            .contentShape(Capsule())
     }
 }
 
@@ -154,5 +180,20 @@ struct SecondaryButtonStyle: ButtonStyle {
             .overlay(Capsule().stroke(enabled ? Brand.accent : Brand.rule, lineWidth: 1))
             .foregroundColor(enabled ? Brand.accent : Brand.muted)
             .opacity(configuration.isPressed ? 0.7 : 1)
+            .contentShape(Capsule())
+    }
+}
+
+// MARK: - Text size (in-app)
+
+enum AppTextSize {
+    static let storageKey = "uiTextScale"
+    static let min: Double = 0.9
+    static let max: Double = 1.45
+    static let step: Double = 0.1
+
+    static func apply(_ value: Double) {
+        let clamped = Swift.min(Self.max, Swift.max(Self.min, value))
+        Brand.textScale = CGFloat(clamped)
     }
 }

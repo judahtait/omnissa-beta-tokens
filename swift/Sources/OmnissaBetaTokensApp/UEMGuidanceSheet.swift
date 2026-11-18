@@ -53,6 +53,7 @@ struct UEMGuidanceSheet: View {
         }
         .frame(minWidth: 760, idealWidth: 860, minHeight: 580, idealHeight: 680)
         .background(Brand.surface)
+        .dynamicTypeSize(.medium ... .accessibility3)
     }
 
     private var header: some View {
