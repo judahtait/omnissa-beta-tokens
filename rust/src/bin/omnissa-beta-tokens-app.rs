@@ -1,16 +1,16 @@
 //! Native macOS GUI (egui) — same Rust core as the CLI.
+//! Visual target: match the prior SwiftUI Brand (gradient header, pill buttons,
+//! full-width frosted cards, backdrop glow).
 //!
-//! Callers: `tools/make_app.sh` via `cargo build --release --bin omnissa-beta-tokens-app`
-//! (bundles as Contents/MacOS/OmnissaBetaTokens). No other GUI entry exists (SwiftUI removed).
-//! Data: local workdir key/cert/*.p7m under ~/.omnissa-beta-tokens; Apple ABM via shared lib.
-//! User: "yeah do whatever works best here. Convert as well." → egui rewrite of the macOS app.
+//! Callers: `tools/make_app.sh` via `cargo build --release --bin omnissa-beta-tokens-app`.
+//! User: screenshots show egui looked worse than Swift — polish to close the gap.
 
 use std::path::PathBuf;
 use std::process::Command;
 use std::sync::mpsc::{self, Receiver, TryRecvError};
 use std::thread;
 
-use eframe::egui::{self, Color32, RichText, Sense, Vec2};
+use eframe::egui::{self, Color32, CornerRadius, FontFamily, FontId, Frame, Margin, Pos2, Rect, RichText, Sense, Stroke, Vec2};
 use eframe::App;
 
 use omnissa_beta_tokens::abm::{self, default_transport};
@@ -22,13 +22,36 @@ const SERVICE_NAME: &str = "Workspace One Beta Token Service";
 const APPLE_ADD_URL: &str =
     "https://business.apple.com/main/devices/managementservices/mdmservers/add";
 
+// Omnissa Brand (light) — matches former Brand.swift
 const NAVY: Color32 = Color32::from_rgb(0x00, 0x1E, 0x60);
+const HEADING: Color32 = Color32::from_rgb(0x1C, 0x1C, 0x20);
 const INDIGO: Color32 = Color32::from_rgb(0x4A, 0x12, 0xF0);
 const MAGENTA: Color32 = Color32::from_rgb(0xD6, 0x00, 0xFF);
 const MUTED: Color32 = Color32::from_rgb(0x6E, 0x6E, 0x73);
 const TEXT: Color32 = Color32::from_rgb(0x1D, 0x1D, 0x1F);
+const RULE: Color32 = Color32::from_rgb(0xD1, 0xD1, 0xD6);
 const CARD: Color32 = Color32::from_rgb(0xFF, 0xFF, 0xFF);
 const SURFACE: Color32 = Color32::from_rgb(0xF5, 0xF5, 0xF7);
+const OK: Color32 = Color32::from_rgb(0x24, 0x8A, 0x3D);
+
+fn lerp_color(a: Color32, b: Color32, t: f32) -> Color32 {
+    let t = t.clamp(0.0, 1.0);
+    Color32::from_rgba_unmultiplied(
+        (a.r() as f32 + (b.r() as f32 - a.r() as f32) * t) as u8,
+        (a.g() as f32 + (b.g() as f32 - a.g() as f32) * t) as u8,
+        (a.b() as f32 + (b.b() as f32 - a.b() as f32) * t) as u8,
+        255,
+    )
+}
+
+fn header_gradient_at(t: f32) -> Color32 {
+    // navy → indigo → magenta (Swift Brand.headerGradient)
+    if t < 0.5 {
+        lerp_color(NAVY, INDIGO, t / 0.5)
+    } else {
+        lerp_color(INDIGO, MAGENTA, (t - 0.5) / 0.5)
+    }
+}
 
 fn default_workdir() -> PathBuf {
     std::env::var_os("HOME")
@@ -92,11 +115,7 @@ struct BetaApp {
 
 impl BetaApp {
     fn new(cc: &eframe::CreationContext<'_>) -> Self {
-        let mut style = (*cc.egui_ctx.style()).clone();
-        style.visuals.window_fill = SURFACE;
-        style.visuals.panel_fill = SURFACE;
-        style.visuals.override_text_color = Some(TEXT);
-        cc.egui_ctx.set_style(style);
+        apply_brand_style(&cc.egui_ctx);
         try_load_outfit(&cc.egui_ctx);
 
         let workdir = default_workdir();
@@ -274,64 +293,132 @@ impl BetaApp {
     }
 }
 
+fn apply_brand_style(ctx: &egui::Context) {
+    let mut style = (*ctx.style()).clone();
+    style.spacing.item_spacing = Vec2::new(10.0, 10.0);
+    style.spacing.button_padding = Vec2::new(16.0, 8.0);
+    style.spacing.window_margin = Margin::same(0);
+    style.visuals.window_fill = SURFACE;
+    style.visuals.panel_fill = SURFACE;
+    style.visuals.override_text_color = Some(TEXT);
+    style.visuals.widgets.inactive.corner_radius = CornerRadius::same(255);
+    style.visuals.widgets.hovered.corner_radius = CornerRadius::same(255);
+    style.visuals.widgets.active.corner_radius = CornerRadius::same(255);
+    style.visuals.widgets.inactive.bg_fill = CARD;
+    style.visuals.widgets.inactive.fg_stroke = Stroke::new(1.0_f32, INDIGO);
+    style.visuals.widgets.hovered.bg_fill = Color32::from_rgb(0xF0, 0xEC, 0xFF);
+    style.visuals.widgets.hovered.fg_stroke = Stroke::new(1.0_f32, INDIGO);
+    ctx.set_style(style);
+}
+
 fn try_load_outfit(ctx: &egui::Context) {
-    let candidates = [
+    let mut candidates = vec![
         PathBuf::from("Fonts"),
         PathBuf::from("../Resources/Fonts"),
-        {
-            let mut p = std::env::current_exe().unwrap_or_default();
-            p.pop();
-            p.pop();
-            p.push("Resources");
-            p.push("Fonts");
-            p
-        },
+        PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../assets/fonts"),
     ];
+    if let Ok(exe) = std::env::current_exe() {
+        let mut p = exe;
+        p.pop();
+        p.pop();
+        p.push("Resources");
+        p.push("Fonts");
+        candidates.push(p);
+    }
     for dir in candidates {
         let light = dir.join("Outfit-Light.ttf");
-        if light.is_file() {
-            let mut fonts = egui::FontDefinitions::default();
-            if let Ok(bytes) = std::fs::read(&light) {
-                fonts
-                    .font_data
-                    .insert("Outfit".into(), egui::FontData::from_owned(bytes).into());
+        let medium = dir.join("Outfit-Medium.ttf");
+        if !light.is_file() {
+            continue;
+        }
+        let mut fonts = egui::FontDefinitions::default();
+        if let Ok(bytes) = std::fs::read(&light) {
+            fonts
+                .font_data
+                .insert("Outfit".into(), egui::FontData::from_owned(bytes).into());
+            fonts
+                .families
+                .entry(FontFamily::Proportional)
+                .or_default()
+                .insert(0, "Outfit".into());
+        }
+        if medium.is_file() {
+            if let Ok(bytes) = std::fs::read(&medium) {
+                fonts.font_data.insert(
+                    "OutfitMedium".into(),
+                    egui::FontData::from_owned(bytes).into(),
+                );
                 fonts
                     .families
-                    .entry(egui::FontFamily::Proportional)
+                    .entry(FontFamily::Name("OutfitMedium".into()))
                     .or_default()
-                    .insert(0, "Outfit".into());
+                    .insert(0, "OutfitMedium".into());
             }
-            ctx.set_fonts(fonts);
-            return;
         }
+        ctx.set_fonts(fonts);
+        return;
     }
 }
 
+fn paint_backdrop(ui: &mut egui::Ui) {
+    let rect = ui.max_rect();
+    let painter = ui.painter();
+    painter.rect_filled(rect, 0.0, SURFACE);
+    // Soft indigo / magenta glow (Swift GlassBackdrop)
+    painter.circle_filled(
+        Pos2::new(rect.left() + 80.0, rect.top() + 160.0),
+        220.0,
+        Color32::from_rgba_unmultiplied(0x4A, 0x12, 0xF0, 40),
+    );
+    painter.circle_filled(
+        Pos2::new(rect.right() - 40.0, rect.bottom() - 80.0),
+        200.0,
+        Color32::from_rgba_unmultiplied(0xD6, 0x00, 0xFF, 28),
+    );
+}
+
 fn header_ui(ui: &mut egui::Ui) {
-    let rect = ui.available_rect_before_wrap();
-    let h = 88.0;
-    let header = egui::Rect::from_min_size(rect.min, Vec2::new(rect.width(), h));
+    let full = ui.available_rect_before_wrap();
+    let h = 108.0_f32;
+    let header = Rect::from_min_size(full.min, Vec2::new(full.width(), h));
     let painter = ui.painter_at(header);
-    painter.rect_filled(header, 0.0, NAVY);
-    let mid = header.left() + header.width() * 0.45;
+
+    // Smooth navy → indigo → magenta (many strips — not 3 hard blocks)
+    let strips = 96;
+    let w = header.width() / strips as f32;
+    for i in 0..strips {
+        let t = i as f32 / (strips - 1).max(1) as f32;
+        let x0 = header.left() + i as f32 * w;
+        let strip = Rect::from_min_max(
+            Pos2::new(x0, header.top()),
+            Pos2::new(x0 + w + 0.6, header.bottom()),
+        );
+        painter.rect_filled(strip, 0.0, header_gradient_at(t));
+    }
+    // Top gloss
     painter.rect_filled(
-        egui::Rect::from_min_max(
-            egui::pos2(mid, header.top()),
-            egui::pos2(header.right(), header.bottom()),
-        ),
+        Rect::from_min_size(header.min, Vec2::new(header.width(), 28.0)),
         0.0,
-        INDIGO,
+        Color32::from_white_alpha(28),
     );
-    painter.rect_filled(
-        egui::Rect::from_min_max(
-            egui::pos2(header.right() - header.width() * 0.22, header.top()),
-            egui::pos2(header.right(), header.bottom()),
-        ),
-        0.0,
-        MAGENTA,
+    // Magenta/indigo accent rule under header (Swift edge)
+    let rule = Rect::from_min_max(
+        Pos2::new(header.left(), header.bottom() - 3.0),
+        Pos2::new(header.right(), header.bottom()),
     );
+    for i in 0..48 {
+        let t = i as f32 / 47.0;
+        let x0 = rule.left() + rule.width() * (i as f32 / 48.0);
+        let x1 = rule.left() + rule.width() * ((i + 1) as f32 / 48.0);
+        painter.rect_filled(
+            Rect::from_min_max(Pos2::new(x0, rule.top()), Pos2::new(x1, rule.bottom())),
+            0.0,
+            lerp_color(INDIGO, MAGENTA, t),
+        );
+    }
+
     ui.allocate_new_ui(
-        egui::UiBuilder::new().max_rect(header.shrink2(Vec2::new(20.0, 14.0))),
+        egui::UiBuilder::new().max_rect(header.shrink2(Vec2::new(24.0, 18.0))),
         |ui| {
             ui.vertical(|ui| {
                 ui.label(
@@ -339,12 +426,13 @@ fn header_ui(ui: &mut egui::Ui) {
                         .size(11.0)
                         .color(Color32::from_white_alpha(230)),
                 );
+                ui.add_space(2.0);
                 ui.label(
                     RichText::new("Beta Token Utility")
-                        .size(26.0)
-                        .strong()
+                        .size(28.0)
                         .color(Color32::WHITE),
                 );
+                ui.add_space(2.0);
                 ui.label(
                     RichText::new(
                         "Get Apple beta enrollment tokens for your declarative Software Update profile.",
@@ -358,38 +446,59 @@ fn header_ui(ui: &mut egui::Ui) {
     ui.add_space(h);
 }
 
+fn pill_primary(ui: &mut egui::Ui, label: &str, enabled: bool) -> egui::Response {
+    let text = RichText::new(label).size(13.0).color(Color32::WHITE);
+    let fill = if enabled { INDIGO } else { RULE };
+    let btn = egui::Button::new(text)
+        .fill(fill)
+        .corner_radius(CornerRadius::same(255))
+        .min_size(Vec2::new(0.0, 32.0));
+    ui.add_enabled(enabled, btn)
+}
+
+fn pill_secondary(ui: &mut egui::Ui, label: &str) -> egui::Response {
+    let text = RichText::new(label).size(13.0).color(INDIGO);
+    let btn = egui::Button::new(text)
+        .fill(Color32::from_rgba_unmultiplied(255, 255, 255, 200))
+        .stroke(Stroke::new(1.2_f32, INDIGO))
+        .corner_radius(CornerRadius::same(255))
+        .min_size(Vec2::new(0.0, 32.0));
+    ui.add(btn)
+}
+
 fn card(ui: &mut egui::Ui, number: u32, title: &str, add: impl FnOnce(&mut egui::Ui)) {
-    egui::Frame::NONE
-        .fill(CARD)
-        .corner_radius(12.0)
-        .inner_margin(16.0)
-        .stroke(egui::Stroke::new(
-            1.0_f32,
-            Color32::from_rgb(0xD1, 0xD1, 0xD6),
-        ))
+    let width = ui.available_width();
+    Frame::NONE
+        .fill(Color32::from_rgba_unmultiplied(255, 255, 255, 230))
+        .corner_radius(16.0)
+        .inner_margin(Margin::symmetric(18, 16))
+        .stroke(Stroke::new(1.0_f32, Color32::from_rgba_unmultiplied(255, 255, 255, 180)))
         .shadow(egui::Shadow {
-            offset: [0, 4],
-            blur: 12,
+            offset: [0, 6],
+            blur: 18,
             spread: 0,
-            color: Color32::from_black_alpha(25),
+            color: Color32::from_black_alpha(28),
         })
         .show(ui, |ui| {
+            ui.set_min_width(width - 4.0);
+            ui.set_max_width(width);
             ui.horizontal(|ui| {
-                let (rect, _) = ui.allocate_exact_size(Vec2::splat(22.0), Sense::hover());
-                ui.painter().circle_filled(rect.center(), 11.0, INDIGO);
+                let (rect, _) = ui.allocate_exact_size(Vec2::splat(24.0), Sense::hover());
+                ui.painter().circle_filled(rect.center(), 12.0, INDIGO);
                 ui.painter().text(
                     rect.center(),
                     egui::Align2::CENTER_CENTER,
                     number.to_string(),
-                    egui::FontId::proportional(12.0),
+                    FontId::proportional(12.0),
                     Color32::WHITE,
                 );
-                ui.label(RichText::new(title).size(15.0).strong().color(NAVY));
+                ui.add_space(4.0);
+                ui.label(RichText::new(title).size(16.0).color(HEADING));
             });
-            ui.add_space(8.0);
+            ui.add_space(10.0);
             add(ui);
         });
-    ui.add_space(12.0);
+    ui.add_space(14.0);
 }
 
 impl App for BetaApp {
@@ -400,20 +509,23 @@ impl App for BetaApp {
         }
 
         egui::CentralPanel::default()
-            .frame(egui::Frame::NONE.fill(SURFACE))
+            .frame(Frame::NONE)
             .show(ctx, |ui| {
+                paint_backdrop(ui);
                 header_ui(ui);
                 egui::ScrollArea::vertical()
                     .auto_shrink([false, false])
                     .show(ui, |ui| {
-                        ui.add_space(12.0);
+                        ui.add_space(16.0);
                         ui.horizontal(|ui| {
-                            ui.add_space(20.0);
+                            let side = 24.0_f32;
+                            ui.add_space(side);
                             ui.vertical(|ui| {
-                                ui.set_max_width(ui.available_width() - 20.0);
+                                ui.set_width((ui.available_width() - side).max(320.0));
                                 self.steps(ui);
                             });
                         });
+                        ui.add_space(24.0);
                     });
             });
 
@@ -422,22 +534,28 @@ impl App for BetaApp {
                 .collapsible(false)
                 .resizable(false)
                 .anchor(egui::Align2::CENTER_CENTER, [0.0, 0.0])
+                .frame(
+                    Frame::window(&ctx.style())
+                        .fill(CARD)
+                        .corner_radius(14.0)
+                        .inner_margin(16.0),
+                )
                 .show(ctx, |ui| {
-                    ui.label(format!(
-                        "This deletes the private key, certificate, and any .p7m files in {}.\nAlso delete the management service in Apple Business if you no longer need it.",
-                        self.workdir.display()
-                    ));
+                    ui.set_min_width(420.0);
+                    ui.label(
+                        RichText::new(format!(
+                            "This deletes the private key, certificate, and any .p7m files in {}.\nAlso delete the management service in Apple Business if you no longer need it.",
+                            self.workdir.display()
+                        ))
+                        .size(13.0)
+                        .color(TEXT),
+                    );
+                    ui.add_space(12.0);
                     ui.horizontal(|ui| {
-                        if ui
-                            .add(
-                                egui::Button::new(RichText::new("Delete").color(Color32::WHITE))
-                                    .fill(MAGENTA),
-                            )
-                            .clicked()
-                        {
+                        if pill_primary(ui, "Delete", true).clicked() {
                             self.teardown();
                         }
-                        if ui.button("Cancel").clicked() {
+                        if pill_secondary(ui, "Cancel").clicked() {
                             self.confirm_teardown = false;
                         }
                     });
@@ -456,36 +574,34 @@ impl BetaApp {
                 .size(13.0)
                 .color(TEXT),
             );
-            ui.add_space(6.0);
-            ui.horizontal(|ui| {
+            ui.add_space(8.0);
+            ui.horizontal_wrapped(|ui| {
+                ui.spacing_mut().item_spacing.x = 8.0;
                 ui.label(RichText::new("Service name:").size(12.0).color(MUTED));
-                ui.monospace(SERVICE_NAME);
-                if ui.button("Copy name").clicked()
-                    && copy_clipboard(SERVICE_NAME)
-                {
+                ui.label(
+                    RichText::new(SERVICE_NAME)
+                        .size(12.0)
+                        .family(FontFamily::Monospace)
+                        .color(HEADING),
+                );
+                if pill_secondary(ui, "Copy name").clicked() && copy_clipboard(SERVICE_NAME) {
                     self.set_note(
                         "Service name copied. Paste it into the Service Name field in Apple Business.",
                     );
                 }
             });
-            ui.horizontal(|ui| {
+            ui.add_space(4.0);
+            ui.horizontal_wrapped(|ui| {
+                ui.spacing_mut().item_spacing.x = 8.0;
                 if self.has_keypair {
-                    ui.colored_label(Color32::from_rgb(0x24, 0x8A, 0x3D), "Certificate ready");
-                    if ui.button("Show in Finder").clicked() {
+                    ui.label(RichText::new("✓  Certificate ready").size(13.0).color(OK));
+                    if pill_secondary(ui, "Show in Finder").clicked() {
                         reveal_in_finder(&self.workdir.join(CERT_NAME));
                     }
-                } else if ui
-                    .add(
-                        egui::Button::new(
-                            RichText::new("Create certificate").color(Color32::WHITE),
-                        )
-                        .fill(INDIGO),
-                    )
-                    .clicked()
-                {
+                } else if pill_primary(ui, "Create certificate", true).clicked() {
                     self.create_cert();
                 }
-                if ui.button("Open Apple Business").clicked() {
+                if pill_secondary(ui, "Open Apple Business").clicked() {
                     let _ = copy_clipboard(SERVICE_NAME);
                     open_url(APPLE_ADD_URL);
                     self.set_note(
@@ -493,7 +609,7 @@ impl BetaApp {
                     );
                 }
                 if (self.has_keypair || self.p7m.is_some())
-                    && ui.button("Delete local credentials…").clicked()
+                    && pill_secondary(ui, "Delete local credentials…").clicked()
                 {
                     self.confirm_teardown = true;
                 }
@@ -502,7 +618,7 @@ impl BetaApp {
 
         card(ui, 2, "Choose server token (.p7m)", |ui| {
             ui.horizontal(|ui| {
-                if ui.button("Choose file…").clicked() {
+                if pill_secondary(ui, "Choose file…").clicked() {
                     if let Some(path) = rfd::FileDialog::new()
                         .add_filter("Apple server token", &["p7m"])
                         .pick_file()
@@ -523,21 +639,12 @@ impl BetaApp {
         card(ui, 3, "Get beta programs", |ui| {
             ui.horizontal(|ui| {
                 let can = self.p7m.is_some() && self.has_keypair && !self.fetching;
-                if ui
-                    .add_enabled(
-                        can,
-                        egui::Button::new(
-                            RichText::new(if self.fetching {
-                                "Fetching…"
-                            } else {
-                                "Fetch beta tokens"
-                            })
-                            .color(Color32::WHITE),
-                        )
-                        .fill(INDIGO),
-                    )
-                    .clicked()
-                {
+                let label = if self.fetching {
+                    "Fetching…"
+                } else {
+                    "Fetch beta tokens"
+                };
+                if pill_primary(ui, label, can).clicked() {
                     self.start_fetch();
                 }
                 if self.fetching {
@@ -550,7 +657,7 @@ impl BetaApp {
             let os_opts = self.os_options();
             card(ui, 4, "Choose a program", |ui| {
                 ui.horizontal(|ui| {
-                    ui.label("OS");
+                    ui.label(RichText::new("OS").size(12.0).color(MUTED));
                     egui::ComboBox::from_id_salt("os_filter")
                         .selected_text(&self.os_filter)
                         .show_ui(ui, |ui| {
@@ -558,8 +665,12 @@ impl BetaApp {
                                 ui.selectable_value(&mut self.os_filter, o.clone(), o);
                             }
                         });
-                    ui.label("Search");
-                    ui.text_edit_singleline(&mut self.search);
+                    ui.label(RichText::new("Search").size(12.0).color(MUTED));
+                    ui.add(
+                        egui::TextEdit::singleline(&mut self.search)
+                            .desired_width(220.0)
+                            .hint_text("Search title"),
+                    );
                 });
                 ui.add_space(6.0);
 
@@ -569,55 +680,69 @@ impl BetaApp {
                     .map(|(i, t)| (i, t.clone()))
                     .collect();
 
-                egui::ScrollArea::vertical()
-                    .max_height(200.0)
+                Frame::NONE
+                    .fill(Color32::from_rgba_unmultiplied(255, 255, 255, 160))
+                    .corner_radius(8.0)
+                    .stroke(Stroke::new(1.0_f32, RULE))
+                    .inner_margin(8.0)
                     .show(ui, |ui| {
-                        for (idx, t) in &filtered {
-                            let selected = self.selected == Some(*idx);
-                            let label = format!("{}  —  {}", t.title, t.os_display());
-                            if ui.selectable_label(selected, label).clicked() {
-                                self.selected = Some(*idx);
-                            }
-                        }
+                        egui::ScrollArea::vertical()
+                            .max_height(200.0)
+                            .show(ui, |ui| {
+                                for (idx, t) in &filtered {
+                                    let selected = self.selected == Some(*idx);
+                                    let label = format!("{}  —  {}", t.title, t.os_display());
+                                    if ui
+                                        .selectable_label(
+                                            selected,
+                                            RichText::new(label).size(13.0).color(TEXT),
+                                        )
+                                        .clicked()
+                                    {
+                                        self.selected = Some(*idx);
+                                    }
+                                }
+                            });
                     });
 
                 if let Some(idx) = self.selected {
                     if let Some(t) = self.tokens.get(idx).cloned() {
-                        ui.add_space(8.0);
+                        ui.add_space(10.0);
                         ui.separator();
-                        ui.label(RichText::new(&t.title).size(15.0).strong().color(NAVY));
+                        ui.add_space(6.0);
+                        ui.label(RichText::new(&t.title).size(15.0).color(HEADING));
                         let unsupported =
                             render::unsupported_uem_beta_oses(std::slice::from_ref(&t));
                         if !unsupported.is_empty() {
-                            ui.colored_label(
-                                MAGENTA,
-                                format!(
+                            ui.label(
+                                RichText::new(format!(
                                     "{} is not supported: the Beta setting cannot deliver this program via Software Update:Settings.",
                                     t.os_display()
-                                ),
+                                ))
+                                .size(12.0)
+                                .color(MAGENTA),
                             );
                         }
-                        ui.horizontal(|ui| {
+                        ui.horizontal_wrapped(|ui| {
+                            ui.spacing_mut().item_spacing.x = 8.0;
                             let shown = if self.reveal_token {
                                 t.token.clone()
                             } else {
                                 t.masked_token()
                             };
-                            ui.monospace(shown);
+                            ui.label(
+                                RichText::new(shown)
+                                    .size(12.0)
+                                    .family(FontFamily::Monospace)
+                                    .color(HEADING),
+                            );
                             ui.checkbox(&mut self.reveal_token, "Reveal");
-                            if ui
-                                .add(
-                                    egui::Button::new(
-                                        RichText::new("Copy token").color(Color32::WHITE),
-                                    )
-                                    .fill(INDIGO),
-                                )
-                                .clicked()
+                            if pill_primary(ui, "Copy token", true).clicked()
                                 && copy_clipboard(&t.token)
                             {
                                 self.set_note("Token copied to clipboard.");
                             }
-                            if ui.button("Copy for UEM").clicked() {
+                            if pill_secondary(ui, "Copy for UEM").clicked() {
                                 let block = uem_paste_block(&t);
                                 if copy_clipboard(&block) {
                                     self.set_note(
@@ -626,6 +751,7 @@ impl BetaApp {
                                 }
                             }
                         });
+                        ui.add_space(4.0);
                         ui.label(
                             RichText::new(
                                 "Workspace ONE UEM Software Update:Settings > Beta — Mode guidance is field checklist only (not declaration JSON).",
@@ -639,9 +765,15 @@ impl BetaApp {
         }
 
         if let Some(e) = &self.error {
-            ui.colored_label(MAGENTA, format!("⚠ {e}"));
+            ui.horizontal(|ui| {
+                ui.label(RichText::new("⚠").color(MAGENTA));
+                ui.label(RichText::new(e).size(13.0).color(MAGENTA));
+            });
         } else if let Some(m) = &self.message {
-            ui.colored_label(MUTED, format!("ℹ {m}"));
+            ui.horizontal(|ui| {
+                ui.label(RichText::new("ℹ").color(MUTED));
+                ui.label(RichText::new(m).size(13.0).color(MUTED));
+            });
         }
     }
 }
@@ -649,8 +781,8 @@ impl BetaApp {
 fn main() -> eframe::Result<()> {
     let options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default()
-            .with_inner_size([820.0, 720.0])
-            .with_min_inner_size([640.0, 520.0])
+            .with_inner_size([880.0, 760.0])
+            .with_min_inner_size([700.0, 560.0])
             .with_title("Omnissa Beta Token Utility"),
         ..Default::default()
     };
