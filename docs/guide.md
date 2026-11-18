@@ -119,7 +119,27 @@ release checkbox cleared, and upload the `.pem`.*
 
 *Figure 3. The completed form, ready to continue.*
 
-### 4.4 Fetch the beta programs
+> **Apple Business will show 0 devices on this management service — that is
+> expected.** This service exists only so you can download a server token and
+> call Apple’s beta enrollment API. It is **not** the MDM that your Macs and
+> iPhones enroll with. Workspace ONE (or your existing MDM) remains the
+> enrollment server. Apple’s Management Services list can still show a
+> **Devices** count of **0** for this entry even when hundreds of devices are
+> managed in UEM. Do not treat that zero as a failure or as a reason to reassign
+> devices to this service.
+
+### 4.4 What success looks like
+
+| Stage | You should see |
+|---|---|
+| Certificate | App: **Certificate ready**; `mdm_public_cert.pem` in `~/.omnissa-beta-tokens` (or drag the chip into Apple Business). |
+| Apple Business service | Service created; you can **Download Service Token**. Device count for **this** service stays **0** (see callout above). |
+| `.p7m` import | App: **Watch Downloads** finishes with “Imported …p7m”; or CLI `fetch --watch` copies the new file. |
+| Fetch tokens | App/CLI: **Loaded N beta programs** (often ~20); filter by OS and pick one program. |
+| UEM profile | One declarative **Software Update: Settings** profile **per platform**; Beta On; Description = program title; Token = token; assigned and published. |
+| Device | In UEM: profile **Installed**. On the device: Software Update shows the expected beta (or Automatic enrollment completed). **Not** in Apple Business under this token service’s device list. |
+
+### 4.5 Fetch the beta programs
 
 ```
 omnissa-beta-tokens fetch --watch   # waits for a new .p7m in ~/Downloads, copies it in
@@ -140,9 +160,10 @@ and/or `--match`). It prints Title, Token, and a Mode field checklist for the
 UEM console — **not** declaration JSON — and copies the block to the clipboard
 when `pbcopy` is available.
 
-In the macOS app (same Rust core): choose the `.p7m`, then **Fetch beta tokens**,
-pick a program, copy the token, and use the Mode picker as a reminder of which
-UEM Beta fields to set.
+In the macOS app: use **Watch Downloads** (or choose the `.p7m`), then **Fetch
+beta tokens**, pick a program, **Copy title** / **Copy token**, and create the
+UEM profile for that platform (**Copy UEM next steps** pastes the short
+checklist).
 
 Security notes:
 
@@ -303,6 +324,8 @@ iPhone confirm them. Treat section results as assumptions until then.
 ### Cross-checks
 
 - [ ] Token period still valid (re-fetch if the seeding period rolled).
+- [ ] Apple Business management service still shows **0 devices** — expected;
+      do not move MDM enrollment to this service.
 - [ ] Screenshots for the guide (token redacted; no tenant or session data).
 - [ ] Record OS builds and UEM console version used for the test.
 
@@ -360,6 +383,7 @@ on a TTY and refuses on a non-interactive terminal.
 | `--uem-block` errors | More than one program matched | Narrow with `--os` and/or `--match` |
 | Device not enrolling | Unsupervised device | Offer the program; user enrolls manually |
 | Profile does not enroll the device | Invalid combination (for example Allowed with Require program) | Use Automatic: AlwaysOn with Require program |
+| Apple Business shows **0 devices** on the beta-token management service | Expected — this service is for API/token access only; MDM enrollment stays on Workspace ONE | Do not reassign devices to this service |
 | tvOS or visionOS device not enrolling | Beta setting not supported on these platforms | Not applicable; see the compatibility table |
 | macOS blocks the app on first launch | Build not notarized yet | Right-click → Open, or clear quarantine with `xattr` |
 

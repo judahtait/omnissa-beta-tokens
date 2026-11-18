@@ -67,7 +67,7 @@ struct ContentView: View {
 
     private var stepCreate: some View {
         card(number: 1, title: "Create certificate") {
-            Text("In Apple Business go to Devices > Management Services > Add, name the service, and upload the .pem file. Then download the .p7m server token.")
+            Text("In Apple Business go to Devices > Management Services > Add, name the service, and upload the .pem file. Then download the .p7m server token. This service is for token API access only — Apple will show 0 devices here; that is normal (UEM stays the enrollment server).")
                 .font(Brand.font(13)).foregroundColor(Brand.text)
             HStack {
                 Text("Service name:").font(Brand.font(12)).foregroundColor(Brand.slate)

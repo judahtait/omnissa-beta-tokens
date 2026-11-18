@@ -121,7 +121,7 @@ final class AppModel: ObservableObject {
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
             Self.tileFrontBrowserRightHalf()
         }
-        message = "Service name copied. App left / browser right — paste the name and drag the .pem into Upload Certificate."
+        message = "Service name copied. App left / browser right — paste the name and drag the .pem into Upload Certificate. Apple will show 0 devices on this service; that is expected (UEM remains the enrollment server)."
     }
 
     func revealCertificate() {

@@ -54,6 +54,8 @@ xattr -d com.apple.quarantine "Omnissa Beta Token Utility.app"
 2. **Add an external device management service in Apple Business.** Upload the
    `.pem` and download the `.p7m` server token. Use the service name
    `Workspace One Beta Token Service`; the app and CLI copy it to your clipboard.
+   Apple will show **0 devices** on this service — that is expected; it is only
+   for beta token API access. Workspace ONE remains the enrollment MDM.
 3. **Fetch the beta programs.** `fetch` decrypts the server token locally,
    signs a request to Apple's `mdmenrollment.apple.com` service, and lists the
    programs. Optionally print a UEM paste block with `--uem-block`.
