@@ -171,7 +171,7 @@ struct UEMGuidanceSheet: View {
                 } else if let name = step.imageName {
                     Label("Screenshot missing: \(name).png — rebuild with tools/make_app.sh", systemImage: "photo")
                         .font(Brand.font(12))
-                        .foregroundColor(Brand.magenta)
+                        .foregroundColor(Brand.error)
                 }
                 if step.showsEnrollmentGuidance {
                     Text("Enable Beta enrollment settings")

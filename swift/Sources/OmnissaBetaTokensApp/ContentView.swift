@@ -269,7 +269,7 @@ struct ContentView: View {
                     systemImage: "exclamationmark.triangle.fill"
                 )
                 .font(Brand.font(12))
-                .foregroundColor(Brand.magenta)
+                .foregroundColor(Brand.error)
                 .fixedSize(horizontal: false, vertical: true)
             }
             HStack(alignment: .top) {
@@ -313,7 +313,7 @@ struct ContentView: View {
         Group {
             if let e = model.errorText {
                 Label(e, systemImage: "exclamationmark.triangle.fill")
-                    .font(Brand.font(13)).foregroundColor(Brand.magenta)
+                    .font(Brand.font(13)).foregroundColor(Brand.error)
             } else if let m = model.message {
                 Label(m, systemImage: "info.circle")
                     .font(Brand.font(13)).foregroundColor(Brand.slate)

@@ -35,9 +35,11 @@ enum Brand {
     static let surface = Color(light: 0xF5F5F7, dark: 0x141416)   // window background (ABM-like gray)
     static let card = Color(light: 0xFFFFFF, dark: 0x1E1E21)      // cards, list background
     static let ok = Color(light: 0x248A3D, dark: 0x30D158)        // healthy
+    /// Errors, failures, and unsupported-platform warnings (system red).
+    static let error = Color(light: 0xD70015, dark: 0xFF453A)
     /// Secondary / Back-style control fill (ABM gray pill).
     static let secondaryFill = Color(light: 0xF2F2F7, dark: 0x3A3A3C)
-    /// Reserved for negative/exception data only (not used on primary CTAs).
+    /// Legacy Omnissa accent — not for errors (use `error` instead).
     static let magenta = Color(hex: 0xD600FF)
     /// Omnissa navy retained for header depth.
     static let omnissaNavy = Color(hex: 0x001E60)
