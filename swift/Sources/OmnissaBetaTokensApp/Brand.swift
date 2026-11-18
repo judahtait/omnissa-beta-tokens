@@ -3,7 +3,8 @@ import AppKit
 import CoreText
 
 // Omnissa brand values with Apple Business Manager–aligned interactive blue.
-// ABM “Next” / checkbox blue sampled from portal screenshot ≈ #3C85E2 (2026-11-18).
+// ABM “Next” fill sampled 2026-11-18 (Screenshot 2.40.07 AM): Display P3 #306FDB
+// (= sRGB #0071E3, Apple’s standard ABM / apple.com blue). Prior #3C85E2 was close but washed.
 
 extension NSColor {
     convenience init(hex: UInt32) {
@@ -11,10 +12,18 @@ extension NSColor {
                   green: CGFloat((hex >> 8) & 0xFF) / 255,
                   blue: CGFloat(hex & 0xFF) / 255, alpha: 1)
     }
+
+    /// Display P3 from 0xRRGGBB channel bytes (as stored in a P3 screenshot).
+    convenience init(p3Hex: UInt32) {
+        self.init(displayP3Red: CGFloat((p3Hex >> 16) & 0xFF) / 255,
+                  green: CGFloat((p3Hex >> 8) & 0xFF) / 255,
+                  blue: CGFloat(p3Hex & 0xFF) / 255, alpha: 1)
+    }
 }
 
 extension Color {
     init(hex: UInt32) { self.init(nsColor: NSColor(hex: hex)) }
+    init(p3Hex: UInt32) { self.init(nsColor: NSColor(p3Hex: p3Hex)) }
 
     /// A color that follows the Mac's light/dark appearance.
     init(light: UInt32, dark: UInt32) {
@@ -26,8 +35,16 @@ extension Color {
 
 enum Brand {
     // Palette, light / dark.
-    /// Primary actions — matches Apple Business Manager filled button blue (#3C85E2).
-    static let accent = Color(light: 0x3C85E2, dark: 0x5AA3F0)
+    /// Primary actions — exact ABM “Next” fill (Display P3 #306FDB / sRGB #0071E3).
+    static let accent = Color(nsColor: NSColor(name: nil) { appearance in
+        if appearance.bestMatch(from: [.aqua, .darkAqua]) == .darkAqua {
+            // Slightly lifted for dark surfaces (still P3-accurate family).
+            return NSColor(p3Hex: 0x4B8AE6)
+        }
+        return NSColor(p3Hex: 0x306FDB)
+    })
+    /// sRGB twin of the ABM button (gradients / non-P3 contexts).
+    static let accentSRGB = Color(hex: 0x0071E3)
     static let heading = Color(light: 0x1C1C20, dark: 0xF2F2F7)   // titles
     static let text = Color(light: 0x1D1D1F, dark: 0xE5E5E7)      // body
     static let muted = Color(light: 0x6E6E73, dark: 0xA1A1A6)     // secondary text
@@ -51,12 +68,12 @@ enum Brand {
     static var tint: Color { rule }
     static var background: Color { surface }
 
-    /// Header: Omnissa navy → ABM blue (closer to Business Manager, less magenta).
+    /// Header: Omnissa navy → ABM Next blue (P3-accurate end stop).
     static let headerGradient = LinearGradient(
-        colors: [Color(hex: 0x001E60), Color(hex: 0x0B5CAD), Color(hex: 0x3C85E2)],
+        colors: [Color(hex: 0x001E60), Color(hex: 0x0B5CAD), Color(p3Hex: 0x306FDB)],
         startPoint: .leading, endPoint: .trailing)
     static let edge = LinearGradient(
-        colors: [Color(hex: 0x0B5CAD), Color(hex: 0x3C85E2)], startPoint: .leading, endPoint: .trailing)
+        colors: [Color(hex: 0x0B5CAD), Color(p3Hex: 0x306FDB)], startPoint: .leading, endPoint: .trailing)
 
     /// ABM-like control corner radius (Next / Back are rounded rects, not full pills).
     static let controlRadius: CGFloat = 8
