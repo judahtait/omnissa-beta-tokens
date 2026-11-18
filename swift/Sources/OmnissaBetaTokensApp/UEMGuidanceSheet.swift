@@ -14,31 +14,29 @@ struct UEMGuidanceSheet: View {
                 number: 1,
                 title: "Add → Add Profile",
                 detail: "Resources → Profiles & Baselines → Profiles → Add → Add Profile.",
-                imageName: "01-add-profile-menu"
+                imageName: "01-add-profile-menu",
+                showsEnrollmentGuidance: false
             ),
             GuidanceStep(
                 number: 2,
                 title: "Select the platform",
                 detail: "Choose the Apple platform that matches the beta program’s OS (one declarative profile per platform).",
-                imageName: "02-select-platform"
+                imageName: "02-select-platform",
+                showsEnrollmentGuidance: false
             ),
             GuidanceStep(
                 number: 3,
                 title: "Declarative → Configuration → Device",
-                detail: "Set Management Type to Declarative, Declaration Type to Configuration, Context to Device, then Next.",
-                imageName: "03-declarative-configuration"
+                detail: "Set Management Type to Declarative, Declaration Type to Configuration, Context to Device, then Next. Before you fill Description and Token, set Program enrollment / Require / Offer using only the combinations Apple allows (see below).",
+                imageName: "03-declarative-configuration",
+                showsEnrollmentGuidance: true
             ),
             GuidanceStep(
                 number: 4,
                 title: "Software Update: Settings → Beta",
-                detail: "Turn Beta On. Paste the program title into Description (and use it as the profile name); paste the token into Token. Example: “\(programTitle)”. Next: set Program enrollment / Require / Offer.",
-                imageName: "04-software-update-beta"
-            ),
-            GuidanceStep(
-                number: 5,
-                title: "Enable Beta enrollment settings",
-                detail: "In the UEM Beta payload, set Program enrollment, Require program, and Offer programs using only the combinations Apple allows. Do not paste declaration JSON — set these fields in the console.",
-                imageName: nil
+                detail: "Turn Beta On. Paste the program title into Description (and use it as the profile name); paste the token into Token. Example: “\(programTitle)”. Assign and publish.",
+                imageName: "04-software-update-beta",
+                showsEnrollmentGuidance: false
             ),
         ]
     }
@@ -130,9 +128,7 @@ struct UEMGuidanceSheet: View {
                     .foregroundColor(Brand.text)
                     .fixedSize(horizontal: false, vertical: true)
 
-                if step.number == 5 {
-                    betaSettingsGuidance
-                } else if let name = step.imageName, let image = bundledImage(name) {
+                if let name = step.imageName, let image = bundledImage(name) {
                     Image(nsImage: image)
                         .resizable()
                         .interpolation(.high)
@@ -148,6 +144,13 @@ struct UEMGuidanceSheet: View {
                     Label("Screenshot missing: \(name).png — rebuild with tools/make_app.sh", systemImage: "photo")
                         .font(Brand.font(12))
                         .foregroundColor(Brand.magenta)
+                }
+                if step.showsEnrollmentGuidance {
+                    Text("Enable Beta enrollment settings")
+                        .font(Brand.font(15, medium: true))
+                        .foregroundColor(Brand.navy)
+                        .padding(.top, 8)
+                    betaSettingsGuidance
                 }
             }
             .padding(20)
@@ -279,4 +282,5 @@ private struct GuidanceStep {
     let title: String
     let detail: String
     let imageName: String?
+    let showsEnrollmentGuidance: Bool
 }
