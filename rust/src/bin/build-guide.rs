@@ -53,19 +53,17 @@ fn repo_root() -> PathBuf {
 
 fn utility_block() -> &'static str {
     r#"<div class="download">
-<p><strong>Download (Rust)</strong></p>
+<p><strong>Install</strong></p>
 <ul>
-<li><code>omnissa-beta-tokens-&lt;ver&gt;-macos-arm64</code> — CLI</li>
-<li><code>Omnissa-Beta-Token-Utility-&lt;ver&gt;-macos.zip</code> — macOS app (same Rust core)</li>
+<li><code>Omnissa-Beta-Token-Utility-&lt;ver&gt;-macos.zip</code> — SwiftUI macOS app</li>
+<li><code>omnissa-beta-tokens-&lt;ver&gt;-macos-arm64</code> — Rust CLI</li>
 </ul>
-<p>From a release: verify with <code>SHA256SUMS</code>, then:</p>
-<pre><code>chmod +x omnissa-beta-tokens-*-macos-arm64
-./omnissa-beta-tokens-*-macos-arm64 init
-./omnissa-beta-tokens-*-macos-arm64 fetch --watch</code></pre>
-<p>Or build from source:</p>
-<pre><code>cd rust &amp;&amp; cargo build --release
-./target/release/omnissa-beta-tokens --help
-./target/release/omnissa-beta-tokens-app</code></pre>
+<p>Local build:</p>
+<pre><code>tools/make_app.sh
+open "dist/Omnissa Beta Token Utility.app"
+# CLI:
+cd rust &amp;&amp; cargo build --release
+./target/release/omnissa-beta-tokens fetch --watch</code></pre>
 </div>"#
 }
 

@@ -1,4 +1,4 @@
-//! Omnissa Beta Token Utility — Rust library for the CLI and egui macOS app.
+//! Omnissa Beta Token Utility — Rust library for the CLI (SwiftUI app is separate).
 //!
 //! Security model: pinned system `openssl` for key/cert and `.p7m` decrypt,
 //! `redirects(0)` for Apple HTTP, fabricated credentials in tests only.

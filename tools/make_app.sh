@@ -1,10 +1,8 @@
 #!/usr/bin/env bash
 # Build "Omnissa Beta Token Utility.app" from the SwiftUI package.
 #
-# Callers: tools/release.sh (Rust GUI app step), docs/RELEASING.md, operators.
-# Same purpose as existing tools/make_app.sh — in-place restore to SwiftUI (not a new file).
+# Callers: tools/release.sh, docs/RELEASING.md, operators.
 # Version from rust/Cargo.toml; binary from swift build → Contents/MacOS/OmnissaBetaTokens.
-# User instruction: "Horrendous. Look back at the old screenshots. Restore the old SwiftUI shell"
 #
 #   tools/make_app.sh
 #   SIGN_IDENTITY="Developer ID Application: ..." tools/make_app.sh

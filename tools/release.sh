@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Build customer artifacts into dist/release/ with SHA-256 checksums.
 #
-#   tools/release.sh                       # Rust CLI + Rust GUI app + guide + checksums
+#   tools/release.sh                       # Rust CLI + SwiftUI app + guide + checksums
 #   SKIP_APP_BUILD=1 tools/release.sh      # reuse the existing dist/*.app
 #   SIGN_IDENTITY="Developer ID Application: ..." tools/release.sh   # passed to make_app.sh
 #

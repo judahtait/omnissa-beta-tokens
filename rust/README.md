@@ -1,7 +1,8 @@
 # Omnissa Beta Token Utility (Rust)
 
-All product surfaces live here: the **CLI** (`omnissa-beta-tokens`) and the
-**macOS egui app** (same core). Version is in `Cargo.toml`.
+Rust **CLI** (`omnissa-beta-tokens`) plus helper bins (`build-guide`, `make-icns`).
+The macOS UI is the separate SwiftUI package under `../swift/` — build with
+`../tools/make_app.sh`. Version is in `Cargo.toml`.
 
 ## Build / run
 

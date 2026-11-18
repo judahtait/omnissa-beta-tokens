@@ -37,27 +37,30 @@ High-level flow:
 - Supervised devices for UEM-controlled enrollment and unenrollment. On
   unsupervised devices, only offering a program is possible (the user enrolls
   manually). Source: Apple *Enrolling a device in a beta program*.
-- A Mac to run the utility (see [Download](#3-download-the-utility)).
+- A Mac to run the app or CLI (see [Download](#3-download)).
 
-## 3. Download the utility
-
-All-Rust product (version from `rust/Cargo.toml`):
+## 3. Download
 
 | Format | Best for | Needs |
 |---|---|---|
-| **Rust CLI** (`omnissa-beta-tokens`, macos-arm64) | Command line | Apple Silicon Mac |
 | **macOS app** (SwiftUI `.app`) | Click-through workflow | macOS 13 or later |
+| **Rust CLI** (`omnissa-beta-tokens`, macos-arm64) | Scripting | Apple Silicon Mac |
 
-Get release builds from the repository **Releases** page. The CLI asset is
-`omnissa-beta-tokens-<version>-macos-arm64`. Check `SHA256SUMS`, or build with
-`cd rust && cargo build --release`. Until builds are signed and notarized, macOS
-may block the app on first launch: right-click → **Open**, or run
-`xattr -d com.apple.quarantine "Omnissa Beta Token Utility.app"`.
+Local build (recommended while iterating):
+
+```
+tools/make_app.sh
+open "dist/Omnissa Beta Token Utility.app"
+```
+
+Or `tools/release.sh` for CLI + guide + app under `dist/release/`. Version comes
+from `rust/Cargo.toml`. Until builds are notarized: right-click → **Open**, or
+`xattr -dr com.apple.quarantine "dist/Omnissa Beta Token Utility.app"`.
 
 <!-- UTILITY_DOWNLOAD -->
 
-Command-line examples in this guide use `omnissa-beta-tokens` (Rust). The macOS
-app is the SwiftUI shell for the same workflow:
+CLI examples use `omnissa-beta-tokens`. The app is the SwiftUI shell for the same
+admin workflow (Watch Downloads, Copy title/token, UEM next steps).
 
 ```
 omnissa-beta-tokens --help
@@ -108,7 +111,7 @@ Device Management Services row).*
 
 ![Apple Business Step 2 of 2: Download Service Token.](images/abm-download-service-token.jpg)
 
-*Figure 2a. Download Service Token — then let the utility pick up the new `.p7m`.*
+*Figure 2a. Download Service Token — then let the app pick up the new `.p7m`.*
 
 ![Add your external device management service form: Service Name, release devices checkbox, Upload Certificate.](images/apple-business-add-service.png)
 
@@ -187,7 +190,7 @@ configuration. Source: Apple's `softwareupdate.settings` declaration schema.
 |---|---|---|
 | macOS | Supported | macOS 15.4 or later, **supervised** |
 | iOS and iPadOS | Supported | Supervised. Version follows the Software Update Settings payload (iOS 18.0 or later per the schema). |
-| tvOS, visionOS | Not supported | The schema lists the Beta key as not applicable. The utility may still list tokens for these programs; they cannot be delivered with this setting. |
+| tvOS, visionOS | Not supported | The schema lists the Beta key as not applicable. The app/CLI may still list tokens for these programs; they cannot be delivered with this setting. |
 
 On unsupervised devices only **Offer programs** can be used (the user enrolls
 manually). The organization must also be enrolled in AppleSeed for IT.
@@ -202,7 +205,7 @@ reverse is also true.
 **Rule:** create **one declarative Software Update: Settings profile per
 platform (and usually per program)** you intend to assign.
 
-| Platform filter in the utility | UEM Add Profile platform | Example profile name |
+| Platform filter in the app/CLI | UEM Add Profile platform | Example profile name |
 |---|---|---|
 | macOS | Apple **macOS** | `macOS 27 Golden Gate AppleSeed Beta` |
 | iOS | Apple **iOS** | `iOS 27 AppleSeed Beta` |
@@ -211,7 +214,7 @@ platform (and usually per program)** you intend to assign.
 
 Workflow:
 
-1. In the utility, filter **OS** to one platform (for example macOS).
+1. In the app/CLI, filter **OS** to one platform (for example macOS).
 2. Select that platform’s program → **Copy title** into UEM **Description**,
    **Copy token** into UEM **Token** (or use **Copy for UEM** as a reference
    block — paste only title and token into those two fields, **not** the mode
@@ -250,7 +253,7 @@ fields must match the table below (Automatic = AlwaysOn + Require on, Offer off)
 ### 5.4 Choose a mode (UEM field guidance only)
 
 Apple's schema only allows these combinations. Enter them in the UEM Beta
-payload (the app **Mode** picker and `fetch --uem-block` show the matching
+payload (`fetch --uem-block` and the app’s UEM next-steps copy show the matching
 field summary). **Do not expect declaration JSON from this tool** — paste title
 and token, then set the fields.
 
