@@ -8,6 +8,10 @@ macOS app for Omnissa / Workspace ONE UEM admins: fetch AppleSeed for IT enrollm
 
 **v1.0.0** · [SemVer](https://semver.org/) · Developer ID signed & notarized
 
+<p align="center">
+  <img src="docs/images/app-main.png" alt="Omnissa Beta Token Utility — certificate, server token, fetch, and program picker" width="720">
+</p>
+
 ## Install
 
 Same version everywhere: Homebrew cask, npm, and the GitHub `.pkg` / `.zip` release.
