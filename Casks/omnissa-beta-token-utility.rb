@@ -17,7 +17,7 @@ cask "omnissa-beta-token-utility" do
   desc "Fetch AppleSeed beta enrollment tokens for Workspace ONE UEM"
   homepage "https://github.com/judahtait/omnissa-beta-tokens"
 
-  depends_on macos: ">= :ventura"
+  depends_on macos: :ventura
 
   app "Omnissa Beta Token Utility.app"
 

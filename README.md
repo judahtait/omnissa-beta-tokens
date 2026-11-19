@@ -14,6 +14,7 @@ Version **0.1.0** — Developer ID signed (`Judah Tait`).
 
 ```bash
 brew tap judahtait/omnissa-beta-tokens
+brew trust judahtait/omnissa-beta-tokens
 brew install --cask omnissa-beta-token-utility
 ```
 

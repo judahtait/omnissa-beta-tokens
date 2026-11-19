@@ -4,6 +4,7 @@
 
 ```bash
 brew tap judahtait/omnissa-beta-tokens
+brew trust judahtait/omnissa-beta-tokens
 brew install --cask omnissa-beta-token-utility
 ```
 
