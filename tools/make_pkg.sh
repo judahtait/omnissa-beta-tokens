@@ -7,8 +7,9 @@
 #
 # Output: dist/release/Omnissa-Beta-Token-Utility-<ver>-macos.pkg
 #
-# Unsigned / ad-hoc pkgs are fine for local testing (Installer may warn; use
-# right-click → Open, or: sudo installer -pkg … -target /).
+# Prefer Developer ID when available:
+#   SIGN_IDENTITY="Developer ID Application: …" \
+#   INSTALLER_IDENTITY="Developer ID Installer: …" tools/make_pkg.sh
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -21,7 +22,18 @@ REL="$ROOT/dist/release"
 PKG_ID="com.omnissa.betatokenutility"
 PKG_OUT="$REL/Omnissa-Beta-Token-Utility-$VERSION-macos.pkg"
 STAGE="$ROOT/dist/pkgroot"
+APP_IDENTITY="${SIGN_IDENTITY:--}"
 IDENTITY="${INSTALLER_IDENTITY:--}"
+
+sign_app() {
+  local target="$1"
+  if [[ "$APP_IDENTITY" != "-" ]]; then
+    codesign --force --options runtime --timestamp --sign "$APP_IDENTITY" "$target" >/dev/null
+  else
+    codesign --force --sign - "$target" >/dev/null
+  fi
+  codesign --verify --verbose=2 "$target"
+}
 
 if [[ -z "${SKIP_APP_BUILD:-}" ]]; then
   tools/make_app.sh
@@ -36,7 +48,7 @@ fi
 # Source .app may already contain real `._*` files from earlier copies — strip them.
 find "$APP" -name '._*' -delete
 xattr -cr "$APP" 2>/dev/null || true
-codesign --force --sign - "$APP" >/dev/null
+sign_app "$APP"
 
 rm -rf "$STAGE"
 mkdir -p "$STAGE" "$REL"
@@ -46,7 +58,7 @@ rsync -a --delete --exclude '._*' --exclude '.DS_Store' \
 find "$STAGE" -name '._*' -delete
 xattr -cr "$STAGE" 2>/dev/null || true
 # Re-sign after stripping attrs so codesign still verifies at install time.
-codesign --force --sign - "$STAGE/Omnissa Beta Token Utility.app" >/dev/null
+sign_app "$STAGE/Omnissa Beta Token Utility.app"
 if find "$STAGE" -name '._*' | grep -q .; then
   echo "error: real AppleDouble files still present in pkg stage:" >&2
   find "$STAGE" -name '._*' >&2

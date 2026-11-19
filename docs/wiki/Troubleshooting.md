@@ -8,6 +8,6 @@
 | `--uem-block` errors | Narrow with `--os` / `--match` (exactly one hit) |
 | Device not enrolling | Valid mode? Supervised? OS floor? Platform match? |
 | 0 devices in Apple Business | Expected for the token-only service |
-| Gatekeeper blocks app | Right-click → Open, or clear quarantine |
+| Gatekeeper on download | Notarize + staple release, or right-click → Open until then |
 
 More context: [Admin guide](../guide.md#6-troubleshooting).

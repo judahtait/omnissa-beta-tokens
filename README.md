@@ -6,6 +6,11 @@
 
 macOS app for Omnissa / Workspace ONE UEM admins: fetch AppleSeed for IT enrollment tokens and paste them into a declarative **Software Update: Settings → Beta** profile.
 
+<<<<<<< HEAD
+=======
+Version **0.1.0** — Developer ID signed (`Judah Tait`).
+
+>>>>>>> 7232678 (Sign releases with Developer ID and drop ad-hoc warnings.)
 ## Install
 
 ### Homebrew (recommended)
@@ -21,12 +26,6 @@ From a local clone (no release yet):
 
 ```bash
 brew install --cask ./Casks/omnissa-beta-token-utility.rb
-```
-
-First launch if Gatekeeper blocks: right-click the app → **Open**, or:
-
-```bash
-xattr -dr com.apple.quarantine "/Applications/Omnissa Beta Token Utility.app"
 ```
 
 ### One-liner (build + install to `/Applications`)
@@ -78,7 +77,7 @@ Apple: [Enrolling a device in a beta program](https://developer.apple.com/docume
 
 ## Security
 
-Workdir `~/.omnissa-beta-tokens` (700); key / `.p7m` mode 600, Finder-hidden, Time Machine excluded. Copied tokens clear from the pasteboard after 60s. Still open: Developer ID signing + notarization.
+Workdir `~/.omnissa-beta-tokens` (700); key / `.p7m` mode 600, Finder-hidden, Time Machine excluded. Copied tokens clear from the pasteboard after 60s. Builds are Developer ID signed; notarization is the remaining Gatekeeper step for downloadable releases.
 
 ## License
 

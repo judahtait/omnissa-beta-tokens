@@ -104,7 +104,7 @@ In-app screenshots: **How to create the UEM profile** (⇧⌘/).
 | Decrypt failed | Re-create cert, re-upload matching `.pem` |
 | Device not enrolling | Mode valid? Supervised? OS floor? Platform match? |
 | 0 devices in Apple Business | Expected — see §3 |
-| Gatekeeper | Right-click → Open |
+| Gatekeeper on download | Complete notarization, or right-click → Open until stapled |
 
 ## 7. References
 

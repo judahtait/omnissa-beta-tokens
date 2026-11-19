@@ -14,13 +14,15 @@
 #
 # Guide is built with Rust (`cargo run --release --bin build-guide`).
 #
-# Builds are ad-hoc signed unless SIGN_IDENTITY is set; notarization is a separate step (README).
+# Pass SIGN_IDENTITY / INSTALLER_IDENTITY for Developer ID; notarize separately (docs/RELEASING.md).
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 VERSION="$(sed -n 's/^version = "\([^"]*\)"/\1/p' rust/Cargo.toml | head -n1)"
 [[ -n "$VERSION" ]] || { echo "error: could not read version from rust/Cargo.toml" >&2; exit 1; }
+export SIGN_IDENTITY="${SIGN_IDENTITY:-Developer ID Application: Judah Tait (U4986YKSZ8)}"
+export INSTALLER_IDENTITY="${INSTALLER_IDENTITY:-Developer ID Installer: Judah Tait (U4986YKSZ8)}"
 REL="$ROOT/dist/release"
 APP="$ROOT/dist/Omnissa Beta Token Utility.app"
 RUST_CLI="$ROOT/rust/target/release/omnissa-beta-tokens"

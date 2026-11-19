@@ -8,17 +8,13 @@ Get Apple beta enrollment tokens (AppleSeed for IT) and use them in a Workspace 
 declarative Software Update: Settings profile.
 
 ### Product
-- **Rust CLI** — `omnissa-beta-tokens-0.1.0-macos-arm64` (`cargo build --release` in `rust/`)
-- **SwiftUI macOS app** — native shell (Brand / glass UI)
+- **SwiftUI macOS app** — mid-blue brand, in-app UEM guidance
 - Step-by-step guide (`omnissa-beta-guide-0.1.0.html`, works offline)
+- Installer / Homebrew cask (see README)
 - `SHA256SUMS`: verify with `shasum -a 256 -c SHA256SUMS`
 
-Use `omnissa-beta-tokens init|fetch|cleanup` (including `fetch --uem-block` for
-UEM field paste guidance — **not** declaration JSON).
-
 ### Notes
-- Builds are not signed or notarized yet. On first launch, right-click the app and choose
-  Open, or run `xattr -d com.apple.quarantine "Omnissa Beta Token Utility.app"`.
+- Developer ID signed (`Judah Tait`). Notarization still pending (Apple Developer agreement must be current on the team).
 - Enter only valid Apple Beta combinations in UEM (automatic, offer, offer with no
   sign-in, block and unenroll). Mode guidance is for UEM fields only — no declaration
   JSON export. The Beta setting needs supervised devices (macOS 15.4+, iOS and

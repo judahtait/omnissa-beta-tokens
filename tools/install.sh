@@ -33,6 +33,10 @@ VERSION="$(sed -n 's/^version = "\([^"]*\)"/\1/p' rust/Cargo.toml | head -n1)"
 [[ -n "$VERSION" ]] || { echo "error: could not read version from rust/Cargo.toml" >&2; exit 1; }
 PKG="$ROOT/dist/release/Omnissa-Beta-Token-Utility-${VERSION}-macos.pkg"
 
+# Default to Judah Tait Developer ID when identities are present locally.
+export SIGN_IDENTITY="${SIGN_IDENTITY:-Developer ID Application: Judah Tait (U4986YKSZ8)}"
+export INSTALLER_IDENTITY="${INSTALLER_IDENTITY:-Developer ID Installer: Judah Tait (U4986YKSZ8)}"
+
 echo "== Building installer (v${VERSION})"
 if [[ ! -f "$PKG" ]]; then
   command -v cargo >/dev/null 2>&1 || {
@@ -51,9 +55,8 @@ echo "== Installing to /Applications (sudo)"
 sudo installer -pkg "$PKG" -target /
 
 if [[ -d "$APP_DEST" ]]; then
-  # Soften quarantine for local/ad-hoc builds so first open is less painful.
-  xattr -dr com.apple.quarantine "$APP_DEST" 2>/dev/null || true
   echo "installed: $APP_DEST"
+  codesign --verify --verbose=2 "$APP_DEST" 2>&1 | tail -5 || true
   open -R "$APP_DEST"
 else
   echo "warning: installer finished but app not found at $APP_DEST" >&2

@@ -28,11 +28,6 @@ cask "omnissa-beta-token-utility" do
   ]
 
   caveats <<~EOS
-    Pre-release builds may be ad-hoc signed. If Gatekeeper blocks first launch,
-    right-click the app → Open, or:
-
-      xattr -dr com.apple.quarantine "#{appdir}/Omnissa Beta Token Utility.app"
-
     Apple Business service name (also copied by the app):
       Workspace One AppleSeed Beta Token Service
   EOS
