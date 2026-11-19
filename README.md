@@ -54,6 +54,14 @@ Apple Business will show **0 devices** on this service — that is expected. Wor
 
 ABM service name (copied by the app): **Workspace One AppleSeed Beta Token Service**
 
+<p align="center">
+  <img src="docs/images/device-settings-search-beta.jpg" alt="iPad Settings search — Open Beta Updates" width="340">
+  &nbsp;
+  <img src="docs/images/device-ipados-beta-updates.jpg" alt="iPad Beta Updates — iPadOS AppleSeed Beta selected" width="220">
+</p>
+
+<p align="center"><em>On device: Settings → search <strong>Beta</strong> → <strong>Beta Updates</strong> → AppleSeed program from your UEM profile.</em></p>
+
 Details: [guide](docs/guide.md) · in-app **⇧⌘/**.
 
 ## Versioning
