@@ -75,7 +75,7 @@ Apple: [Enrolling a device in a beta program](https://developer.apple.com/docume
 
 ## Security
 
-Workdir `~/.omnissa-beta-tokens` (700); key / `.p7m` mode 600, Finder-hidden, Time Machine excluded. Copied tokens clear from the pasteboard after 60s. Builds are Developer ID signed; notarization is the remaining Gatekeeper step for downloadable releases.
+Workdir `~/.omnissa-beta-tokens` (700); key / `.p7m` mode 600, Finder-hidden, Time Machine excluded. Copied tokens clear from the pasteboard after 60s. Releases are Developer ID signed and notarized (Gatekeeper-ready).
 
 ## License
 
