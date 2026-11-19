@@ -61,13 +61,3 @@ Attach only files that exist in `dist/release/` and that appear in
 `SHA256SUMS`. Do not advertise an arm64 asset that was not built.
 
 Do not commit binaries to git; they belong on the release.
-
-## Before making the repository public
-
-- [ ] Legal review of the license and the upstream attribution in `NOTICE`.
-- [ ] Brand approval for the icon, the styling and the use of Omnissa marks.
-- [ ] Confirm the copyright holder name in `LICENSE` and `NOTICE`.
-- [ ] Confirm the commit author identity you want public (history includes it).
-- [ ] No tokens, tenant names or session data in any screenshot.
-- [ ] Developer ID signing + notarization complete (or Gatekeeper workaround
-      still documented honestly).

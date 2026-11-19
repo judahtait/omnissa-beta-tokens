@@ -1,11 +1,5 @@
 # Enrolling Apple Devices in a Beta Program with Workspace ONE UEM
 
-**Status:** Draft — Legal / Compliance review required.
-**Date:** 2026-11-18
-**Author:** Judah Tait (Support Engineering · Omnissa)
-
----
-
 <!-- Source for the branded HTML guide. Redact tokens, tenant names, and session
 data in screenshots before external use. -->
 

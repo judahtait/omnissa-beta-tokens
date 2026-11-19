@@ -174,16 +174,27 @@ fn main() {
         eprintln!("ERROR: read {}: {e}", src.display());
         std::process::exit(1);
     });
-    let Some((meta, body_md)) = s.split_once("\n---\n") else {
-        eprintln!("ERROR: expected meta then \\n---\\n then body");
-        std::process::exit(1);
+    let (meta, body_md) = match s.split_once("\n---\n") {
+        Some((m, b)) => (m.to_string(), b.to_string()),
+        None => {
+            // No front matter — title from the first H1; rest is the body.
+            let mut lines = s.lines();
+            let title_line = lines.find(|l| l.starts_with("# ")).unwrap_or("# Guide");
+            let body = s
+                .lines()
+                .skip_while(|l| !l.starts_with("# "))
+                .skip(1)
+                .collect::<Vec<_>>()
+                .join("\n");
+            (title_line.to_string(), body)
+        }
     };
     let title = meta
         .lines()
         .find_map(|l| l.strip_prefix("# "))
         .unwrap_or("Guide")
         .to_string();
-    let mut body = md_to_html(body_md);
+    let mut body = md_to_html(&body_md);
     body = body.replace("<!-- UTILITY_DOWNLOAD -->", utility_block());
     let img_root = src.parent().unwrap_or(Path::new("."));
     body = match inline_images(&body, img_root) {
@@ -194,10 +205,10 @@ fn main() {
         }
     };
 
-    let status = field(meta, "Status");
-    let date = field(meta, "Date");
-    let author = field(meta, "Author");
-    let claim = field(meta, "Ticket claim");
+    let status = field(&meta, "Status");
+    let date = field(&meta, "Date");
+    let author = field(&meta, "Author");
+    let claim = field(&meta, "Ticket claim");
 
     let draft_html = if status.to_lowercase().contains("draft") {
         format!(r#"<div class="draft"><strong>Draft.</strong> {}</div>"#, esc_inline(&status))
@@ -212,6 +223,23 @@ fn main() {
             esc_inline(&claim)
         )
     };
+    let meta_bits: Vec<&str> = [&date, &author]
+        .into_iter()
+        .map(String::as_str)
+        .filter(|s| !s.is_empty())
+        .collect();
+    let meta_html = if meta_bits.is_empty() {
+        String::new()
+    } else {
+        format!(
+            r#"<div class="meta">{}</div>"#,
+            meta_bits
+                .iter()
+                .map(|s| format!("<span>{}</span>", esc_inline(s)))
+                .collect::<Vec<_>>()
+                .join("")
+        )
+    };
 
     let html = format!(
         r#"<!doctype html>
@@ -220,12 +248,12 @@ fn main() {
 <style>{fonts}{CSS}</style></head><body>
 <header><div class="wrap"><div class="eyebrow">Omnissa &middot; Workspace ONE UEM &middot; Guide</div>
 <h1>{title}</h1>
-<div class="meta"><span>{date}</span><span>{author}</span></div></div></header>
+{meta_html}</div></header>
 <main class="wrap">
 {draft_html}
 {claim_html}
 {body}
-<footer>Omnissa &middot; Draft for review. Do not share tokens, server tokens (.p7m) or private keys. Outfit font: SIL Open Font License 1.1.</footer>
+<footer>Omnissa &middot; Do not share tokens, server tokens (.p7m) or private keys. Outfit font: SIL Open Font License 1.1.</footer>
 </main></body></html>"#,
         fonts = font_css(&root),
     );
