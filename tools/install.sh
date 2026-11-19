@@ -6,14 +6,14 @@
 #   tools/install.sh
 #
 # Usage (one-liner, once this file is on the default branch):
-#   curl -fsSL https://raw.githubusercontent.com/jtait_euc/omnissa-beta-tokens/main/tools/install.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/judahtait/omnissa-beta-tokens/main/tools/install.sh | bash
 #
 # Prefer Homebrew when a GitHub release exists:
-#   brew tap jtait_euc/omnissa-beta-tokens https://github.com/jtait_euc/omnissa-beta-tokens
+#   brew tap judahtait/omnissa-beta-tokens
 #   brew install --cask omnissa-beta-token-utility
 set -euo pipefail
 
-REPO_URL="${REPO_URL:-https://github.com/jtait_euc/omnissa-beta-tokens.git}"
+REPO_URL="${REPO_URL:-https://github.com/judahtait/omnissa-beta-tokens.git}"
 APP_NAME="Omnissa Beta Token Utility.app"
 APP_DEST="/Applications/${APP_NAME}"
 

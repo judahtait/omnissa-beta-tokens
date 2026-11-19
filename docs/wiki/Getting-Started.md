@@ -2,19 +2,15 @@
 
 ## Install
 
-This repo is private. Use SSH + a GitHub PAT for Homebrew:
-
 ```bash
-export HOMEBREW_GITHUB_API_TOKEN="ghp_…"
-brew untap jtait_euc/omnissa-beta-tokens 2>/dev/null || true
-brew tap jtait_euc/omnissa-beta-tokens git@github.com:jtait_euc/omnissa-beta-tokens.git
+brew tap judahtait/omnissa-beta-tokens
 brew install --cask omnissa-beta-token-utility
 ```
 
 Or download the signed installer:
 
 ```bash
-gh release download v0.1.0 -R jtait_euc/omnissa-beta-tokens \
+gh release download v0.1.0 -R judahtait/omnissa-beta-tokens \
   -p 'Omnissa-Beta-Token-Utility-*-macos.pkg'
 sudo installer -pkg Omnissa-Beta-Token-Utility-0.1.0-macos.pkg -target /
 ```

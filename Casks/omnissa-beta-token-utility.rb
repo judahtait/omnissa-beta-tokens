@@ -1,7 +1,6 @@
-# Homebrew Cask — Omnissa Beta Token Utility (private EMU repo)
+# Homebrew Cask — Omnissa Beta Token Utility
 #
-#   export HOMEBREW_GITHUB_API_TOKEN="ghp_…"
-#   brew tap jtait_euc/omnissa-beta-tokens git@github.com:jtait_euc/omnissa-beta-tokens.git
+#   brew tap judahtait/omnissa-beta-tokens
 #   brew install --cask omnissa-beta-token-utility
 #
 # From a clone:
@@ -13,10 +12,10 @@ cask "omnissa-beta-token-utility" do
   version "0.1.0"
   sha256 "d0aaafa867a6cbc336d3685eb7d3051b85e0c758b3f846674b0032167dee4a4f"
 
-  url "https://github.com/jtait_euc/omnissa-beta-tokens/releases/download/v#{version}/Omnissa-Beta-Token-Utility-#{version}-macos.zip"
+  url "https://github.com/judahtait/omnissa-beta-tokens/releases/download/v#{version}/Omnissa-Beta-Token-Utility-#{version}-macos.zip"
   name "Omnissa Beta Token Utility"
   desc "Fetch AppleSeed beta enrollment tokens for Workspace ONE UEM"
-  homepage "https://github.com/jtait_euc/omnissa-beta-tokens"
+  homepage "https://github.com/judahtait/omnissa-beta-tokens"
 
   depends_on macos: ">= :ventura"
 
