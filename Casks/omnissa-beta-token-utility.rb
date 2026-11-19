@@ -1,18 +1,18 @@
-# Homebrew Cask — Omnissa Beta Token Utility
+# Homebrew Cask — Omnissa Beta Token Utility (private repo)
 #
-# Tap (after this file is on the default branch):
-#   brew tap jtait_euc/omnissa-beta-tokens https://github.com/jtait_euc/omnissa-beta-tokens
+# Tap over SSH (HTTPS anonymous clone will fail while the repo is private):
+#   export HOMEBREW_GITHUB_API_TOKEN="ghp_…"   # repo read + release assets
+#   brew tap jtait_euc/omnissa-beta-tokens git@github.com:jtait_euc/omnissa-beta-tokens.git
 #   brew install --cask omnissa-beta-token-utility
 #
-# From a clone (no tap):
+# From a clone:
 #   brew install --cask ./Casks/omnissa-beta-token-utility.rb
 #
-# Maintainers: bump `version` + `sha256` when cutting a GitHub Release that
-# attaches Omnissa-Beta-Token-Utility-<ver>-macos.zip (from tools/release.sh).
+# Maintainers: bump `version` + `sha256` when replacing the release zip.
 
 cask "omnissa-beta-token-utility" do
   version "0.1.0"
-  sha256 :no_check # replace with SHA-256 of the release zip when publishing
+  sha256 "d0aaafa867a6cbc336d3685eb7d3051b85e0c758b3f846674b0032167dee4a4f"
 
   url "https://github.com/jtait_euc/omnissa-beta-tokens/releases/download/v#{version}/Omnissa-Beta-Token-Utility-#{version}-macos.zip"
   name "Omnissa Beta Token Utility"
@@ -28,6 +28,8 @@ cask "omnissa-beta-token-utility" do
   ]
 
   caveats <<~EOS
+    Private repo: set HOMEBREW_GITHUB_API_TOKEN so brew can download the release zip.
+
     Apple Business service name (also copied by the app):
       Workspace One AppleSeed Beta Token Service
   EOS

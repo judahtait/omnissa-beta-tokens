@@ -1,16 +1,20 @@
 # Getting started
 
-## Install
+## Install (private repo)
 
 ```bash
-brew tap jtait_euc/omnissa-beta-tokens https://github.com/jtait_euc/omnissa-beta-tokens
+export HOMEBREW_GITHUB_API_TOKEN="ghp_…"   # repo + release read
+brew untap jtait_euc/omnissa-beta-tokens 2>/dev/null || true
+brew tap jtait_euc/omnissa-beta-tokens git@github.com:jtait_euc/omnissa-beta-tokens.git
 brew install --cask omnissa-beta-token-utility
 ```
 
-Or from a clone:
+Or download the signed installer:
 
 ```bash
-tools/install.sh
+gh release download v0.1.0 -R jtait_euc/omnissa-beta-tokens \
+  -p 'Omnissa-Beta-Token-Utility-*-macos.pkg'
+sudo installer -pkg Omnissa-Beta-Token-Utility-0.1.0-macos.pkg -target /
 ```
 
 ## First token
