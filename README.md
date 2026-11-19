@@ -10,11 +10,23 @@ Version **0.1.0** — Developer ID signed (`Judah Tait`).
 
 ## Install
 
+This repository is **private** (Enterprise Managed User account — public repos are not available). Use SSH and a GitHub token for Homebrew, or install the `.pkg` with `gh`.
+
 ### Homebrew
 
 ```bash
-brew tap jtait_euc/omnissa-beta-tokens https://github.com/jtait_euc/omnissa-beta-tokens
+export HOMEBREW_GITHUB_API_TOKEN="ghp_…"   # classic PAT with repo scope
+
+brew untap jtait_euc/omnissa-beta-tokens 2>/dev/null || true
+brew tap jtait_euc/omnissa-beta-tokens git@github.com:jtait_euc/omnissa-beta-tokens.git
 brew install --cask omnissa-beta-token-utility
+```
+
+Requires GitHub SSH access (`ssh -T git@github.com`). From a clone instead:
+
+```bash
+export HOMEBREW_GITHUB_API_TOKEN="ghp_…"
+brew install --cask ./Casks/omnissa-beta-token-utility.rb
 ```
 
 ### Installer package
@@ -28,7 +40,7 @@ sudo installer -pkg Omnissa-Beta-Token-Utility-0.1.0-macos.pkg -target /
 ### Build from a clone
 
 ```bash
-git clone https://github.com/jtait_euc/omnissa-beta-tokens.git
+git clone git@github.com:jtait_euc/omnissa-beta-tokens.git
 cd omnissa-beta-tokens
 tools/install.sh
 ```

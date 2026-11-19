@@ -1,6 +1,7 @@
-# Homebrew Cask — Omnissa Beta Token Utility
+# Homebrew Cask — Omnissa Beta Token Utility (private EMU repo)
 #
-#   brew tap jtait_euc/omnissa-beta-tokens https://github.com/jtait_euc/omnissa-beta-tokens
+#   export HOMEBREW_GITHUB_API_TOKEN="ghp_…"
+#   brew tap jtait_euc/omnissa-beta-tokens git@github.com:jtait_euc/omnissa-beta-tokens.git
 #   brew install --cask omnissa-beta-token-utility
 #
 # From a clone:

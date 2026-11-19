@@ -2,8 +2,12 @@
 
 ## Install
 
+This repo is private. Use SSH + a GitHub PAT for Homebrew:
+
 ```bash
-brew tap jtait_euc/omnissa-beta-tokens https://github.com/jtait_euc/omnissa-beta-tokens
+export HOMEBREW_GITHUB_API_TOKEN="ghp_…"
+brew untap jtait_euc/omnissa-beta-tokens 2>/dev/null || true
+brew tap jtait_euc/omnissa-beta-tokens git@github.com:jtait_euc/omnissa-beta-tokens.git
 brew install --cask omnissa-beta-token-utility
 ```
 
