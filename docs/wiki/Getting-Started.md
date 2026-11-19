@@ -8,6 +8,10 @@ brew trust judahtait/omnissa-beta-tokens
 brew install --cask omnissa-beta-token-utility
 ```
 
+```bash
+npm install -g omnissa-beta-token-utility
+```
+
 Or download the signed installer:
 
 ```bash

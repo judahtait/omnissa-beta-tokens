@@ -18,10 +18,10 @@ brew trust judahtait/omnissa-beta-tokens
 brew install --cask omnissa-beta-token-utility
 ```
 
-From a clone:
+### npm
 
 ```bash
-brew install --cask ./Casks/omnissa-beta-token-utility.rb
+npm install -g omnissa-beta-token-utility
 ```
 
 ### Installer package
@@ -30,14 +30,6 @@ brew install --cask ./Casks/omnissa-beta-token-utility.rb
 gh release download v0.1.0 -R judahtait/omnissa-beta-tokens \
   -p 'Omnissa-Beta-Token-Utility-*-macos.pkg'
 sudo installer -pkg Omnissa-Beta-Token-Utility-0.1.0-macos.pkg -target /
-```
-
-### Build from a clone
-
-```bash
-git clone https://github.com/judahtait/omnissa-beta-tokens.git
-cd omnissa-beta-tokens
-tools/install.sh
 ```
 
 ## How to use
@@ -53,16 +45,7 @@ Apple Business will show **0 devices** on this service — that is expected. Wor
 
 ABM service name (copied by the app): **Workspace One AppleSeed Beta Token Service**
 
-### Modes (Apple)
-
-| Mode | UEM | Programs per profile |
-|---|---|---|
-| Automatic | AlwaysOn + Require | One |
-| Offer to user | Allowed + Offer | One or more (same OS) |
-| Offer, no sign-in | AlwaysOn + Offer | One or more (same OS) |
-| Block and unenroll | AlwaysOff | None |
-
-macOS and iOS need **separate** profiles. Details: [guide](docs/guide.md) · in-app **⇧⌘/**.
+Details: [guide](docs/guide.md) · in-app **⇧⌘/**.
 
 ## Docs
 

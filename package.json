@@ -1,0 +1,43 @@
+{
+  "name": "omnissa-beta-token-utility",
+  "version": "0.1.0",
+  "description": "Install the Omnissa Beta Token Utility macOS app (AppleSeed for IT tokens for Workspace ONE UEM)",
+  "license": "MIT",
+  "author": "Judah Tait",
+  "homepage": "https://github.com/judahtait/omnissa-beta-tokens",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/judahtait/omnissa-beta-tokens.git"
+  },
+  "bugs": {
+    "url": "https://github.com/judahtait/omnissa-beta-tokens/issues"
+  },
+  "keywords": [
+    "omnissa",
+    "workspace-one",
+    "appleseed",
+    "beta",
+    "mdm",
+    "macos"
+  ],
+  "os": [
+    "darwin"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "bin": {
+    "omnissa-beta-token-utility": "bin/omnissa-beta-token-utility.js"
+  },
+  "scripts": {
+    "postinstall": "node scripts/install-app.js",
+    "install-app": "node scripts/install-app.js"
+  },
+  "files": [
+    "bin/",
+    "scripts/",
+    "LICENSE",
+    "NOTICE",
+    "README.md"
+  ]
+}

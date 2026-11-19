@@ -1,0 +1,10 @@
+# Ship only the npm installer surface (see package.json "files").
+*
+!bin/
+!bin/**
+!scripts/
+!scripts/**
+!LICENSE
+!NOTICE
+!README.md
+!package.json

@@ -1,10 +1,8 @@
 # Homebrew Cask — Omnissa Beta Token Utility
 #
 #   brew tap judahtait/omnissa-beta-tokens
+#   brew trust judahtait/omnissa-beta-tokens
 #   brew install --cask omnissa-beta-token-utility
-#
-# From a clone:
-#   brew install --cask ./Casks/omnissa-beta-token-utility.rb
 #
 # Maintainers: bump `version` + `sha256` when replacing the release zip.
 
