@@ -9,7 +9,7 @@ brew install --cask omnissa-beta-token-utility
 ```
 
 ```bash
-npm install -g omnissa-beta-token-utility
+npm install -g omnissa-beta-token-utility@0.1.0
 ```
 
 Or download the signed installer:

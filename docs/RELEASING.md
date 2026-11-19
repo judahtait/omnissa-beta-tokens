@@ -2,8 +2,22 @@
 
 ## Version
 
-Read the release version from `rust/Cargo.toml` (`[package] version`). Do not
-use a separate non-Rust version string for product assets.
+Use **Semantic Versioning** (`MAJOR.MINOR.PATCH`), e.g. `0.1.0`.
+
+**Source of truth:** `rust/Cargo.toml` → `[package] version`.
+
+When cutting a release, set the **same** version (no `v` prefix, no `-stage` /
+prerelease labels) in:
+
+1. `rust/Cargo.toml`
+2. `package.json`
+3. `Casks/omnissa-beta-token-utility.rb` (+ `sha256` of the new zip)
+
+Then tag GitHub as `v<version>` (leading `v` on the **tag only**). Artifact
+filenames use the bare version: `Omnissa-Beta-Token-Utility-0.1.0-macos.zip`.
+
+Ignore npm’s temporary `0.0.0-stage` placeholder if it appears while a new
+package name is processing — product installs must pin `@0.1.0` or later.
 
 ## Build
 
