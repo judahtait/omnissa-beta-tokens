@@ -1,8 +1,6 @@
-# Homebrew Cask — Omnissa Beta Token Utility (private repo)
+# Homebrew Cask — Omnissa Beta Token Utility
 #
-# Tap over SSH (HTTPS anonymous clone will fail while the repo is private):
-#   export HOMEBREW_GITHUB_API_TOKEN="ghp_…"   # repo read + release assets
-#   brew tap jtait_euc/omnissa-beta-tokens git@github.com:jtait_euc/omnissa-beta-tokens.git
+#   brew tap jtait_euc/omnissa-beta-tokens https://github.com/jtait_euc/omnissa-beta-tokens
 #   brew install --cask omnissa-beta-token-utility
 #
 # From a clone:
@@ -28,8 +26,6 @@ cask "omnissa-beta-token-utility" do
   ]
 
   caveats <<~EOS
-    Private repo: set HOMEBREW_GITHUB_API_TOKEN so brew can download the release zip.
-
     Apple Business service name (also copied by the app):
       Workspace One AppleSeed Beta Token Service
   EOS

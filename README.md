@@ -10,31 +10,14 @@ Version **0.1.0** — Developer ID signed (`Judah Tait`).
 
 ## Install
 
-This repository is **private**. Homebrew cannot use anonymous HTTPS to tap it or download release assets — use SSH and a GitHub token (or install from a clone).
-
-### Homebrew (private tap)
-
-1. Ensure this Mac can reach GitHub over **SSH** (`ssh -T git@github.com`).
-2. Create a classic PAT with `repo` scope (or a fine-grained token that can read this repo + its releases), then:
+### Homebrew
 
 ```bash
-export HOMEBREW_GITHUB_API_TOKEN="ghp_…"   # needed for private release downloads
-
-brew untap jtait_euc/omnissa-beta-tokens 2>/dev/null || true
-brew tap jtait_euc/omnissa-beta-tokens git@github.com:jtait_euc/omnissa-beta-tokens.git
+brew tap jtait_euc/omnissa-beta-tokens https://github.com/jtait_euc/omnissa-beta-tokens
 brew install --cask omnissa-beta-token-utility
 ```
 
-If `brew tap` still fails, clone once and install the cask from disk:
-
-```bash
-gh auth login   # or: git clone git@github.com:jtait_euc/omnissa-beta-tokens.git
-cd omnissa-beta-tokens
-export HOMEBREW_GITHUB_API_TOKEN="ghp_…"
-brew install --cask ./Casks/omnissa-beta-token-utility.rb
-```
-
-### Installer package (no Homebrew)
+### Installer package
 
 ```bash
 gh release download v0.1.0 -R jtait_euc/omnissa-beta-tokens \
@@ -45,7 +28,7 @@ sudo installer -pkg Omnissa-Beta-Token-Utility-0.1.0-macos.pkg -target /
 ### Build from a clone
 
 ```bash
-git clone git@github.com:jtait_euc/omnissa-beta-tokens.git
+git clone https://github.com/jtait_euc/omnissa-beta-tokens.git
 cd omnissa-beta-tokens
 tools/install.sh
 ```

@@ -1,11 +1,9 @@
 # Getting started
 
-## Install (private repo)
+## Install
 
 ```bash
-export HOMEBREW_GITHUB_API_TOKEN="ghp_…"   # repo + release read
-brew untap jtait_euc/omnissa-beta-tokens 2>/dev/null || true
-brew tap jtait_euc/omnissa-beta-tokens git@github.com:jtait_euc/omnissa-beta-tokens.git
+brew tap jtait_euc/omnissa-beta-tokens https://github.com/jtait_euc/omnissa-beta-tokens
 brew install --cask omnissa-beta-token-utility
 ```
 
