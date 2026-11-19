@@ -16,7 +16,7 @@ use crate::render;
 use crate::servertoken::{self, CERT_NAME};
 
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
-pub const SERVICE_NAME: &str = "Workspace One Beta Token Service";
+pub const SERVICE_NAME: &str = "Workspace One AppleSeed Beta Token Service";
 pub const APPLE_ADD_SERVICE_URL: &str =
     "https://business.apple.com/main/devices/managementservices/mdmservers/add";
 

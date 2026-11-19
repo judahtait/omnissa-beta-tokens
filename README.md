@@ -1,85 +1,86 @@
 <p align="center">
-  <img src="docs/branding/icons/v2-key-bow-abm-1024.png" alt="Omnissa Beta Token Utility" width="128">
+  <img src="docs/branding/icons/v12-palette/12-mid-blue-1024.png" alt="Omnissa Beta Token Utility" width="128">
 </p>
 
 # Omnissa Beta Token Utility
 
-**Omnissa** · Workspace ONE UEM
+macOS app for Omnissa / Workspace ONE UEM admins: fetch AppleSeed for IT enrollment tokens and paste them into a declarative **Software Update: Settings → Beta** profile.
 
-Fetch AppleSeed for IT enrollment tokens, then deliver them with a Workspace ONE
-UEM declarative **Software Update: Settings → Beta** profile.
-
-| | |
-|---|---|
-| **App** | Click-through admin workflow (recommended) |
-| **CLI** | `omnissa-beta-tokens` for scripting |
-| **Guide** | [docs/guide.md](docs/guide.md) · offline HTML via `build-guide` |
-| **Wiki** | [docs/wiki/Home.md](docs/wiki/Home.md) |
-
-Version from [`rust/Cargo.toml`](rust/Cargo.toml). **Pre-release 0.1.0** (ad-hoc
-signed; Gatekeeper may warn).
+**Pre-release 0.1.0** — ad-hoc signed (Gatekeeper may warn until Developer ID + notarization).
 
 ## Install
 
+### Homebrew (recommended)
+
+After a GitHub release is published:
+
 ```bash
-tools/release.sh          # app zip + .pkg + CLI + guide → dist/release/
-tools/make_pkg.sh         # Installer → /Applications
-open dist/release/Omnissa-Beta-Token-Utility-0.1.0-macos.pkg
+brew tap jtait_euc/omnissa-beta-tokens https://github.com/jtait_euc/omnissa-beta-tokens
+brew install --cask omnissa-beta-token-utility
 ```
 
-Or app only: `tools/make_app.sh` then open `dist/Omnissa Beta Token Utility.app`.
+From a local clone (no release yet):
 
-## How it works
+```bash
+brew install --cask ./Casks/omnissa-beta-token-utility.rb
+```
 
-1. **Create certificate** → upload `.pem` to Apple Business Management Services.  
-2. **Download `.p7m`** → **Watch Downloads** / `fetch --watch`.  
-3. **Fetch programs** → Copy title / token.  
-4. **UEM declarative Beta profile** → assign → publish.  
-5. **Clean up** ABM token service + local credentials when finished.
+First launch if Gatekeeper blocks: right-click the app → **Open**, or:
 
-Apple Business will show **0 devices** on the token service — that is expected.
-Workspace ONE stays the enrollment MDM.
+```bash
+xattr -dr com.apple.quarantine "/Applications/Omnissa Beta Token Utility.app"
+```
 
-### Modes (aligned with Apple)
+### One-liner (build + install to `/Applications`)
 
-| Mode | UEM fields | Programs in one profile |
+```bash
+curl -fsSL https://raw.githubusercontent.com/jtait_euc/omnissa-beta-tokens/main/tools/install.sh | bash
+```
+
+Or from a clone:
+
+```bash
+tools/install.sh
+```
+
+Requires Xcode CLT (and a Rust toolchain only if the `.pkg` is built from source). Prefer Homebrew once a release zip is available.
+
+## How to use
+
+1. **Create certificate** — upload the `.pem` in Apple Business (private key stays on this Mac).
+2. **Add service** — name it `Workspace One AppleSeed Beta Token Service`, upload `.pem`, download the `.p7m`.
+3. **Watch Downloads** → **Fetch beta tokens** → **Copy title** / **Copy token**.
+4. Create a UEM declarative Beta profile (in-app **How to create the UEM profile**, or [docs/guide.md](docs/guide.md)).
+5. Assign → publish → confirm on the device (Settings → Beta Updates).
+6. Tear down the ABM service and local credentials when finished.
+
+Apple Business will show **0 devices** on this service — that is expected. Workspace ONE stays the MDM.
+
+ABM service name (copied by the app): **Workspace One AppleSeed Beta Token Service**
+
+### Modes (Apple)
+
+| Mode | UEM | Programs per profile |
 |---|---|---|
-| Automatic | AlwaysOn + Require | **One** (forced) |
-| Offer to user | Allowed + Offer | **One or more** (same OS) |
-| Offer, no sign-in | AlwaysOn + Offer | **One or more** (same OS) |
+| Automatic | AlwaysOn + Require | One |
+| Offer to user | Allowed + Offer | One or more (same OS) |
+| Offer, no sign-in | AlwaysOn + Offer | One or more (same OS) |
 | Block and unenroll | AlwaysOff | None |
 
-macOS and iOS always need **separate** profiles. Details:
-[guide §4](docs/guide.md#4-choose-a-mode-then-build-the-profile) ·
-[wiki: Modes](docs/wiki/Modes-and-OfferPrograms.md).
+macOS and iOS need **separate** profiles. Details: [guide](docs/guide.md) · in-app **⇧⌘/**.
 
-## CLI
+## Docs
 
-```bash
-omnissa-beta-tokens init
-omnissa-beta-tokens fetch --watch
-omnissa-beta-tokens fetch --os macOS --match "27" --uem-block
-omnissa-beta-tokens cleanup --yes
-```
-
-## Docs map
-
-| Doc | Audience |
-|---|---|
-| [docs/guide.md](docs/guide.md) | Admins — short walkthrough + screenshots |
-| [docs/wiki/](docs/wiki/Home.md) | Same content, split for GitHub Wiki |
-| [docs/RELEASING.md](docs/RELEASING.md) | Engineers building releases |
-| In-app **⇧⌘/** | Screenshot UEM steps + mode help |
+- [Admin guide](docs/guide.md) — short walkthrough + screenshots  
+- [Wiki source](docs/wiki/Home.md) — same content, split for GitHub Wiki  
+- [Releasing](docs/RELEASING.md) — engineers building signed/notarized builds  
 
 Apple: [Enrolling a device in a beta program](https://developer.apple.com/documentation/devicemanagement/enrolling-a-device-in-a-beta-program) ·
-[Get beta enrollment tokens](https://developer.apple.com/documentation/devicemanagement/get-beta-enrollment-tokens) ·
-[Software Update settings](https://support.apple.com/guide/deployment/software-update-settings-declarative-dep0578d8b8a/web)
+[Get beta enrollment tokens](https://developer.apple.com/documentation/devicemanagement/get-beta-enrollment-tokens)
 
-## Security (short)
+## Security
 
-Workdir `~/.omnissa-beta-tokens` (700); key/`.p7m` 600, Finder-hidden, Time Machine
-excluded. Pasteboard clears tokens after 60s. Still open: Developer ID +
-notarization.
+Workdir `~/.omnissa-beta-tokens` (700); key / `.p7m` mode 600, Finder-hidden, Time Machine excluded. Copied tokens clear from the pasteboard after 60s. Still open: Developer ID signing + notarization.
 
 ## License
 

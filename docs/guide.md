@@ -33,7 +33,7 @@ This matches Apple’s model and how other MDMs (Jamf Blueprints, Fleet DDM, Int
 ## 3. Get tokens
 
 1. **Create certificate** in the app — drag the `.pem` into Apple Business (private key stays hidden).
-2. **Open Apple Business** → add service `Workspace One Beta Token Service` → upload `.pem` → **Download Service Token** (`.p7m`).
+2. **Open Apple Business** → add service `Workspace One AppleSeed Beta Token Service` → upload `.pem` → **Download Service Token** (`.p7m`).
 
    ![Apple Business — Add management service.](images/apple-business-management-services.png)
 
@@ -42,12 +42,6 @@ This matches Apple’s model and how other MDMs (Jamf Blueprints, Fleet DDM, Int
 3. **Watch Downloads** → **Fetch beta tokens** → filter by OS → **Copy title** / **Copy token**.
 
 > **0 devices on this Apple Business service is expected.** It only unlocks the beta API. Workspace ONE remains the MDM — do not reassign devices here.
-
-```
-omnissa-beta-tokens init
-omnissa-beta-tokens fetch --watch
-omnissa-beta-tokens fetch --os macOS --match "27" --uem-block
-```
 
 ## 4. Choose a mode (then build the profile)
 

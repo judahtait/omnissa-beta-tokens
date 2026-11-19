@@ -2,9 +2,8 @@ import SwiftUI
 import AppKit
 import CoreText
 
-// Omnissa brand values with Apple Business Manager–aligned interactive blue.
-// ABM “Next” fill sampled 2026-11-18 (Screenshot 2.40.07 AM): Display P3 #306FDB
-// (= sRGB #0071E3, Apple’s standard ABM / apple.com blue). Prior #3C85E2 was close but washed.
+// Mid-blue brand (v12c ship pick): field #2B6CB0 → #1A4F8A.
+// Accent matches the AppIcon mid-blue; ABM’s #0071E3 is no longer the UI primary.
 
 extension NSColor {
     convenience init(hex: UInt32) {
@@ -35,31 +34,29 @@ extension Color {
 
 enum Brand {
     // Palette, light / dark.
-    /// Primary actions — exact ABM “Next” fill (Display P3 #306FDB / sRGB #0071E3).
+    /// Primary actions — mid blue from v12c AppIcon field (#2B6CB0).
     static let accent = Color(nsColor: NSColor(name: nil) { appearance in
         if appearance.bestMatch(from: [.aqua, .darkAqua]) == .darkAqua {
-            // Slightly lifted for dark surfaces (still P3-accurate family).
-            return NSColor(p3Hex: 0x4B8AE6)
+            return NSColor(hex: 0x4A8AD0) // lifted for dark surfaces
         }
-        return NSColor(p3Hex: 0x306FDB)
+        return NSColor(hex: 0x2B6CB0)
     })
-    /// sRGB twin of the ABM button (gradients / non-P3 contexts).
-    static let accentSRGB = Color(hex: 0x0071E3)
+    static let accentSRGB = Color(hex: 0x2B6CB0)
     static let heading = Color(light: 0x1C1C20, dark: 0xF2F2F7)   // titles
     static let text = Color(light: 0x1D1D1F, dark: 0xE5E5E7)      // body
     static let muted = Color(light: 0x6E6E73, dark: 0xA1A1A6)     // secondary text
     static let rule = Color(light: 0xD1D1D6, dark: 0x3A3A3C)      // separators
-    static let surface = Color(light: 0xF5F5F7, dark: 0x141416)   // window background (ABM-like gray)
+    static let surface = Color(light: 0xF4F6F9, dark: 0x141416)   // cool mid-blue-tinted gray
     static let card = Color(light: 0xFFFFFF, dark: 0x1E1E21)      // cards, list background
     static let ok = Color(light: 0x248A3D, dark: 0x30D158)        // healthy
     /// Errors, failures, and unsupported-platform warnings (system red).
     static let error = Color(light: 0xD70015, dark: 0xFF453A)
-    /// Secondary / Back-style control fill (ABM gray pill).
+    /// Secondary / Back-style control fill.
     static let secondaryFill = Color(light: 0xF2F2F7, dark: 0x3A3A3C)
     /// Legacy Omnissa accent — not for errors (use `error` instead).
     static let magenta = Color(hex: 0xD600FF)
-    /// Omnissa navy retained for header depth.
-    static let omnissaNavy = Color(hex: 0x001E60)
+    /// Deep mid-blue for header depth (icon field dark stop).
+    static let omnissaNavy = Color(hex: 0x1A4F8A)
 
     // Short aliases used by the views.
     static var navy: Color { heading }
@@ -68,12 +65,12 @@ enum Brand {
     static var tint: Color { rule }
     static var background: Color { surface }
 
-    /// Header: Omnissa navy → ABM Next blue (P3-accurate end stop).
+    /// Header: deep mid blue → mid blue.
     static let headerGradient = LinearGradient(
-        colors: [Color(hex: 0x001E60), Color(hex: 0x0B5CAD), Color(p3Hex: 0x306FDB)],
+        colors: [Color(hex: 0x1A4F8A), Color(hex: 0x2B6CB0), Color(hex: 0x3B7BC0)],
         startPoint: .leading, endPoint: .trailing)
     static let edge = LinearGradient(
-        colors: [Color(hex: 0x0B5CAD), Color(p3Hex: 0x306FDB)], startPoint: .leading, endPoint: .trailing)
+        colors: [Color(hex: 0x1A4F8A), Color(hex: 0x2B6CB0)], startPoint: .leading, endPoint: .trailing)
 
     /// ABM-like control corner radius (Next / Back are rounded rects, not full pills).
     static let controlRadius: CGFloat = 8
@@ -166,21 +163,27 @@ extension View {
     func glass(_ radius: CGFloat = 16) -> some View { modifier(GlassSurface(radius: radius)) }
 }
 
-/// Soft ABM-blue light behind the cards (no magenta wash on the workspace).
+/// Quiet mid-blue atmosphere behind the steps.
 struct GlassBackdrop: View {
     var body: some View {
         ZStack {
             Brand.surface
-            Circle().fill(Brand.accent.opacity(0.22)).frame(width: 460, height: 460)
-                .blur(radius: 100).offset(x: -280, y: -140)
-            Circle().fill(Brand.omnissaNavy.opacity(0.10)).frame(width: 420, height: 420)
-                .blur(radius: 110).offset(x: 320, y: 280)
+            Ellipse()
+                .fill(Brand.accent.opacity(0.14))
+                .frame(width: 520, height: 360)
+                .blur(radius: 90)
+                .offset(x: -200, y: -160)
+            Ellipse()
+                .fill(Brand.omnissaNavy.opacity(0.10))
+                .frame(width: 480, height: 400)
+                .blur(radius: 100)
+                .offset(x: 240, y: 220)
         }
         .ignoresSafeArea()
     }
 }
 
-// MARK: - Buttons (shaped like ABM Next / Back)
+// MARK: - Buttons
 
 struct PrimaryButtonStyle: ButtonStyle {
     @Environment(\.isEnabled) private var enabled

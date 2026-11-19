@@ -112,7 +112,7 @@ final class AppModel: ObservableObject {
     static let appleAddServiceURL = URL(string: "https://business.apple.com/main/devices/managementservices/mdmservers/add")!
 
     /// Apple's form cannot be prefilled from a URL, so the name goes on the clipboard to paste.
-    static let serviceName = "Workspace One Beta Token Service"
+    static let serviceName = "Workspace One AppleSeed Beta Token Service"
 
     func copyServiceName() {
         copy(Self.serviceName, note: "Service name copied. Paste it into the Service Name field in Apple Business.")

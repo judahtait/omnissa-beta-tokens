@@ -3,16 +3,20 @@
 ## Install
 
 ```bash
-tools/make_pkg.sh
-open dist/release/Omnissa-Beta-Token-Utility-0.1.0-macos.pkg
+brew tap jtait_euc/omnissa-beta-tokens https://github.com/jtait_euc/omnissa-beta-tokens
+brew install --cask omnissa-beta-token-utility
 ```
 
-Or open `dist/Omnissa Beta Token Utility.app` after `tools/make_app.sh`.
+Or from a clone:
+
+```bash
+tools/install.sh
+```
 
 ## First token
 
 1. **Create certificate** — drag `.pem` into Apple Business.  
-2. Service name: `Workspace One Beta Token Service` (copied for you).  
+2. Service name: `Workspace One AppleSeed Beta Token Service` (copied for you).  
 3. Download `.p7m` → app **Watch Downloads**.  
 4. **Fetch beta tokens** → filter OS → Copy title / token.
 

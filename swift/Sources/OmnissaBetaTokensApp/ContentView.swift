@@ -12,8 +12,9 @@ struct ContentView: View {
     var body: some View {
         VStack(spacing: 0) {
             header
+            stepRail
             ScrollView {
-                VStack(alignment: .leading, spacing: 16) {
+                VStack(alignment: .leading, spacing: 14) {
                     stepCreate
                     stepChoose
                     stepFetch
@@ -55,26 +56,30 @@ struct ContentView: View {
     // MARK: Header
 
     private var header: some View {
-        HStack(spacing: 14) {
+        HStack(alignment: .center, spacing: 16) {
             Image(nsImage: NSApp.applicationIconImage)
-                .resizable().interpolation(.high).frame(width: 64, height: 64)
-                .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-                .shadow(color: .black.opacity(0.25), radius: 8, y: 2)
-            VStack(alignment: .leading, spacing: 6) {
-                Text("OMNISSA  |  WORKSPACE ONE UEM")
-                    .font(Brand.font(11, medium: true)).tracking(1.6).opacity(0.9)
-                Text("Beta Token Utility").font(Brand.font(26, medium: true))
-                Text("Get AppleSeed enrollment tokens for declarative Software Update profiles.")
-                    .font(Brand.font(13))
-                // All Apple platforms we surface tokens for — SF Symbols only (not the Apple logo).
+                .resizable().interpolation(.high).frame(width: 72, height: 72)
+                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                .shadow(color: .black.opacity(0.28), radius: 10, y: 3)
+            VStack(alignment: .leading, spacing: 5) {
+                Text("OMNISSA")
+                    .font(Brand.font(22, medium: true))
+                    .tracking(1.2)
+                Text("Beta Token Utility")
+                    .font(Brand.font(13, medium: true))
+                    .opacity(0.92)
+                Text("AppleSeed tokens for Workspace ONE UEM Software Update profiles.")
+                    .font(Brand.font(12))
+                    .opacity(0.85)
                 platformIcons
             }
+            Spacer(minLength: 0)
         }
         .foregroundColor(.white)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal, 20).padding(.vertical, 14)
+        .padding(.horizontal, 22).padding(.vertical, 16)
         .background(Brand.headerGradient)
-        .overlay(LinearGradient(colors: [Color.white.opacity(0.18), Color.white.opacity(0)],
+        .overlay(LinearGradient(colors: [Color.white.opacity(0.16), Color.white.opacity(0)],
                                 startPoint: .top, endPoint: .center).allowsHitTesting(false))
     }
 
@@ -87,28 +92,56 @@ struct ContentView: View {
             ("Vision", "visionpro"),
             ("Watch", "applewatch"),
         ]
-        return ViewThatFits(in: .horizontal) {
-            HStack(spacing: 12) {
-                ForEach(items, id: \.0) { title, symbol in
-                    Label(title, systemImage: symbol)
-                }
+        return HStack(spacing: 8) {
+            ForEach(items, id: \.0) { title, symbol in
+                Image(systemName: symbol)
+                    .font(.system(size: 11, weight: .semibold))
+                    .accessibilityLabel(title)
             }
-            HStack(spacing: 10) {
-                ForEach(items, id: \.0) { title, symbol in
-                    Image(systemName: symbol)
-                        .accessibilityLabel(title)
+        }
+        .opacity(0.8)
+        .padding(.top, 2)
+    }
+
+    /// Lightweight progress cue under the brand header.
+    private var stepRail: some View {
+        let doneCert = model.hasKeypair
+        let doneP7m = model.p7m != nil
+        let doneFetch = !model.tokens.isEmpty
+        let steps: [(String, Bool)] = [
+            ("Cert", doneCert),
+            ("Token", doneP7m),
+            ("Fetch", doneFetch),
+            ("UEM", doneFetch && model.selected != nil),
+        ]
+        return HStack(spacing: 0) {
+            ForEach(Array(steps.enumerated()), id: \.offset) { index, item in
+                HStack(spacing: 6) {
+                    Image(systemName: item.1 ? "checkmark.circle.fill" : "circle")
+                        .foregroundColor(item.1 ? Brand.ok : Brand.muted)
+                        .font(.system(size: 12, weight: .semibold))
+                    Text(item.0)
+                        .font(Brand.font(11, medium: true))
+                        .foregroundColor(item.1 ? Brand.heading : Brand.muted)
+                }
+                .frame(maxWidth: .infinity)
+                if index < steps.count - 1 {
+                    Rectangle()
+                        .fill(Brand.rule)
+                        .frame(width: 24, height: 1)
                 }
             }
         }
-        .font(Brand.font(11, medium: true))
-        .labelStyle(.titleAndIcon)
-        .opacity(0.92)
+        .padding(.horizontal, 20)
+        .padding(.vertical, 8)
+        .background(Brand.card.opacity(0.72))
+        .overlay(alignment: .bottom) { Divider().opacity(0.6) }
     }
 
     // MARK: Steps
 
     private var stepCreate: some View {
-        card(number: 1, title: "Create certificate") {
+        card(number: 1, title: "Create certificate", done: model.hasKeypair) {
             Text("Open Apple Business moves this window left and opens the Add Service page in your browser (no special permissions). Name the service, upload the .pem, then download the .p7m. Apple will show 0 devices on this service; that is normal — UEM stays the enrollment server.")
                 .font(Brand.font(13)).foregroundColor(Brand.text)
             HStack {
@@ -129,7 +162,13 @@ struct ContentView: View {
                 } else {
                     Button("Create certificate") { model.createCertificate() }.buttonStyle(PrimaryButtonStyle())
                 }
-                Button("Open Apple Business") { model.openAppleBusiness() }.buttonStyle(SecondaryButtonStyle())
+                Button {
+                    model.openAppleBusiness()
+                } label: {
+                    Label("Open Apple Business", systemImage: "doc.badge.arrow.up")
+                }
+                .buttonStyle(SecondaryButtonStyle())
+                .help("Opens Add Service — use Upload Certificate (PEM · DER) with the file below")
                 if model.hasKeypair || model.p7m != nil {
                     Button("Delete local credentials...") { confirmTeardown = true }
                         .buttonStyle(SecondaryButtonStyle())
@@ -169,7 +208,7 @@ struct ContentView: View {
     }
 
     private var stepChoose: some View {
-        card(number: 2, title: "Choose server token (.p7m)") {
+        card(number: 2, title: "Choose server token (.p7m)", done: model.p7m != nil) {
             Text("After you click Download Service Token in Apple Business, the app can watch ~/Downloads, wait until the .p7m finishes, and move it into the work folder.")
                 .font(Brand.font(12)).foregroundColor(Brand.slate)
             if let p7m = model.p7m {
@@ -221,7 +260,7 @@ struct ContentView: View {
     }
 
     private var stepFetch: some View {
-        card(number: 3, title: "Get beta programs") {
+        card(number: 3, title: "Get beta programs", done: !model.tokens.isEmpty) {
             HStack {
                 Button("Fetch beta tokens") { model.fetch() }
                     .buttonStyle(PrimaryButtonStyle())
@@ -234,7 +273,7 @@ struct ContentView: View {
     // MARK: Results
 
     private var results: some View {
-        card(number: 4, title: "Choose a program") {
+        card(number: 4, title: "Choose a program", done: model.selected != nil) {
             HStack {
                 Picker("OS", selection: $model.osFilter) {
                     ForEach(model.osOptions, id: \.self) { Text($0).tag($0) }
@@ -345,17 +384,36 @@ struct ContentView: View {
 
     // MARK: Card
 
-    private func card<Content: View>(number: Int, title: String, @ViewBuilder content: () -> Content) -> some View {
+    private func card<Content: View>(number: Int, title: String, done: Bool = false, @ViewBuilder content: () -> Content) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 10) {
-                Text("\(number)").font(Brand.font(12, medium: true)).foregroundColor(.white)
-                    .frame(width: 22, height: 22).background(Circle().fill(Brand.indigo))
+                ZStack {
+                    Circle().fill(done ? Brand.ok : Brand.indigo)
+                        .frame(width: 24, height: 24)
+                    if done {
+                        Image(systemName: "checkmark")
+                            .font(.system(size: 11, weight: .bold))
+                            .foregroundColor(.white)
+                    } else {
+                        Text("\(number)").font(Brand.font(12, medium: true)).foregroundColor(.white)
+                    }
+                }
                 Text(title).font(Brand.font(15, medium: true)).foregroundColor(Brand.navy)
+                Spacer(minLength: 0)
+                if done {
+                    Text("Done")
+                        .font(Brand.font(11, medium: true))
+                        .foregroundColor(Brand.ok)
+                }
             }
             content()
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(16)
         .glass(16)
+        .overlay(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .strokeBorder(done ? Brand.ok.opacity(0.35) : Color.clear, lineWidth: 1)
+        )
     }
 }

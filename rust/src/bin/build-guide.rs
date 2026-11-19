@@ -14,11 +14,11 @@ use base64::Engine;
 use pulldown_cmark::{html, Options, Parser};
 
 const CSS: &str = r#"
-:root{--navy:#1C1C20;--indigo:#0071E3;--text:#1D1D1F;--slate:#6E6E73;--tint:#D1D1D6;--bg:#F5F5F7;--page:#FFFFFF;--thbg:#001E60}
-@media(prefers-color-scheme:dark){:root{--navy:#F2F2F7;--indigo:#5AA3F0;--text:#E5E5E7;--slate:#A1A1A6;--tint:#3A3A3C;--bg:#1E1E21;--page:#141416;--thbg:#0B5CAD}}
+:root{--navy:#1C1C20;--indigo:#2B6CB0;--text:#1D1D1F;--slate:#6E6E73;--tint:#D1D1D6;--bg:#F4F6F9;--page:#FFFFFF;--thbg:#1A4F8A}
+@media(prefers-color-scheme:dark){:root{--navy:#F2F2F7;--indigo:#4A8AD0;--text:#E5E5E7;--slate:#A1A1A6;--tint:#3A3A3C;--bg:#1E1E21;--page:#141416;--thbg:#2B6CB0}}
 *{box-sizing:border-box}
 body{margin:0;background:var(--page);color:var(--text);font-family:'Outfit','Outfit Light',system-ui,-apple-system,Segoe UI,sans-serif;font-weight:300;font-size:16px;line-height:1.6}
-header{background:linear-gradient(100deg,#001E60,#0B5CAD,#0071E3);color:#fff;padding:48px 16px 40px}
+header{background:linear-gradient(100deg,#1A4F8A,#2B6CB0,#3B7BC0);color:#fff;padding:48px 16px 40px}
 .wrap{max-width:900px;margin:0 auto;padding:0 16px}
 header .wrap{padding:0}
 .eyebrow{font-weight:500;letter-spacing:.12em;text-transform:uppercase;font-size:13px;opacity:.9}
