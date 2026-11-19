@@ -66,13 +66,14 @@ public enum Render {
         Program: \(title)
         Token: \(token)
 
-        Create the UEM profile (one declaration per platform):
+        Create the UEM profile (Apple \(platform) — must match this token):
         1. Resources > Profiles & Baselines > Profiles > Add > Add Profile
-        2. Choose Apple \(platform) (must match this token)
+        2. Choose Apple \(platform)
         3. Management Type = Declarative, Declaration Type = Configuration, Context = Device
         4. Add Software Update: Settings → Beta = On
-        5. Paste Program into Description, Token into Token
-        6. Set Program enrollment / Require / Offer per your policy (see the admin guide), then assign and publish
+        5. Automatic: paste Program into Description, Token into Token (Require = on)
+           Offer: add Description + Token for each same-OS program you want listed
+        6. Set Program enrollment / Require / Offer per the admin guide, then assign and publish
         """
     }
 

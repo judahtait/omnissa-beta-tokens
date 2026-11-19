@@ -20,7 +20,7 @@ struct UEMGuidanceSheet: View {
             GuidanceStep(
                 number: 2,
                 title: "Select the platform",
-                detail: "Choose the Apple platform that matches this beta program’s OS. Each AppleSeed beta needs its own profile on the matching platform — do not reuse one profile for multiple programs.",
+                detail: "Choose the Apple platform that matches this program’s OS (macOS vs iOS). Cross-platform always needs separate profiles. On one platform, Automatic (Require) is one program per profile; Offer modes may list several same-OS programs in one declaration.",
                 imageName: "02-select-platform",
                 showsEnrollmentGuidance: false
             ),
@@ -34,7 +34,7 @@ struct UEMGuidanceSheet: View {
             GuidanceStep(
                 number: 4,
                 title: "Software Update: Settings → Beta",
-                detail: "Turn Beta On. Paste this program’s title into Description (and use it as the profile name); paste this program’s token into Token. Example: “\(programTitle)”. Assign this profile to the right Smart Group and publish. For another AppleSeed beta, fetch that program’s token and create a new profile + assignment — one token, one profile, one assignment per program.",
+                detail: "Turn Beta On. For Automatic: paste this title into Description and this token into Token (Require program). Example: “\(programTitle)”. For Offer modes: add one Description + Token pair per program you want listed (same OS only). Assign to a pilot Smart Group and publish.",
                 imageName: "04-software-update-beta",
                 showsEnrollmentGuidance: false
             ),
@@ -80,16 +80,16 @@ struct UEMGuidanceSheet: View {
         .padding(20)
     }
 
-    /// Each AppleSeed beta = its own token, profile, and assignment.
+    /// How tokens map into UEM declarations (Require vs Offer).
     private var oneProgramCallout: some View {
         HStack(alignment: .top, spacing: 10) {
-            Image(systemName: "exclamationmark.circle.fill")
+            Image(systemName: "info.circle.fill")
                 .foregroundColor(Brand.indigo)
             VStack(alignment: .leading, spacing: 4) {
-                Text("One AppleSeed beta → one token, one profile, one assignment")
+                Text("How many programs per profile?")
                     .font(Brand.font(13, medium: true))
                     .foregroundColor(Brand.navy)
-                Text("Every program (for example a macOS seed vs an iOS seed, or two different macOS seeds) needs its own enrollment token, its own declarative Software Update: Settings profile, and its own Smart Group assignment. Do not put multiple programs in one profile.")
+                Text("Each AppleSeed program still has its own org token. Automatic (Require program) = one program per profile. Offer programs may list multiple Description + Token pairs in one declaration — same platform only (macOS with macOS, iOS with iOS). Keep macOS and iOS in separate profiles.")
                     .font(Brand.font(12))
                     .foregroundColor(Brand.text)
                     .fixedSize(horizontal: false, vertical: true)
@@ -228,7 +228,7 @@ struct UEMGuidanceSheet: View {
             fieldCard(
                 title: "Offer programs",
                 body: """
-                List of beta programs the user may choose. Only with Allowed or AlwaysOn. Must not be set together with Require program. On unsupervised devices, enrollment is effectively Allowed when this key is used.
+                Array of programs the user may choose. Each entry needs Description + Token. Apple allows multiple entries in one declaration (same OS). Only with Allowed or AlwaysOn. Must not be set together with Require program. On unsupervised devices, Offer is the supported path (enrollment behaves like Allowed).
                 """
             )
 
@@ -236,12 +236,12 @@ struct UEMGuidanceSheet: View {
                 .font(Brand.font(14, medium: true))
                 .foregroundColor(Brand.navy)
 
-            modeRow("Automatic", "AlwaysOn + Require on + Offer off", "Device enrolls in your program; no user Apple Account enrollment.")
-            modeRow("Offer to user", "Allowed + Offer on + Require off", "User can use their Apple Account; offered programs also appear.")
-            modeRow("Offer, no sign-in", "AlwaysOn + Offer on + Require off", "User picks from offered programs; no Apple Account enrollment.")
+            modeRow("Automatic", "AlwaysOn + Require on + Offer off", "One program auto-enrolls; no user Apple Account enrollment.")
+            modeRow("Offer to user", "Allowed + Offer on + Require off", "User may use Apple Account; your Offer list can include several same-OS programs.")
+            modeRow("Offer, no sign-in", "AlwaysOn + Offer on + Require off", "User picks from the Offer list (one or more); no Apple Account enrollment.")
             modeRow("Block and unenroll", "AlwaysOff", "Blocks enrollment and removes existing beta enrollment.")
 
-            Text("Do not use Allowed together with Require program — invalid under Apple’s schema. Prefer Automatic (AlwaysOn + Require).")
+            Text("Do not use Allowed with Require program. Prefer Automatic for forced enrollment, or Offer when users should choose among programs.")
                 .font(Brand.font(12))
                 .foregroundColor(Brand.slate)
                 .fixedSize(horizontal: false, vertical: true)

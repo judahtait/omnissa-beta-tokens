@@ -14,11 +14,11 @@ use base64::Engine;
 use pulldown_cmark::{html, Options, Parser};
 
 const CSS: &str = r#"
-:root{--navy:#1C1C20;--indigo:#4A12F0;--text:#1D1D1F;--slate:#6E6E73;--tint:#D1D1D6;--bg:#F5F5F7;--page:#FFFFFF;--thbg:#001E60;--magenta:#D600FF}
-@media(prefers-color-scheme:dark){:root{--navy:#F2F2F7;--indigo:#7050FF;--text:#E5E5E7;--slate:#A1A1A6;--tint:#3A3A3C;--bg:#1E1E21;--page:#141416;--thbg:#1B2A66}}
+:root{--navy:#1C1C20;--indigo:#0071E3;--text:#1D1D1F;--slate:#6E6E73;--tint:#D1D1D6;--bg:#F5F5F7;--page:#FFFFFF;--thbg:#001E60}
+@media(prefers-color-scheme:dark){:root{--navy:#F2F2F7;--indigo:#5AA3F0;--text:#E5E5E7;--slate:#A1A1A6;--tint:#3A3A3C;--bg:#1E1E21;--page:#141416;--thbg:#0B5CAD}}
 *{box-sizing:border-box}
 body{margin:0;background:var(--page);color:var(--text);font-family:'Outfit','Outfit Light',system-ui,-apple-system,Segoe UI,sans-serif;font-weight:300;font-size:16px;line-height:1.6}
-header{background:linear-gradient(100deg,#001E60,#4A12F0,#D600FF);color:#fff;padding:48px 16px 40px}
+header{background:linear-gradient(100deg,#001E60,#0B5CAD,#0071E3);color:#fff;padding:48px 16px 40px}
 .wrap{max-width:900px;margin:0 auto;padding:0 16px}
 header .wrap{padding:0}
 .eyebrow{font-weight:500;letter-spacing:.12em;text-transform:uppercase;font-size:13px;opacity:.9}
@@ -36,7 +36,7 @@ td{padding:8px 12px;border-bottom:1px solid var(--tint);vertical-align:top}
 tr:nth-child(even) td{background:var(--bg)}li{margin:4px 0}
 footer{border-top:2px solid var(--tint);margin-top:48px;padding:20px 0 40px;font-size:13px;color:var(--slate)}
 img{max-width:100%;height:auto;border:1px solid var(--tint);border-radius:8px;margin:10px 0 2px;display:block}
-.btn{display:inline-block;background:var(--indigo);color:#fff!important;font-weight:500;text-decoration:none;padding:10px 18px;border-radius:999px;border:0;cursor:pointer;font-family:inherit;font-size:15px}
+.btn{display:inline-block;background:var(--indigo);color:#fff!important;font-weight:500;text-decoration:none;padding:10px 18px;border-radius:8px;border:0;cursor:pointer;font-family:inherit;font-size:15px}
 .download{background:var(--bg);border-left:4px solid var(--indigo);padding:16px;margin:16px 0;border-radius:6px}
 details summary{cursor:pointer;color:var(--indigo);font-weight:500;margin-top:8px}
 pre{background:var(--page);border:1px solid var(--tint);border-radius:6px;padding:12px;overflow:auto;max-height:480px;font-size:12.5px;line-height:1.45}
@@ -199,9 +199,8 @@ fn main() {
     let author = field(meta, "Author");
     let claim = field(meta, "Ticket claim");
 
-    let draft_html = if status.starts_with("Draft only") {
-        let rest = status.strip_prefix("Draft only. ").unwrap_or(&status);
-        format!(r#"<div class="draft"><strong>Draft only.</strong> {rest}</div>"#)
+    let draft_html = if status.to_lowercase().contains("draft") {
+        format!(r#"<div class="draft"><strong>Draft.</strong> {}</div>"#, esc_inline(&status))
     } else {
         String::new()
     };
