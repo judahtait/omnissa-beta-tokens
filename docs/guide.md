@@ -87,7 +87,15 @@ In-app screenshots: **How to create the UEM profile** (⇧⌘/).
 
 ## 5. Confirm and clean up
 
-**Confirm:** UEM shows the profile **Installed**. On the device, open Software Update and check the beta (Mac: System Settings → General → Software Update; iPhone: Settings → General → Software Update).
+**Confirm in UEM:** profile shows **Installed** on the device.
+
+**Confirm on the device:** Settings → search **Beta** → **Beta Updates** (or Software Update → Beta Updates). The AppleSeed program from your profile should appear; with Offer modes the user can select it.
+
+![Settings search for Beta Updates.](images/device-settings-search-beta.jpg)
+
+![Beta Updates — AppleSeed program selected.](images/device-ipados-beta-updates.jpg)
+
+*iPad example: **iPadOS 27 AppleSeed Beta** is selected under Beta Updates. Mac path: System Settings → General → Software Update.*
 
 **Leave a beta:** assign **Block and unenroll**, then remove the enroll profile from that group.
 
