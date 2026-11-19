@@ -4,13 +4,13 @@
 
 # Omnissa Beta Token Utility
 
+<p align="center">
+  <img src="docs/images/BetaTokenApp.jpg" alt="Omnissa Beta Token Utility macOS app" width="720">
+</p>
+
 macOS app for Omnissa / Workspace ONE UEM admins: fetch AppleSeed for IT enrollment tokens and paste them into a declarative **Software Update: Settings → Beta** profile.
 
 **v1.0.0** · [SemVer](https://semver.org/) · Developer ID signed & notarized
-
-<p align="center">
-  <img src="docs/images/app-main.png" alt="Omnissa Beta Token Utility — certificate, server token, fetch, and program picker" width="720">
-</p>
 
 ## Install
 
