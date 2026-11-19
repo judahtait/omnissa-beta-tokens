@@ -9,15 +9,15 @@ brew install --cask omnissa-beta-token-utility
 ```
 
 ```bash
-npm install -g omnissa-beta-token-utility@0.1.0
+npm install -g omnissa-beta-token-utility@1.0.0
 ```
 
 Or download the signed installer:
 
 ```bash
-gh release download v0.1.0 -R judahtait/omnissa-beta-tokens \
+gh release download v1.0.0 -R judahtait/omnissa-beta-tokens \
   -p 'Omnissa-Beta-Token-Utility-*-macos.pkg'
-sudo installer -pkg Omnissa-Beta-Token-Utility-0.1.0-macos.pkg -target /
+sudo installer -pkg Omnissa-Beta-Token-Utility-1.0.0-macos.pkg -target /
 ```
 
 ## First token

@@ -1,4 +1,4 @@
-## Omnissa Beta Token Utility 0.1.0
+## Omnissa Beta Token Utility 1.0.0
 
 Version from `rust/Cargo.toml`.
 
@@ -7,7 +7,7 @@ declarative Software Update: Settings profile.
 
 ### Product
 - **SwiftUI macOS app** — mid-blue brand, in-app UEM guidance
-- Step-by-step guide (`omnissa-beta-guide-0.1.0.html`, works offline)
+- Step-by-step guide (`omnissa-beta-guide-1.0.0.html`, works offline)
 - Installer / Homebrew cask (see README)
 - `SHA256SUMS`: verify with `shasum -a 256 -c SHA256SUMS`
 

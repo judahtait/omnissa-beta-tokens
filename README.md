@@ -6,7 +6,7 @@
 
 macOS app for Omnissa / Workspace ONE UEM admins: fetch AppleSeed for IT enrollment tokens and paste them into a declarative **Software Update: Settings → Beta** profile.
 
-**v0.1.0** · [SemVer](https://semver.org/) · Developer ID signed & notarized
+**v1.0.0** · [SemVer](https://semver.org/) · Developer ID signed & notarized
 
 ## Install
 
@@ -23,7 +23,7 @@ brew install --cask omnissa-beta-token-utility
 ### npm
 
 ```bash
-npm install -g omnissa-beta-token-utility@0.1.0
+npm install -g omnissa-beta-token-utility@1.0.0
 ```
 
 Installs the notarized app into `~/Applications` and provides the `omnissa-beta-token-utility` command to open it.  
@@ -32,9 +32,9 @@ Package: [npmjs.com/package/omnissa-beta-token-utility](https://www.npmjs.com/pa
 ### Installer package
 
 ```bash
-gh release download v0.1.0 -R judahtait/omnissa-beta-tokens \
+gh release download v1.0.0 -R judahtait/omnissa-beta-tokens \
   -p 'Omnissa-Beta-Token-Utility-*-macos.pkg'
-sudo installer -pkg Omnissa-Beta-Token-Utility-0.1.0-macos.pkg -target /
+sudo installer -pkg Omnissa-Beta-Token-Utility-1.0.0-macos.pkg -target /
 ```
 
 ## How to use
@@ -54,15 +54,15 @@ Details: [guide](docs/guide.md) · in-app **⇧⌘/**.
 
 ## Versioning
 
-Release versions are **Semantic Versioning** (`MAJOR.MINOR.PATCH`), for example `0.1.0`.
+Release versions are **Semantic Versioning** (`MAJOR.MINOR.PATCH`), for example `1.0.0`.
 
 | Surface | Where the version lives |
 |---|---|
 | Source of truth | `rust/Cargo.toml` → `[package] version` |
 | npm | `package.json` → `version` (must match) |
 | Homebrew cask | `Casks/omnissa-beta-token-utility.rb` → `version` (must match) |
-| GitHub release / tag | `v0.1.0` (leading `v` on the tag only) |
-| App / pkg / zip / guide filenames | `…-0.1.0-…` (no `v` in the filename) |
+| GitHub release / tag | `v1.0.0` (leading `v` on the tag only) |
+| App / pkg / zip / guide filenames | `…-1.0.0-…` (no `v` in the filename) |
 
 Do not use prerelease labels like `0.0.0-stage` for product builds. Bump all three files (`Cargo.toml`, `package.json`, cask) together when cutting a release — see [Releasing](docs/RELEASING.md).
 

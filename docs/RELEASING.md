@@ -2,7 +2,7 @@
 
 ## Version
 
-Use **Semantic Versioning** (`MAJOR.MINOR.PATCH`), e.g. `0.1.0`.
+Use **Semantic Versioning** (`MAJOR.MINOR.PATCH`), e.g. `1.0.0`.
 
 **Source of truth:** `rust/Cargo.toml` → `[package] version`.
 
@@ -14,10 +14,10 @@ prerelease labels) in:
 3. `Casks/omnissa-beta-token-utility.rb` (+ `sha256` of the new zip)
 
 Then tag GitHub as `v<version>` (leading `v` on the **tag only**). Artifact
-filenames use the bare version: `Omnissa-Beta-Token-Utility-0.1.0-macos.zip`.
+filenames use the bare version: `Omnissa-Beta-Token-Utility-1.0.0-macos.zip`.
 
 Ignore npm’s temporary `0.0.0-stage` placeholder if it appears while a new
-package name is processing — product installs must pin `@0.1.0` or later.
+package name is processing — product installs must pin `@1.0.0` or later.
 
 ## Build
 
@@ -68,7 +68,7 @@ Create a GitHub release and attach the Rust CLI, Rust `.app` zip, guide HTML,
 and `SHA256SUMS`:
 
 ```bash
-gh release create v0.1.0 dist/release/* --title "v0.1.0" --notes-file docs/RELEASE_NOTES.md
+gh release create v1.0.0 dist/release/* --title "v1.0.0" --notes-file docs/RELEASE_NOTES.md
 ```
 
 Attach only files that exist in `dist/release/` and that appear in

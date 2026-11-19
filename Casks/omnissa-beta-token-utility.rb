@@ -7,8 +7,8 @@
 # Maintainers: bump `version` + `sha256` when replacing the release zip.
 
 cask "omnissa-beta-token-utility" do
-  version "0.1.0"
-  sha256 "6306dd907a99424009e8e4bf18a077ecb62ad429fe8b88d67025e6806dd517d1"
+  version "1.0.0"
+  sha256 "18d4f1a7c908ad6c18c24ef54f2f18e83341588628b493a23b3b5eb9fdbaa46b"
 
   url "https://github.com/judahtait/omnissa-beta-tokens/releases/download/v#{version}/Omnissa-Beta-Token-Utility-#{version}-macos.zip"
   name "Omnissa Beta Token Utility"
