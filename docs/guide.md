@@ -31,7 +31,6 @@ This matches Apple’s model and how other MDMs (Jamf Blueprints, Fleet DDM, Int
 
    ![Apple Business — Add management service.](images/apple-business-management-services.png)
 
-   ![Download Service Token.](images/abm-download-service-token.jpg)
 
 3. **Watch Downloads** → **Fetch beta tokens** → filter by OS → **Copy title** / **Copy token**.
 
