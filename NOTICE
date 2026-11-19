@@ -16,6 +16,6 @@ Permission is hereby granted, free of charge, to any person obtaining a copy of
 the upstream software and associated documentation files, to deal in it without
 restriction, subject to the conditions of the MIT License reproduced in LICENSE.
 
-Changes by Omnissa: rewritten in Rust (CLI) with a SwiftUI macOS app; secrets are
+Changes by developer: rewritten in Rust (CLI) with a SwiftUI macOS app; secrets are
 masked and never printed; decrypted server token is kept in memory only; added
 filtering, JSON/CSV output, and clearer error handling.
