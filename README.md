@@ -6,8 +6,6 @@
 
 macOS app for Omnissa / Workspace ONE UEM admins: fetch AppleSeed for IT enrollment tokens and paste them into a declarative **Software Update: Settings → Beta** profile.
 
-**Pre-release 0.1.0** — ad-hoc signed (Gatekeeper may warn until Developer ID + notarization).
-
 ## Install
 
 ### Homebrew (recommended)
