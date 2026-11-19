@@ -10,7 +10,7 @@
 
 cask "omnissa-beta-token-utility" do
   version "0.1.0"
-  sha256 "097fd73abea0045a3fdfbe80e998f553bb23b2d9375ac15eb1dc42fec818a990"
+  sha256 "6306dd907a99424009e8e4bf18a077ecb62ad429fe8b88d67025e6806dd517d1"
 
   url "https://github.com/judahtait/omnissa-beta-tokens/releases/download/v#{version}/Omnissa-Beta-Token-Utility-#{version}-macos.zip"
   name "Omnissa Beta Token Utility"
